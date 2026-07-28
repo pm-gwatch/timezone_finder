@@ -30,8 +30,8 @@ void main() {
     skip: available
         ? null
         : 'tzbb $defaultRelease data not cached. Run:\n'
-            '  dart run tool/fetch_data.dart\n'
-            '(downloads ~51 MB into .dart_tool/, which is gitignored)',
+              '  dart run tool/fetch_data.dart\n'
+              '(downloads ~51 MB into .dart_tool/, which is gitignored)',
     () {
       late ReferenceTimeZoneFinder oracle;
 
@@ -77,7 +77,8 @@ void main() {
         expect(
           failures,
           isEmpty,
-          reason: 'The oracle disagrees with external ground truth. Either the '
+          reason:
+              'The oracle disagrees with external ground truth. Either the '
               'oracle is wrong, or a golden is — resolve it by hand, never by '
               'adopting the oracle\'s answer.\n${failures.join('\n')}',
         );

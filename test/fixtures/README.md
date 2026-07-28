@@ -1,5 +1,94 @@
 # Test fixtures
 
+Three files, with three different contracts. The distinction matters more than
+it looks:
+
+| File | Contract | On failure |
+| --- | --- | --- |
+| `bootstrap_goldens.dart` | External ground truth, independent of tzbb. Validates the oracle. | Oracle or fixture is wrong |
+| `golden_points.dart` | External ground truth, harder cases. | Oracle or fixture is wrong |
+| `overlap_pins.dart` | **Not ground truth.** Pins the §6.5 tiebreak where two zones genuinely contain a point. | The tiebreak changed — investigate, do not refresh |
+
+---
+
+## `golden_points.dart` — milestone 3
+
+196 fixtures extending the bootstrap set into borders, enclaves, islands,
+Antarctic stations, the antimeridian, and open ocean. Combined with the
+bootstrap set: **262 fixtures across 236 distinct zones**.
+
+| Category | Count |
+| --- | --- |
+| city | 182 |
+| island | 30 |
+| border | 19 |
+| antarctic | 9 |
+| enclave | 8 |
+| ocean | 8 |
+| antimeridian | 6 |
+
+### Verification log — 2026-07-28
+
+Same discipline as the bootstrap set: written by hand first, verified after.
+
+| Check | Method | Result |
+| --- | --- | --- |
+| Identifier exists | tzbb `2026c` `timezone-names.json` | **all present** |
+| Coordinate → zone | `timezonefinder` 8.2.5 (authoritative) | **262/262** |
+| Coordinate → zone | `tzf` via `tzfpy` 1.3.2 (advisory) | **254/254** of the non-null fixtures |
+
+**Verification weighting is inverted from the bootstrap set.** There, both
+tools were equal peers because every point was deep inland. Here, border
+fixtures sit within metres of a zone boundary, and `tzf` simplifies its
+polygons to ~110 m — so a `tzf` disagreement near a border is an expected
+artifact of its preprocessing, not a finding. `timezonefinder`, which keeps
+full-precision coordinates, is authoritative for those. Ocean fixtures have
+only one possible verifier at all: `tzf` ships the with-oceans variant and
+answers `Etc/GMT±N` where a land-only dataset must answer nothing.
+
+### Disagreements found and resolved
+
+The first pass produced three. All were resolved from a third source, none by
+adopting a tool's answer.
+
+1. **Hanoi — I was wrong.** I expected `Asia/Ho_Chi_Minh`; both tools said
+   `Asia/Bangkok`. IANA's own `zone1970.tab` settles it:
+   `Asia/Bangkok — north Vietnam`, `Asia/Ho_Chi_Minh — south Vietnam`.
+   Northern Vietnam has agreed with Bangkok since 1970, so tzdb gives it no
+   separate zone. Kept as a fixture with a note, and Ho Chi Minh City added as
+   its southern counterpart — the pair is worth more than either alone.
+2. **Palikir — authoring slip.** Expected `Pacific/Kosrae` while the note
+   itself said Pohnpei. Corrected to `Pacific/Pohnpei`.
+3. **Ürümqi — mis-filed, not wrong.** The two tools disagreed with each other:
+   `timezonefinder` said `Asia/Urumqi`, `tzf` said `Asia/Shanghai`. Neither is
+   wrong — the point lies inside the documented `Asia/Shanghai`–`Asia/Urumqi`
+   overlap, and each implementation applies its own tiebreak. It is not
+   ground truth at all, and moved to `overlap_pins.dart`.
+
+That third case is the reason the files are split, and it is worth
+generalising: **two independent implementations disagreeing with each other,
+rather than both disagreeing with you, is the signature of a fixture that has
+no external answer.** A sweep of all 262 fixtures against the oracle confirmed
+Ürümqi was the only one affected; `dart run tool/probe_overlaps.dart
+--check-fixtures` re-runs that sweep, and a test enforces it permanently.
+
+---
+
+## `overlap_pins.dart` — milestone 3
+
+21 of the 25 documented overlap pairs, pinned. Read the file header before
+touching it: these record what an arbitrary tiebreak returns in mostly
+disputed territories, and are not claims about sovereignty.
+
+The other four pairs (`Asia/Ho_Chi_Minh`–`Asia/Manila`,
+`Asia/Ho_Chi_Minh`–`Asia/Shanghai`, `Asia/Kolkata`–`Asia/Shanghai`,
+`Asia/Manila`–`Asia/Shanghai`) do not overlap anywhere in the 2026c land-only
+geometry at sampling densities up to 200×200. They cannot be pinned because
+the situation does not arise. See plan §9.4 — grid sampling cannot prove
+absence, so this is "not found", not "does not exist".
+
+---
+
 ## `bootstrap_goldens.dart` — milestone 1
 
 66 coordinate → IANA identifier pairs. This is the only ground truth in the

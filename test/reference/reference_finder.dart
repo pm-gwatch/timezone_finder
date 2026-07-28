@@ -50,11 +50,11 @@ class ReferencePolygon {
     required this.zone,
     required this.outer,
     required this.holes,
-  })  : minX = _min(outer, 0),
-        maxX = _max(outer, 0),
-        minY = _min(outer, 1),
-        maxY = _max(outer, 1),
-        area = _netArea(outer, holes);
+  }) : minX = _min(outer, 0),
+       maxX = _max(outer, 0),
+       minY = _min(outer, 1),
+       maxY = _max(outer, 1),
+       area = _netArea(outer, holes);
 
   /// The IANA identifier this polygon belongs to.
   final String zone;
@@ -148,10 +148,7 @@ class ReferenceTimeZoneFinder {
       }
     }
 
-    return ReferenceTimeZoneFinder._(
-      polygons,
-      zones.toList()..sort(),
-    );
+    return ReferenceTimeZoneFinder._(polygons, zones.toList()..sort());
   }
 
   /// Returns the identifier containing ([latitude], [longitude]), or `null`
@@ -189,7 +186,9 @@ class ReferenceTimeZoneFinder {
   }
 
   List<ReferencePolygon> _containing(double latitude, double longitude) {
-    final x = quantize(longitude);
+    // Query longitudes are normalised so the antimeridian is one seam; stored
+    // vertices are not. See quantizeQueryLongitude.
+    final x = quantizeQueryLongitude(longitude);
     final y = quantize(latitude);
     return <ReferencePolygon>[
       for (final polygon in polygons)
@@ -198,7 +197,10 @@ class ReferenceTimeZoneFinder {
   }
 
   static void _validate(double latitude, double longitude) {
-    if (latitude.isNaN || !latitude.isFinite || latitude < -90 || latitude > 90) {
+    if (latitude.isNaN ||
+        !latitude.isFinite ||
+        latitude < -90 ||
+        latitude > 90) {
       throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
     }
     if (longitude.isNaN ||

@@ -26,34 +26,9 @@
 // Do not add a pair to this file by running an implementation and recording
 // what it said. That defeats the entire purpose of the file.
 
-/// A hand-authored coordinate → IANA identifier expectation.
-class GoldenPoint {
-  const GoldenPoint(
-    this.name,
-    this.latitude,
-    this.longitude,
-    this.zone, {
-    this.note,
-  });
+import 'golden_point.dart';
 
-  /// Human-readable label, e.g. `'Paris, France'`.
-  final String name;
-
-  /// Degrees north, in [-90, 90].
-  final double latitude;
-
-  /// Degrees east, in [-180, 180].
-  final double longitude;
-
-  /// The expected IANA identifier, e.g. `'Europe/Paris'`.
-  final String zone;
-
-  /// Why this point is here, when that is not obvious.
-  final String? note;
-
-  @override
-  String toString() => '$name ($latitude, $longitude) → $zone';
-}
+export 'golden_point.dart' show GoldenCategory, GoldenPoint;
 
 /// Externally sourced coordinate → identifier pairs. See the file header.
 const List<GoldenPoint> bootstrapGoldens = <GoldenPoint>[
@@ -83,7 +58,8 @@ const List<GoldenPoint> bootstrapGoldens = <GoldenPoint>[
     39.9334,
     32.8597,
     'Europe/Istanbul',
-    note: 'Turkey has one zone, named for Istanbul. Ankara is used instead of '
+    note:
+        'Turkey has one zone, named for Istanbul. Ankara is used instead of '
         'Istanbul because Europe/Athens–Europe/Istanbul is a documented '
         'overlap pair in the Aegean; Ankara is far inland of it.',
   ),
@@ -98,7 +74,8 @@ const List<GoldenPoint> bootstrapGoldens = <GoldenPoint>[
     33.4484,
     -112.0740,
     'America/Phoenix',
-    note: 'Arizona does not observe DST and has its own zone, distinct from '
+    note:
+        'Arizona does not observe DST and has its own zone, distinct from '
         'America/Denver.',
   ),
   GoldenPoint('Anchorage, USA', 61.2181, -149.9003, 'America/Anchorage'),
@@ -116,7 +93,8 @@ const List<GoldenPoint> bootstrapGoldens = <GoldenPoint>[
     -34.6037,
     -58.3816,
     'America/Argentina/Buenos_Aires',
-    note: 'Three-segment identifier — exercises parsing that must not assume '
+    note:
+        'Three-segment identifier — exercises parsing that must not assume '
         'exactly one slash.',
   ),
   GoldenPoint('São Paulo, Brazil', -23.5505, -46.6333, 'America/Sao_Paulo'),
@@ -144,7 +122,8 @@ const List<GoldenPoint> bootstrapGoldens = <GoldenPoint>[
     39.9042,
     116.4074,
     'Asia/Shanghai',
-    note: 'Counterintuitive but correct: mainland China uses a single zone '
+    note:
+        'Counterintuitive but correct: mainland China uses a single zone '
         'named for Shanghai. Do not "correct" this to Asia/Beijing.',
   ),
   GoldenPoint('Hong Kong', 22.3193, 114.1694, 'Asia/Hong_Kong'),
@@ -156,7 +135,8 @@ const List<GoldenPoint> bootstrapGoldens = <GoldenPoint>[
     28.6139,
     77.2090,
     'Asia/Kolkata',
-    note: 'Counterintuitive but correct: all of India uses a single zone '
+    note:
+        'Counterintuitive but correct: all of India uses a single zone '
         'named for Kolkata. Do not "correct" this to Asia/Delhi.',
   ),
   GoldenPoint('Karachi, Pakistan', 24.8607, 67.0011, 'Asia/Karachi'),
@@ -175,7 +155,8 @@ const List<GoldenPoint> bootstrapGoldens = <GoldenPoint>[
     56.8389,
     60.6057,
     'Asia/Yekaterinburg',
-    note: 'Russia spans many zones; three are sampled to catch an index that '
+    note:
+        'Russia spans many zones; three are sampled to catch an index that '
         'collapses a large country to one answer.',
   ),
   GoldenPoint('Novosibirsk, Russia', 55.0084, 82.9357, 'Asia/Novosibirsk'),

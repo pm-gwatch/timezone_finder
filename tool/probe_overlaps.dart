@@ -22,6 +22,8 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../test/fixtures/bootstrap_goldens.dart';
+import '../test/fixtures/golden_points.dart';
 import '../test/reference/reference_finder.dart';
 import 'src/fetch.dart';
 
@@ -42,9 +44,71 @@ Future<void> main(List<String> args) async {
       _gridSteps = int.parse(args[i + 1]);
     } else if (args[i] == '--only' && i + 1 < args.length) {
       only = args[i + 1];
+    } else if (args[i] == '--point' && i + 1 < args.length) {
+      await _queryPoint(args[i + 1]);
+      return;
+    } else if (args[i] == '--check-fixtures') {
+      await _checkFixtures();
+      return;
     }
   }
   await _run(only);
+}
+
+/// Reports any ground-truth fixture that sits inside more than one zone.
+///
+/// Such a fixture is mis-filed: its answer comes from the §6.5 tiebreak, not
+/// from any external fact, so it belongs in `overlap_pins.dart`.
+Future<void> _checkFixtures() async {
+  final cached = cachedGeoJsonFile(defaultRelease);
+  if (!cached.existsSync()) {
+    stderr.writeln('No cached data. Run: dart run tool/fetch_data.dart');
+    exitCode = 1;
+    return;
+  }
+  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  final all = [...bootstrapGoldens, ...goldenPoints];
+  var flagged = 0;
+  for (final point in all) {
+    final zones = oracle.zonesContaining(point.latitude, point.longitude);
+    if (zones.length > 1) {
+      flagged++;
+      stdout.writeln(
+        '  MIS-FILED  ${point.name}: covered by '
+        '${zones.join(' + ')} — belongs in overlap_pins.dart',
+      );
+    }
+  }
+  stdout.writeln(
+    flagged == 0
+        ? 'All ${all.length} ground-truth fixtures lie in exactly one zone.'
+        : '\n$flagged of ${all.length} fixtures are in overlap regions.',
+  );
+}
+
+/// Reports every zone containing `lat,lon`, in precedence order.
+///
+/// Used when deciding whether a fixture belongs in the ground-truth set or in
+/// `overlap_pins.dart`: a point covered by two zones cannot be filed as an
+/// external fact, because no external source adjudicates the tiebreak.
+Future<void> _queryPoint(String spec) async {
+  final cached = cachedGeoJsonFile(defaultRelease);
+  if (!cached.existsSync()) {
+    stderr.writeln('No cached data. Run: dart run tool/fetch_data.dart');
+    exitCode = 1;
+    return;
+  }
+  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  for (final pair in spec.split(';')) {
+    final parts = pair.split(',');
+    final lat = double.parse(parts[0].trim());
+    final lon = double.parse(parts[1].trim());
+    final zones = oracle.zonesContaining(lat, lon);
+    stdout.writeln(
+      '($lat, $lon) -> ${zones.length} zone(s): '
+      '${zones.isEmpty ? 'none' : zones.join(', ')}',
+    );
+  }
 }
 
 Future<void> _run(String? only) async {
@@ -92,23 +156,29 @@ Future<void> _run(String? only) async {
       // Distinguish "this region is ocean, so the land-only variant has no
       // geometry here" from "this is land, but the polygons do not overlap".
       final coverage = _coverage(oracle, regions);
-      stdout.writeln('  --  ${entry.key}\n'
-          '      no multi-zone point found at ${_gridSteps}x$_gridSteps\n'
-          '      of ${coverage.total} sampled points: ${coverage.empty} in no '
-          'zone, ${coverage.single} in exactly one\n'
-          '      zones seen: ${coverage.zones.isEmpty ? '(none)' : coverage.zones.join(', ')}');
+      stdout.writeln(
+        '  --  ${entry.key}\n'
+        '      no multi-zone point found at ${_gridSteps}x$_gridSteps\n'
+        '      of ${coverage.total} sampled points: ${coverage.empty} in no '
+        'zone, ${coverage.single} in exactly one\n'
+        '      zones seen: ${coverage.zones.isEmpty ? '(none)' : coverage.zones.join(', ')}',
+      );
       continue;
     }
     found++;
-    stdout.writeln('  OK  ${entry.key}\n'
-        '      (${hit.latitude.toStringAsFixed(5)}, '
-        '${hit.longitude.toStringAsFixed(5)}) '
-        'covered by ${hit.zones.join(' + ')}\n'
-        '      precedence returns: ${hit.zones.first}');
+    stdout.writeln(
+      '  OK  ${entry.key}\n'
+      '      (${hit.latitude.toStringAsFixed(5)}, '
+      '${hit.longitude.toStringAsFixed(5)}) '
+      'covered by ${hit.zones.join(' + ')}\n'
+      '      precedence returns: ${hit.zones.first}',
+    );
   }
 
-  stdout.writeln('\n$found of ${overlaps.length} pairs reproduced; '
-      '$missed not found at ${_gridSteps}x$_gridSteps sampling.');
+  stdout.writeln(
+    '\n$found of ${overlaps.length} pairs reproduced; '
+    '$missed not found at ${_gridSteps}x$_gridSteps sampling.',
+  );
 }
 
 class _Hit {
@@ -159,7 +229,10 @@ _Hit? _searchRegions(ReferenceTimeZoneFinder oracle, List<Object?> regions) {
   for (final region in regions) {
     // [west, south, east, north]
     final bounds = _bounds(region);
-    final west = bounds[0], south = bounds[1], east = bounds[2], north = bounds[3];
+    final west = bounds[0],
+        south = bounds[1],
+        east = bounds[2],
+        north = bounds[3];
     for (var i = 0; i <= _gridSteps; i++) {
       for (var j = 0; j <= _gridSteps; j++) {
         final lon = west + (east - west) * i / _gridSteps;

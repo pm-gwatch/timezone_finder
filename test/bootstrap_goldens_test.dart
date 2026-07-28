@@ -48,8 +48,10 @@ void main() {
     test('identifiers are well-formed IANA names', () {
       // Area/Location, optionally Area/Region/Location. Letters, digits,
       // underscores and hyphens only; no trailing or doubled separators.
-      final pattern = RegExp(r'^[A-Za-z][A-Za-z0-9_+-]*'
-          r'(?:/[A-Za-z][A-Za-z0-9_+-]*){1,2}$');
+      final pattern = RegExp(
+        r'^[A-Za-z][A-Za-z0-9_+-]*'
+        r'(?:/[A-Za-z][A-Za-z0-9_+-]*){1,2}$',
+      );
       for (final point in bootstrapGoldens) {
         expect(
           point.zone,
@@ -90,7 +92,10 @@ void main() {
     });
 
     test('coverage spans multiple continents and many zones', () {
-      final areas = bootstrapGoldens.map((p) => p.zone.split('/').first).toSet();
+      // Every bootstrap point is on land, so none has a null expectation.
+      final areas = bootstrapGoldens
+          .map((p) => p.zone!.split('/').first)
+          .toSet();
       expect(
         areas,
         containsAll(<String>['Europe', 'America', 'Africa', 'Asia']),

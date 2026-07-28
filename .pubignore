@@ -1,0 +1,30 @@
+# Files excluded from the published package archive.
+#
+# IMPORTANT: pub uses this file INSTEAD OF .gitignore, not in addition to it.
+# Every path .gitignore keeps out of the repository must be repeated here, or
+# it ships to pub.dev. In particular `docs/` holds working notes and review
+# documents that must not be published.
+#
+# Keep in sync with .gitignore when adding entries there.
+
+# Working notes, draft plans and review documents.
+docs/
+
+# Tests and fixtures. Not useful to consumers, and the golden fixtures will
+# grow large enough to be worth keeping out of every download.
+test/
+
+# Local tooling settings.
+.claude/
+
+# macOS folder metadata.
+.DS_Store
+
+# Not published for library packages; see
+# https://dart.dev/tools/pub/private-files#pubspec-lock.
+pubspec.lock
+
+# `.dart_tool/` is excluded by pub unconditionally; listed for the reader's
+# benefit, because it caches the ~170 MB boundary GeoJSON that must never
+# reach the archive.
+.dart_tool/

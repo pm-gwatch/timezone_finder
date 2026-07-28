@@ -32,3 +32,29 @@ int quantize(double degrees) => (degrees * coordinateScale).round();
 /// Lossy by construction: the result is within half a unit (~5.5 cm) of the
 /// original coordinate, never closer.
 double dequantize(int units) => units / coordinateScale;
+
+/// Quantizes a **query** longitude, collapsing the antimeridian to one seam.
+///
+/// +180° and −180° name the same meridian, and plan §9.3 requires that both
+/// return the same answer. They do not do so naturally, for a reason that is
+/// about the algorithm rather than the data: point-in-polygon casts a ray in
+/// the +x direction, so a point lying exactly on a polygon's **west** edge has
+/// the ray cross the interior and counts as inside, while a point on an
+/// **east** edge has the ray leave immediately and counts as outside.
+///
+/// timezone-boundary-builder splits zones that span the meridian into separate
+/// polygons, one ending at +180 and one beginning at −180. Querying at +180
+/// therefore lands on an east edge and finds nothing, while −180 lands on a
+/// west edge and resolves. Measured against 2026c: of fifteen latitudes
+/// sampled at the meridian, every non-empty answer — `Antarctica/McMurdo`,
+/// `America/Adak`, `Asia/Anadyr` — came from the −180 side, and +180 was
+/// empty at all fifteen.
+///
+/// Mapping +180 to −180 makes the seam single-valued, and picks the
+/// representation where the geometry actually resolves.
+///
+/// **This applies to query coordinates only.** Polygon vertices must be
+/// quantized with plain [quantize]: normalising a stored vertex at +180 would
+/// move geometry to the far side of the world.
+int quantizeQueryLongitude(double degrees) =>
+    quantize(degrees == 180.0 ? -180.0 : degrees);

@@ -41,10 +41,10 @@ File cachedGeoJsonFile(String release, {Directory? packageRoot}) {
 
 /// The URL of the release asset for [release].
 Uri releaseAssetUrl(String release) => Uri.https(
-      'github.com',
-      '/evansiroky/timezone-boundary-builder/releases/download/'
-          '$release/$_assetName',
-    );
+  'github.com',
+  '/evansiroky/timezone-boundary-builder/releases/download/'
+      '$release/$_assetName',
+);
 
 /// Ensures [release]'s GeoJSON is present in the cache, downloading it if not.
 ///
@@ -75,9 +75,7 @@ Future<File> ensureGeoJson({
   report('Downloading $url …');
   final response = await http.get(url);
   if (response.statusCode != 200) {
-    throw StateError(
-      'Download failed: HTTP ${response.statusCode} for $url',
-    );
+    throw StateError('Download failed: HTTP ${response.statusCode} for $url');
   }
   final bytes = response.bodyBytes;
   if (bytes.length < _minPlausibleZipBytes) {
@@ -93,7 +91,9 @@ Future<File> ensureGeoJson({
   final input = InputFileStream(zipFile.path);
   try {
     final archive = ZipDecoder().decodeStream(input);
-    final member = archive.files.where((f) => f.name == _memberName).firstOrNull;
+    final member = archive.files
+        .where((f) => f.name == _memberName)
+        .firstOrNull;
     if (member == null) {
       throw StateError(
         'Archive from $url does not contain $_memberName. '
