@@ -23,6 +23,9 @@ README is the intended shape, not working code.
   ocean, plus 21 regression pins for the documented zone overlaps.
 - Query longitudes are normalised at the antimeridian so that 180° and -180°
   return the same identifier.
-- 66 tests. The tests needing boundary data skip when it has not been fetched;
+- Packed coordinate format: rings stored as zigzag-varint deltas between
+  consecutive vertices, with a vertex count prefix so a ring can be decoded
+  from its offset alone.
+- 85 tests. The tests needing boundary data skip when it has not been fetched;
   the quantization tests always run.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.
