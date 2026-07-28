@@ -28,41 +28,20 @@ int quantize(double degrees) => (degrees * coordinateScale).round();
 /// original coordinate.
 double dequantize(int units) => units / coordinateScale;
 
-/// Quantizes a **query** longitude, collapsing the antimeridian to one seam.
+/// Quantizes a lookup longitude (the `lon` passed to `find`) so that
+/// +180° and −180° resolve the same.
 ///
-/// +180° and −180° name the same meridian, and plan §9.3 requires that both
-/// return the same answer. They do not do so naturally, for a reason that is
-/// about the algorithm rather than the data: point-in-polygon casts a ray in
-/// the +x direction, so a point lying exactly on a polygon's **west** edge has
-/// the ray cross the interior and counts as inside, while a point on an
-/// **east** edge has the ray leave immediately and counts as outside.
+/// Use this for the caller's coordinates. Boundary vertices from the
+/// timezone polygons must use [quantize] instead: remapping a stored +180
+/// vertex would move that edge to the other side of the world.
 ///
-/// timezone-boundary-builder splits zones that span the meridian into separate
-/// polygons, one ending at +180 and one beginning at −180. Querying at +180
-/// therefore lands on an east edge and finds nothing, while −180 lands on a
-/// west edge and resolves. Measured against 2026c: of fifteen latitudes
-/// sampled at the meridian, every non-empty answer — `Antarctica/McMurdo`,
-/// `America/Adak`, `Asia/Anadyr` — came from the −180 side, and +180 was
-/// empty at all fifteen.
+/// After [quantize], maps the east antimeridian seam
+/// (`+180 × coordinateScale`) to the west (`−180 × coordinateScale`).
+/// Point-in-polygon treats those edges differently, and zones that cross
+/// 180° are split there, so a bare +180 can miss a hit that −180 gets.
 ///
-/// Mapping the east seam to the west one makes it single-valued, and picks the
-/// representation where the geometry actually resolves.
-///
-/// The remapping is applied **after** quantizing, not to the incoming double.
-/// That distinction is not cosmetic: every longitude in
-/// `[179.9999995, 180.0]` quantizes to the same `+180000000`, so testing the
-/// double for equality with `180.0` would leave the rest of that band on the
-/// east edge. It would then return nothing while both `180.0` and
-/// `179.9999994` resolved — a ~5.5 cm hole in the map rather than a
-/// disagreement at a single point.
-///
-/// The west side needs no such care: `-179.9999996` and `-180.0` already
-/// quantize alike, and anything beyond ±180 is rejected as out of range before
-/// reaching here.
-///
-/// **This applies to query coordinates only.** Polygon vertices must be
-/// quantized with plain [quantize]: normalising a stored vertex at +180 would
-/// move geometry to the far side of the world.
+/// Remapping after quantization (not via `degrees == 180.0`) covers every
+/// value that rounds to the east seam.
 int quantizeQueryLongitude(double degrees) {
   const eastSeam = 180 * coordinateScale;
   final units = quantize(degrees);
