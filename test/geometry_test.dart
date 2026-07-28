@@ -12,7 +12,7 @@ import 'package:test/test.dart';
 import '../tool/src/geometry.dart';
 
 /// A polygon's sort key: everything the precedence rule looks at.
-typedef Key = ({double area, String zone});
+typedef Key = ({int area, String zone});
 
 int compareKeys(Key x, Key y) =>
     comparePrecedence(x.area, x.zone, y.area, y.zone);
@@ -31,7 +31,7 @@ void main() {
   group('ringArea', () {
     test('computes the area of a unit square', () {
       expect(
-        ringArea(
+        ringDoubledArea(
           ring([
             [0, 0],
             [10, 0],
@@ -39,7 +39,7 @@ void main() {
             [0, 10],
           ]),
         ),
-        100.0,
+        200,
       );
     });
 
@@ -56,7 +56,7 @@ void main() {
         [10, 10],
         [0, 10],
       ]);
-      expect(ringArea(clockwise), ringArea(counterClockwise));
+      expect(ringDoubledArea(clockwise), ringDoubledArea(counterClockwise));
     });
 
     test('is translation-invariant', () {
@@ -74,7 +74,7 @@ void main() {
         [179000100, 89000050],
         [179000000, 89000050],
       ]);
-      expect(ringArea(farAway), ringArea(atOrigin));
+      expect(ringDoubledArea(farAway), ringDoubledArea(atOrigin));
     });
 
     test('handles negative coordinates identically', () {
@@ -90,40 +90,39 @@ void main() {
         [-10, -10],
         [0, -10],
       ]);
-      expect(ringArea(negative), ringArea(positive));
+      expect(ringDoubledArea(negative), ringDoubledArea(positive));
     });
 
     test('gives degenerate rings zero area', () {
-      expect(ringArea(ring([])), 0.0);
+      expect(ringDoubledArea(ring([])), 0);
       expect(
-        ringArea(
+        ringDoubledArea(
           ring([
             [0, 0],
           ]),
         ),
-        0.0,
+        0,
       );
       expect(
-        ringArea(
+        ringDoubledArea(
           ring([
             [0, 0],
             [10, 10],
           ]),
         ),
-        0.0,
+        0,
       );
     });
 
-    test('never returns a negative or non-finite area', () {
+    test('never returns a negative area', () {
       final collinear = ring([
         [0, 0],
         [10, 10],
         [20, 20],
         [30, 30],
       ]);
-      expect(ringArea(collinear), 0.0);
-      expect(ringArea(collinear).isFinite, isTrue);
-      expect(ringArea(collinear), isNonNegative);
+      expect(ringDoubledArea(collinear), 0);
+      expect(ringDoubledArea(collinear), isNonNegative);
     });
   });
 
@@ -141,9 +140,9 @@ void main() {
         [20, 20],
         [10, 20],
       ]);
-      expect(netPolygonArea(outer, []), 10000.0);
-      expect(netPolygonArea(outer, [hole]), 10000.0 - 100.0);
-      expect(netPolygonArea(outer, [hole, hole]), 10000.0 - 200.0);
+      expect(polygonDoubledArea(outer, []), 20000);
+      expect(polygonDoubledArea(outer, [hole]), 20000 - 200);
+      expect(polygonDoubledArea(outer, [hole, hole]), 20000 - 400);
     });
   });
 
@@ -166,7 +165,7 @@ void main() {
     });
 
     test('is reflexive and antisymmetric', () {
-      const areas = <double>[0, 1, 1e-9, 1e12, 1.0000000005];
+      const areas = <int>[0, 1, 2, 1000000, 9007199254740993];
       const zones = <String>['A', 'B', 'Zzz'];
       for (final a in areas) {
         for (final za in zones) {
@@ -194,17 +193,16 @@ void main() {
       // c — so the comparator contradicts itself and List.sort may emit an
       // arbitrary order. Here that order decides which identifier is returned
       // in a disputed territory.
-      // Steps of 0.6e-9 relative: each adjacent pair falls inside the 1e-9
-      // tolerance, but a and c are 1.2e-9 apart and fall outside it.
-      const a = 1.0;
-      const b = 1.0 + 6e-10;
-      const c = 1.0 + 12e-10;
+      // Steps of 2 against a tolerance of 2: each adjacent pair is "within
+      // tolerance", but the endpoints are 4 apart and are not.
+      const a = 100;
+      const b = 102;
+      const c = 104;
 
       // Demonstrate that the OLD rule really was inconsistent on this triple,
       // so the test is anchored to the real defect rather than to a guess.
-      int oldRule(double x, String zx, double y, String zy) {
-        final scale = x.abs() > y.abs() ? x.abs() : y.abs();
-        if ((x - y).abs() > 1e-9 * scale) return x.compareTo(y);
+      int oldRule(int x, String zx, int y, String zy) {
+        if ((x - y).abs() > 2) return x.compareTo(y);
         return zx.compareTo(zy);
       }
 
@@ -226,16 +224,7 @@ void main() {
 
     test('is transitive across an exhaustive sample', () {
       final keys = <Key>[
-        for (final area in <double>[
-          0,
-          1e-12,
-          1e-9,
-          1.0,
-          1.0 + 6e-10,
-          1.0 + 12e-10,
-          2.0,
-          1e12,
-        ])
+        for (final area in <int>[0, 1, 2, 100, 102, 104, 200, 1000000000000])
           for (final zone in <String>['A', 'M', 'Z']) (area: area, zone: zone),
       ];
       const cmp = compareKeys;
@@ -259,11 +248,11 @@ void main() {
       // A comparator that is a total order sorts every permutation of the same
       // input to the same result. An inconsistent one need not.
       final base = <Key>[
-        (area: 1.0, zone: 'Europe/Rome'),
-        (area: 1.0 + 6e-10, zone: 'Europe/Paris'),
-        (area: 1.0 + 12e-10, zone: 'Europe/Berlin'),
-        (area: 0.5, zone: 'Europe/Madrid'),
-        (area: 1.0, zone: 'Europe/Athens'),
+        (area: 100, zone: 'Europe/Rome'),
+        (area: 102, zone: 'Europe/Paris'),
+        (area: 104, zone: 'Europe/Berlin'),
+        (area: 50, zone: 'Europe/Madrid'),
+        (area: 100, zone: 'Europe/Athens'),
       ];
       const cmp = compareKeys;
 

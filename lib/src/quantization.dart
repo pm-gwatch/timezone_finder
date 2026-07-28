@@ -10,25 +10,22 @@
 /// share border vertices.
 library;
 
-/// Units per degree. 1e-6 degrees is roughly 11 cm at the equator — finer than
-/// the positional accuracy of the underlying OpenStreetMap data, and chosen
-/// because the size budget does not require anything coarser (plan §5.2).
+/// How many fixed-point units equal one degree of latitude or longitude.
+///
+/// With the current value, one unit is \(10^{-6}\)° — about 11 cm at the
+/// equator.
 const int coordinateScale = 1000000;
 
-/// Converts [degrees] to fixed-point units.
+/// Converts a latitude or longitude in degrees to fixed-point units.
 ///
-/// Rounds half away from zero, symmetrically about the meridian and equator,
-/// so that positive and negative coordinates are treated identically.
-///
-/// Valid inputs are bounded by ±180, giving a maximum magnitude of 1.8e8 —
-/// comfortably inside the 2^53 range that is exact on every Dart platform,
-/// including the web.
+/// Multiplies by [coordinateScale] and rounds half away from zero, so
+/// positive and negative values are treated the same.
 int quantize(double degrees) => (degrees * coordinateScale).round();
 
 /// Converts fixed-point [units] back to degrees.
 ///
-/// Lossy by construction: the result is within half a unit (~5.5 cm) of the
-/// original coordinate, never closer.
+/// Lossy: the result is within half a unit (~5.5 cm at the equator) of the
+/// original coordinate.
 double dequantize(int units) => units / coordinateScale;
 
 /// Quantizes a **query** longitude, collapsing the antimeridian to one seam.

@@ -23,6 +23,6 @@ README is the intended shape, not working code.
   ocean, plus 21 regression pins for the documented zone overlaps.
 - Query longitudes are normalised at the antimeridian so that 180° and -180°
   return the same identifier.
-- 50 tests. The tests needing boundary data skip when it has not been fetched;
+- 66 tests. The tests needing boundary data skip when it has not been fetched;
   the quantization tests always run.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.

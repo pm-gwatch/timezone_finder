@@ -41,6 +41,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:timezone_finder/src/point_in_polygon.dart';
 import 'package:timezone_finder/src/quantization.dart';
 
 import '../../tool/src/geometry.dart';
@@ -55,7 +56,7 @@ class ReferencePolygon {
        maxX = _max(outer, 0),
        minY = _min(outer, 1),
        maxY = _max(outer, 1),
-       area = netPolygonArea(outer, holes);
+       area = polygonDoubledArea(outer, holes);
 
   /// The IANA identifier this polygon belongs to.
   final String zone;
@@ -71,24 +72,25 @@ class ReferencePolygon {
   /// Bounding box of [outer], for cheap rejection.
   final int minX, maxX, minY, maxY;
 
-  /// Planar area in square quantized units, holes subtracted.
+  /// Twice the planar area in square quantized units, holes subtracted.
   ///
   /// This is the overlap tiebreak of plan §6.5 and carries no geographic
   /// meaning — it is distorted near the poles and ignores the ellipsoid. It
-  /// only has to be stable and reproducible.
-  final double area;
+  /// only has to be stable and reproducible. Doubled so it stays an exact
+  /// integer; see `polygonDoubledArea`.
+  final int area;
 
   bool _bboxContains(int x, int y) =>
       x >= minX && x <= maxX && y >= minY && y <= maxY;
 
   /// Whether ([x], [y]) in quantized units lies inside this polygon.
+  ///
+  /// The bounding-box test is only an optimisation; containment itself is
+  /// delegated to the shared [pointInPolygon] so the oracle and the index
+  /// cannot drift apart on it.
   bool contains(int x, int y) {
     if (!_bboxContains(x, y)) return false;
-    if (!_pointInRing(outer, x, y)) return false;
-    for (final hole in holes) {
-      if (_pointInRing(hole, x, y)) return false;
-    }
-    return true;
+    return pointInPolygon(outer, holes, x, y);
   }
 }
 
@@ -234,29 +236,6 @@ Int32List _quantizeRing(Object? ring) {
     out[i * 2 + 1] = quantize((point[1]! as num).toDouble());
   }
   return out;
-}
-
-/// Even-odd ray casting in integer space.
-///
-/// Casts a ray in +x from the point and counts edge crossings. The usual
-/// intersection formula is `xi + (py - yi) * (xj - xi) / (yj - yi)`; here it
-/// is cross-multiplied to stay in integers, with the comparison flipped when
-/// the edge runs downward so that multiplying by a negative preserves it.
-///
-/// Products reach ~1.3e17 for antipodal coordinates, inside the int64 range
-/// of the Dart VM. This runs only in tests, never on the web.
-bool _pointInRing(Int32List ring, int px, int py) {
-  final n = ring.length ~/ 2;
-  var inside = false;
-  for (var i = 0, j = n - 1; i < n; j = i++) {
-    final xi = ring[i * 2], yi = ring[i * 2 + 1];
-    final xj = ring[j * 2], yj = ring[j * 2 + 1];
-    if ((yi > py) == (yj > py)) continue;
-    final dy = yj - yi;
-    final side = (px - xi) * dy - (py - yi) * (xj - xi);
-    if (dy > 0 ? side < 0 : side > 0) inside = !inside;
-  }
-  return inside;
 }
 
 int _min(Int32List ring, int offset) {

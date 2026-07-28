@@ -15,9 +15,12 @@
 @Timeout(Duration(minutes: 10))
 library;
 
+import 'dart:typed_data';
+
 import 'package:test/test.dart';
 
 import '../tool/src/fetch.dart';
+import '../tool/src/geometry.dart';
 import 'fixtures/bootstrap_goldens.dart';
 import 'reference/reference_finder.dart';
 
@@ -119,6 +122,36 @@ void main() {
         expect(() => oracle.find(0, -180), returnsNormally);
       });
 
+      test('the shoelace sum is exact for every ring in the dataset', () {
+        // ringDoubledArea accumulates in int64. That is safe only while the
+        // running sum stays inside the 64-bit range, which is a property of
+        // the data, not of the code — so it is checked against the data rather
+        // than argued for. Measured on 2026c the peak is 5.12e15, about 1801x
+        // inside the limit, but a future release with wider rings could
+        // approach it and the failure would otherwise be silent.
+        //
+        // Comparing against an exact BigInt sum detects overflow directly: an
+        // int64 that wrapped would not match.
+        var checked = 0;
+        final mismatches = <String>[];
+        for (final polygon in oracle.polygons) {
+          for (final ring in <Int32List>[polygon.outer, ...polygon.holes]) {
+            checked++;
+            final fast = ringDoubledArea(ring);
+            final exact = _exactDoubledArea(ring);
+            if (BigInt.from(fast) != exact) {
+              mismatches.add('${polygon.zone}: int64 $fast, exact $exact');
+            }
+          }
+        }
+        expect(checked, 1456, reason: 'ring count changed');
+        expect(
+          mismatches.take(5),
+          isEmpty,
+          reason: 'the int64 shoelace sum overflowed or lost precision',
+        );
+      });
+
       test('precedence is deterministic and total', () {
         // Every polygon must order consistently against every other, or the
         // overlap rule is not a rule. Spot-check a sample rather than all
@@ -137,4 +170,24 @@ void main() {
       });
     },
   );
+}
+
+/// The doubled area a perfectly precise implementation would produce.
+///
+/// Used only to check the int64 version; far too slow for production use.
+BigInt _exactDoubledArea(Int32List ring) {
+  final n = ring.length ~/ 2;
+  if (n < 3) return BigInt.zero;
+  final x0 = BigInt.from(ring[0]);
+  final y0 = BigInt.from(ring[1]);
+  var total = BigInt.zero;
+  for (var i = 0; i < n; i++) {
+    final j = (i + 1) % n;
+    final xi = BigInt.from(ring[i * 2]) - x0;
+    final yi = BigInt.from(ring[i * 2 + 1]) - y0;
+    final xj = BigInt.from(ring[j * 2]) - x0;
+    final yj = BigInt.from(ring[j * 2 + 1]) - y0;
+    total += xi * yj - xj * yi;
+  }
+  return total.abs();
 }
