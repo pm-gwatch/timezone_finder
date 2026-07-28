@@ -513,8 +513,12 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
   ),
 
   // ===================================================== antimeridian ====
-  // The five zones split by the 180th meridian (plan §9.3). Each needs a
-  // point in both halves: a fixture on one side exercises only one polygon.
+  // The five zones split by the 180th meridian (plan §9.3). A fixture on one
+  // side exercises only one polygon, so where a place in the far half can be
+  // named from an external source, both halves are sampled: Adak/Attu,
+  // Anadyr/Cape Dezhnev, Suva/Taveuni, McMurdo/Ross Ice Shelf.
+  //
+  // Pacific/Funafuti is sampled on one side only, deliberately — see its note.
   GoldenPoint(
     'Adak, Alaska, USA',
     51.8800,
@@ -539,6 +543,17 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
     177.5087,
     'Asia/Anadyr',
     category: GoldenCategory.antimeridian,
+    note: 'West of 180; paired with Cape Dezhnev on the far side.',
+  ),
+  GoldenPoint(
+    'Cape Dezhnev, Russia',
+    66.0800,
+    -169.6500,
+    'Asia/Anadyr',
+    category: GoldenCategory.antimeridian,
+    note:
+        'The easternmost point of Eurasia, in Chukotka — past 180, and so in '
+        'the other half of the Asia/Anadyr split.',
   ),
   GoldenPoint(
     'Suva, Fiji',
@@ -548,11 +563,26 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
     category: GoldenCategory.antimeridian,
   ),
   GoldenPoint(
+    'Taveuni, Fiji',
+    -16.8500,
+    -179.9700,
+    'Pacific/Fiji',
+    category: GoldenCategory.antimeridian,
+    note:
+        'The 180th meridian runs through Taveuni, putting it in the eastern '
+        'half of the Pacific/Fiji split.',
+  ),
+  GoldenPoint(
     'Funafuti, Tuvalu',
     -8.5211,
     179.1962,
     'Pacific/Funafuti',
     category: GoldenCategory.antimeridian,
+    note:
+        'Only one half is sampled. Tuvalu\'s inhabited atolls all lie west of '
+        '180; the geometry crossing the meridian belongs to islets that '
+        'cannot be named from an external source, and inventing a coordinate '
+        'there would make this an oracle-derived fixture.',
   ),
   GoldenPoint(
     'McMurdo Station',
@@ -563,6 +593,17 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
     note:
         'The Ross Dependency spans the meridian, so McMurdo is one of the '
         'five split zones.',
+  ),
+  GoldenPoint(
+    'Ross Ice Shelf, east of 180',
+    -80.0000,
+    -170.0000,
+    'Antarctica/McMurdo',
+    category: GoldenCategory.antimeridian,
+    note:
+        'The Ross Dependency runs from 160°E to 150°W, so this is the eastern '
+        'half of the Antarctica/McMurdo split. Not a settlement, but a '
+        'defensible external claim about the territory.',
   ),
 
   // ============================================================= ocean ====
@@ -710,7 +751,8 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
     147.1803,
     'Pacific/Port_Moresby',
   ),
-  GoldenPoint('Darwin, Australia', -12.4634, 130.8456, 'Australia/Darwin'),
+  // Darwin is deliberately absent: it is already in bootstrapGoldens, and the
+  // two sets are concatenated. A test rejects cross-set duplicates.
   GoldenPoint('Hobart, Australia', -42.8821, 147.3272, 'Australia/Hobart'),
   GoldenPoint(
     'Eucla, Australia',

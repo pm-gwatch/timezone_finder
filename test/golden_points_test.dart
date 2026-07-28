@@ -58,6 +58,33 @@ void main() {
         }
       });
 
+      test('no fixture is duplicated across the two sets', () {
+        // The sets are concatenated, so an entry listed in both is sampled
+        // twice and inflates the advertised coverage without adding any. The
+        // per-file integrity tests cannot see this, because each only checks
+        // within its own file.
+        final byCoordinate = <String, List<String>>{};
+        final byName = <String, int>{};
+        for (final point in all) {
+          byCoordinate
+              .putIfAbsent('${point.latitude},${point.longitude}', () => [])
+              .add(point.name);
+          byName[point.name] = (byName[point.name] ?? 0) + 1;
+        }
+        expect(
+          byCoordinate.entries
+              .where((e) => e.value.length > 1)
+              .map((e) => '${e.key}: ${e.value.join(' / ')}'),
+          isEmpty,
+          reason: 'duplicate coordinates across bootstrap + extended sets',
+        );
+        expect(
+          byName.entries.where((e) => e.value > 1).map((e) => e.key),
+          isEmpty,
+          reason: 'duplicate labels across bootstrap + extended sets',
+        );
+      });
+
       test('the oracle agrees with every ground-truth fixture', () {
         final byCategory = <GoldenCategory, List<String>>{};
         for (final point in all) {

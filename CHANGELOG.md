@@ -18,11 +18,11 @@ README is the intended shape, not working code.
 - `tool/fetch_data.dart` caches the boundary data under `.dart_tool/`;
   `tool/probe_overlaps.dart` reports which documented zone overlaps are
   reachable in the land-only dataset.
-- Full golden set: 262 ground-truth fixtures across 236 zones, covering
+- Full golden set: 264 ground-truth fixtures across 236 zones, covering
   borders, enclaves, islands, Antarctic stations, the antimeridian and open
   ocean, plus 21 regression pins for the documented zone overlaps.
 - Query longitudes are normalised at the antimeridian so that 180° and -180°
   return the same identifier.
-- 36 tests. The tests needing boundary data skip when it has not been fetched;
+- 37 tests. The tests needing boundary data skip when it has not been fetched;
   the quantization tests always run.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.

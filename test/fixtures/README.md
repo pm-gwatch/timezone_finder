@@ -13,19 +13,19 @@ it looks:
 
 ## `golden_points.dart` — milestone 3
 
-196 fixtures extending the bootstrap set into borders, enclaves, islands,
+198 fixtures extending the bootstrap set into borders, enclaves, islands,
 Antarctic stations, the antimeridian, and open ocean. Combined with the
-bootstrap set: **262 fixtures across 236 distinct zones**.
+bootstrap set: **264 fixtures across 236 distinct zones**.
 
 | Category | Count |
 | --- | --- |
-| city | 182 |
+| city | 181 |
 | island | 30 |
 | border | 19 |
 | antarctic | 9 |
 | enclave | 8 |
 | ocean | 8 |
-| antimeridian | 6 |
+| antimeridian | 9 |
 
 ### Verification log — 2026-07-28
 
@@ -34,8 +34,8 @@ Same discipline as the bootstrap set: written by hand first, verified after.
 | Check | Method | Result |
 | --- | --- | --- |
 | Identifier exists | tzbb `2026c` `timezone-names.json` | **all present** |
-| Coordinate → zone | `timezonefinder` 8.2.5 (authoritative) | **262/262** |
-| Coordinate → zone | `tzf` via `tzfpy` 1.3.2 (advisory) | **254/254** of the non-null fixtures |
+| Coordinate → zone | `timezonefinder` 8.2.5 (authoritative) | **264/264** |
+| Coordinate → zone | `tzf` via `tzfpy` 1.3.2 (advisory) | **256/256** of the non-null fixtures |
 
 **Verification weighting is inverted from the bootstrap set.** There, both
 tools were equal peers because every point was deep inland. Here, border
@@ -68,7 +68,7 @@ adopting a tool's answer.
 That third case is the reason the files are split, and it is worth
 generalising: **two independent implementations disagreeing with each other,
 rather than both disagreeing with you, is the signature of a fixture that has
-no external answer.** A sweep of all 262 fixtures against the oracle confirmed
+no external answer.** A sweep of all fixtures against the oracle confirmed
 Ürümqi was the only one affected; `dart run tool/probe_overlaps.dart
 --check-fixtures` re-runs that sweep, and a test enforces it permanently.
 
