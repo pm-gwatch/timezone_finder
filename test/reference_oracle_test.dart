@@ -40,10 +40,30 @@ void main() {
       });
 
       test('parses the expected shape of the dataset', () {
-        // Measured from tzbb 2026c; see plan §5.1. If these change, the
-        // release changed, and every golden below needs re-checking.
-        expect(oracle.zones.length, 419);
-        expect(oracle.polygons.length, 1184);
+        // Measured independently from tzbb 2026c before the oracle existed;
+        // see plan §5.1. Asserting all five totals — not just the two cheap
+        // ones — means a parse that silently drops rings or vertices fails CI
+        // rather than quietly weakening every downstream guarantee.
+        //
+        // If these change, the release changed, and every golden needs
+        // re-checking.
+        var rings = 0;
+        var holes = 0;
+        var vertices = 0;
+        for (final polygon in oracle.polygons) {
+          rings += 1 + polygon.holes.length;
+          holes += polygon.holes.length;
+          vertices += polygon.outer.length ~/ 2;
+          for (final hole in polygon.holes) {
+            vertices += hole.length ~/ 2;
+          }
+        }
+
+        expect(oracle.zones.length, 419, reason: 'zones');
+        expect(oracle.polygons.length, 1184, reason: 'polygons');
+        expect(rings, 1456, reason: 'rings');
+        expect(holes, 272, reason: 'holes');
+        expect(vertices, 7649092, reason: 'vertices');
       });
 
       test('agrees with every bootstrap golden', () {

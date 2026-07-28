@@ -11,5 +11,13 @@ README is the intended shape, not working code.
   validated against. Verified against two independent implementations
   (`timezonefinder`, `tzf`) and against the identifier list of
   timezone-boundary-builder `2026c`; see `test/fixtures/README.md`.
-- 10 fixture integrity tests.
+- Phase A reference oracle in `test/reference/` — a deliberately naive
+  implementation that parses the boundary GeoJSON and tests every polygon. It
+  never ships; it is the correctness authority the real index will be
+  validated against. Passes all 66 bootstrap goldens.
+- `tool/fetch_data.dart` caches the boundary data under `.dart_tool/`;
+  `tool/probe_overlaps.dart` reports which documented zone overlaps are
+  reachable in the land-only dataset.
+- 17 tests: 10 fixture integrity, 7 oracle. The oracle tests skip when the
+  boundary data has not been fetched.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.
