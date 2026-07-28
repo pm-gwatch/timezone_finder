@@ -11,6 +11,12 @@
 // fixture or the implementation is wrong, and it must be resolved by
 // investigation, never by adopting the implementation's answer.
 //
+// One documented exception: 'Unclaimed Antarctic sector, 10°W'. Its
+// expectation is externally verified, but its coordinate came from the
+// dataset, because the region has no named place to anchor it to. It carries
+// a note saying so. Do not add a second exception without the same note —
+// the value of this file is that its provenance is knowable.
+//
 // Fixtures where no external source *can* adjudicate — the documented zone
 // overlaps, where two zones genuinely contain the same point and the answer
 // comes from an arbitrary tiebreak — are NOT here. They live in
@@ -510,6 +516,24 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
     140.0014,
     'Antarctica/DumontDUrville',
     category: GoldenCategory.antarctic,
+  ),
+  GoldenPoint(
+    'Unclaimed Antarctic sector, 10°W',
+    -78.0000,
+    -10.0000,
+    'Etc/UTC',
+    category: GoldenCategory.antarctic,
+    note:
+        'Antarctic territory with no station keeping a national time falls to '
+        'Etc/UTC. This is the only identifier in the dataset absent from '
+        "tzdb's zone.tab, which makes it easy to mistake for an artifact and "
+        'filter out; it is a real six-vertex land polygon.\n'
+        '\n'
+        'PROVENANCE, weaker than the rest of this file: the expectation is '
+        'externally verified — timezonefinder and tzf both return Etc/UTC here '
+        '— but the coordinate was chosen from the dataset, because the region '
+        'contains no named station to anchor it to. It is the one fixture here '
+        'that was not written before looking at the data.',
   ),
 
   // ===================================================== antimeridian ====

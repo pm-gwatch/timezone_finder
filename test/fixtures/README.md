@@ -13,16 +13,16 @@ it looks:
 
 ## `golden_points.dart` — milestone 3
 
-198 fixtures extending the bootstrap set into borders, enclaves, islands,
+199 fixtures extending the bootstrap set into borders, enclaves, islands,
 Antarctic stations, the antimeridian, and open ocean. Combined with the
-bootstrap set: **264 fixtures across 236 distinct zones**.
+bootstrap set: **265 fixtures across 237 distinct zones**.
 
 | Category | Count |
 | --- | --- |
 | city | 181 |
 | island | 30 |
 | border | 19 |
-| antarctic | 9 |
+| antarctic | 10 |
 | enclave | 8 |
 | ocean | 8 |
 | antimeridian | 9 |
@@ -34,8 +34,8 @@ Same discipline as the bootstrap set: written by hand first, verified after.
 | Check | Method | Result |
 | --- | --- | --- |
 | Identifier exists | tzbb `2026c` `timezone-names.json` | **all present** |
-| Coordinate → zone | `timezonefinder` 8.2.5 (authoritative) | **264/264** |
-| Coordinate → zone | `tzf` via `tzfpy` 1.3.2 (advisory) | **256/256** of the non-null fixtures |
+| Coordinate → zone | `timezonefinder` 8.2.5 (authoritative) | **265/265** |
+| Coordinate → zone | `tzf` via `tzfpy` 1.3.2 (advisory) | **257/257** of the non-null fixtures |
 
 **Verification weighting is inverted from the bootstrap set.** There, both
 tools were equal peers because every point was deep inland. Here, border
@@ -189,6 +189,19 @@ for n, lat, lon, z in pairs:
     if a != z or b != z:
         print(f'DISAGREE {n}: expected {z}, tzf {a}, timezonefinder {b}')
 ```
+
+### The one provenance exception
+
+`Unclaimed Antarctic sector, 10°W` → `Etc/UTC` is the only fixture here whose
+*coordinate* came from the dataset rather than from independent knowledge. The
+region has no named station to anchor to, and `Etc/UTC` is the one identifier
+of the 419 that is absent from tzdb's `zone.tab` — which makes it easy to
+mistake for an artifact and filter out. It is a real six-vertex land polygon,
+and both external implementations return `Etc/UTC` there.
+
+Without it, a zone the package can genuinely return would never be tested. It
+is included with the weaker provenance stated in its note, rather than either
+omitted or quietly filed as if it were like the rest.
 
 ### Scope — what is deliberately absent
 
