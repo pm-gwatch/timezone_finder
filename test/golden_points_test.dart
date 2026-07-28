@@ -125,6 +125,42 @@ void main() {
         }
       });
 
+      test('the whole seam band resolves, not just its endpoints', () {
+        // Comparing only exact ±180 is not enough, and this is not
+        // hypothetical: an earlier normalisation tested the incoming double
+        // against 180.0, so every other longitude rounding to +180000000 was
+        // left on the east edge and returned null while both 180.0 and
+        // 179.9999994 resolved — a ~5.5 cm strip of nothing.
+        //
+        // Sample latitudes where the meridian actually crosses land, so a
+        // regression cannot hide behind an all-null ocean result.
+        const seamLatitudes = <double>[-85, -80, 51.88, 66];
+        const band = <double>[
+          -180.0,
+          180.0,
+          179.9999999,
+          179.9999998,
+          179.9999995,
+        ];
+        for (final lat in seamLatitudes) {
+          final expected = oracle.find(lat, -180);
+          expect(
+            expected,
+            isNotNull,
+            reason:
+                'latitude $lat was chosen because the seam has land '
+                'there; if this is null the dataset changed',
+          );
+          for (final lon in band) {
+            expect(
+              oracle.find(lat, lon),
+              expected,
+              reason: 'seam is discontinuous at ($lat, $lon)',
+            );
+          }
+        }
+      });
+
       test('overlap pins reproduce the documented tiebreak', () {
         final drift = <String>[];
         for (final pin in overlapPins) {

@@ -50,11 +50,26 @@ double dequantize(int units) => units / coordinateScale;
 /// `America/Adak`, `Asia/Anadyr` — came from the −180 side, and +180 was
 /// empty at all fifteen.
 ///
-/// Mapping +180 to −180 makes the seam single-valued, and picks the
+/// Mapping the east seam to the west one makes it single-valued, and picks the
 /// representation where the geometry actually resolves.
+///
+/// The remapping is applied **after** quantizing, not to the incoming double.
+/// That distinction is not cosmetic: every longitude in
+/// `[179.9999995, 180.0]` quantizes to the same `+180000000`, so testing the
+/// double for equality with `180.0` would leave the rest of that band on the
+/// east edge. It would then return nothing while both `180.0` and
+/// `179.9999994` resolved — a ~5.5 cm hole in the map rather than a
+/// disagreement at a single point.
+///
+/// The west side needs no such care: `-179.9999996` and `-180.0` already
+/// quantize alike, and anything beyond ±180 is rejected as out of range before
+/// reaching here.
 ///
 /// **This applies to query coordinates only.** Polygon vertices must be
 /// quantized with plain [quantize]: normalising a stored vertex at +180 would
 /// move geometry to the far side of the world.
-int quantizeQueryLongitude(double degrees) =>
-    quantize(degrees == 180.0 ? -180.0 : degrees);
+int quantizeQueryLongitude(double degrees) {
+  const eastSeam = 180 * coordinateScale;
+  final units = quantize(degrees);
+  return units == eastSeam ? -eastSeam : units;
+}
