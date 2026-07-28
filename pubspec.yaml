@@ -1,0 +1,30 @@
+name: timezone_finder
+description: >-
+  Offline lookup of the IANA time zone identifier (Continent/City) for any
+  latitude/longitude on land. Pure Dart, no network, no dependencies.
+version: 0.1.0
+repository: https://github.com/pm-gwatch/timezone_finder
+issue_tracker: https://github.com/pm-gwatch/timezone_finder/issues
+
+topics:
+  - timezone
+  - geospatial
+  - iana
+
+environment:
+  # Floor is set by lints ^6.1.0, which requires ^3.8.0 (Dart 3.8, 2025-05-20).
+  # The package itself needs nothing beyond Dart 3.0.
+  sdk: ^3.8.0
+
+# Intentionally empty. Zero runtime dependencies is a hard constraint:
+# the runtime uses only dart:convert, dart:typed_data and dart:math.
+# See docs/implementation-plan_claude_v3.md §4.4.
+dependencies:
+
+dev_dependencies:
+  lints: ^6.1.0
+  # 1.31.1+ require SDK ^3.10.0/^3.11.0; ^1.27.0 resolves to 1.31.0 under ^3.8.0.
+  test: ^1.27.0
+  # tool/ only — never imported from lib/.
+  archive: ^4.0.0
+  http: ^1.6.0
