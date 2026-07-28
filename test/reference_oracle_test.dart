@@ -125,11 +125,11 @@ void main() {
         // 1,184 x 1,184 pairs.
         final sample = oracle.polygons.take(120).toList();
         for (final a in sample) {
-          expect(comparePrecedence(a, a), 0, reason: 'not reflexive');
+          expect(comparePolygons(a, a), 0, reason: 'not reflexive');
           for (final b in sample) {
             expect(
-              comparePrecedence(a, b),
-              -comparePrecedence(b, a),
+              comparePolygons(a, b),
+              -comparePolygons(b, a),
               reason: 'not antisymmetric for ${a.zone} vs ${b.zone}',
             );
           }

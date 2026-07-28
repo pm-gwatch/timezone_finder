@@ -1,15 +1,13 @@
-/// Fixed-point representation of geographic coordinates.
+/// Fixed-point geographic coordinates used everywhere this package
+/// compares geometry.
 ///
-/// Every part of this package that compares geometry does so in quantized
-/// integer space: the runtime lookup, the index builder in `tool/`, and the
-/// Phase A reference oracle in `test/`. Sharing one definition is deliberate —
-/// if any of them quantized differently, points within one unit of a border
-/// would resolve differently and the differential test's zero-disagreement
-/// guarantee (plan §10.3) would be unachievable.
+/// Latitude and longitude are stored as integers in millionths of a degree
+/// ([coordinateScale]): one unit is \(10^{-6}\)°, about 11 cm at the equator.
+/// The same conversion is used for lookups, the on-disk index, and tests, so
+/// a point near a border cannot resolve differently in one place than another.
 ///
-/// Integer geometry also removes floating-point edge cases from
-/// point-in-polygon tests along shared borders, where two polygons reference
-/// the same vertices.
+/// Working in integers also avoids floating-point edge cases when polygons
+/// share border vertices.
 library;
 
 /// Units per degree. 1e-6 degrees is roughly 11 cm at the equator — finer than

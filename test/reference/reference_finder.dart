@@ -39,10 +39,11 @@ library;
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:timezone_finder/src/quantization.dart';
+
+import '../../tool/src/geometry.dart';
 
 /// A polygon in quantized space: one outer ring, zero or more holes.
 class ReferencePolygon {
@@ -54,7 +55,7 @@ class ReferencePolygon {
        maxX = _max(outer, 0),
        minY = _min(outer, 1),
        maxY = _max(outer, 1),
-       area = _netArea(outer, holes);
+       area = netPolygonArea(outer, holes);
 
   /// The IANA identifier this polygon belongs to.
   final String zone;
@@ -166,7 +167,7 @@ class ReferenceTimeZoneFinder {
     _validate(latitude, longitude);
     final hits = _containing(latitude, longitude);
     if (hits.isEmpty) return null;
-    hits.sort(comparePrecedence);
+    hits.sort(comparePolygons);
     return hits.first.zone;
   }
 
@@ -177,7 +178,7 @@ class ReferenceTimeZoneFinder {
   /// the `findAll()` public API, which is deferred (plan §2.5).
   List<String> zonesContaining(double latitude, double longitude) {
     _validate(latitude, longitude);
-    final hits = _containing(latitude, longitude)..sort(comparePrecedence);
+    final hits = _containing(latitude, longitude)..sort(comparePolygons);
     final seen = <String>{};
     return <String>[
       for (final polygon in hits)
@@ -218,20 +219,10 @@ class ReferenceTimeZoneFinder {
 
 /// Orders overlapping polygons by the precedence rule of plan §6.5.
 ///
-/// Smallest planar area wins; ties break on identifier. Areas are compared
-/// with a relative tolerance rather than for exact equality, so that a
-/// last-bit difference in floating-point accumulation between this oracle and
-/// the index builder cannot flip the ordering and manufacture a spurious
-/// disagreement. Two genuinely distinct polygons are never within 1e-9
-/// relative area of each other in this dataset; two implementations summing
-/// the same shoelace terms can be.
-int comparePrecedence(ReferencePolygon a, ReferencePolygon b) {
-  final scale = math.max(a.area.abs(), b.area.abs());
-  if ((a.area - b.area).abs() > 1e-9 * scale) {
-    return a.area.compareTo(b.area);
-  }
-  return a.zone.compareTo(b.zone);
-}
+/// Delegates to the shared [comparePrecedence] so the oracle and the index
+/// builder cannot drift apart on the rule that decides disputed territories.
+int comparePolygons(ReferencePolygon a, ReferencePolygon b) =>
+    comparePrecedence(a.area, a.zone, b.area, b.zone);
 
 Int32List _quantizeRing(Object? ring) {
   final points = ring! as List<Object?>;
@@ -266,37 +257,6 @@ bool _pointInRing(Int32List ring, int px, int py) {
     if (dy > 0 ? side < 0 : side > 0) inside = !inside;
   }
   return inside;
-}
-
-/// Shoelace area of one ring, in square quantized units.
-///
-/// Vertices are translated by the ring's first point before accumulating, so
-/// the products stay small relative to the coordinate magnitudes; the shoelace
-/// formula is translation-invariant, so this changes nothing but the
-/// numerics. Accumulation is in `double` because an exact integer sum would
-/// overflow int64 for the largest rings.
-double _ringArea(Int32List ring) {
-  final n = ring.length ~/ 2;
-  if (n < 3) return 0;
-  final x0 = ring[0].toDouble();
-  final y0 = ring[1].toDouble();
-  var total = 0.0;
-  for (var i = 0; i < n; i++) {
-    final j = (i + 1) % n;
-    final xi = ring[i * 2] - x0, yi = ring[i * 2 + 1] - y0;
-    final xj = ring[j * 2] - x0, yj = ring[j * 2 + 1] - y0;
-    total += xi * yj - xj * yi;
-  }
-  return total.abs() / 2;
-}
-
-/// Area of a polygon: its outer ring less its holes.
-double _netArea(Int32List outer, List<Int32List> holes) {
-  var area = _ringArea(outer);
-  for (final hole in holes) {
-    area -= _ringArea(hole);
-  }
-  return area;
 }
 
 int _min(Int32List ring, int offset) {
