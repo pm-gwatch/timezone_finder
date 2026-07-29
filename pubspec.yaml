@@ -11,6 +11,18 @@ topics:
   - geospatial
   - iana
 
+# `lib/data/` is ~42 MB of base64. Over that much random-looking text, byte
+# sequences matching credential patterns turn up by chance — pub's scanner
+# flagged three as AWS access keys, all of them fragments of packed polygon
+# coordinates.
+#
+# Narrow to the generated data only, never the whole package. Nothing
+# hand-written lands here: every file is produced by tool/refresh.dart from a
+# public boundary release, and the suite checks the bundled bytes against a
+# rebuild, so a real secret has no route in.
+false_secrets:
+  - /lib/data/**
+
 environment:
   # Floor is set by lints ^6.1.0, which requires ^3.8.0 (Dart 3.8, 2025-05-20).
   # The package itself needs nothing beyond Dart 3.0.
