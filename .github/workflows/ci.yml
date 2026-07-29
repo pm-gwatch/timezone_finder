@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.8 is the floor declared in pubspec.yaml. Everything has been
+        # developed on a much newer SDK, so this entry is the only thing that
+        # verifies the floor is real rather than arithmetic.
+        sdk: ['3.8.0', stable]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ matrix.sdk }}
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart format --output=none --set-exit-if-changed .
+      # The tests that need the 170 MB boundary GeoJSON skip themselves when it
+      # is absent, so CI exercises the bundled data and the unit suites without
+      # a 51 MB download on every run. The full oracle comparison is the
+      # maintainer's job before a data refresh lands.
+      - run: dart test
+
+  publish-dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+      - run: dart pub publish --dry-run

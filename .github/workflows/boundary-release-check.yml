@@ -1,0 +1,99 @@
+name: Boundary release check
+
+on:
+  schedule:
+    # Weekly. timezone-boundary-builder publishes two to four times a year, so
+    # anything more frequent is noise.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - run: dart pub get
+
+      - name: Find the latest boundary release
+        id: latest
+        run: |
+          set -euo pipefail
+          tag=$(curl -fsSL \
+            https://api.github.com/repos/evansiroky/timezone-boundary-builder/releases/latest \
+            | jq -r .tag_name)
+          if [ -z "$tag" ] || [ "$tag" = "null" ]; then
+            echo "could not determine the latest release" >&2
+            exit 1
+          fi
+          committed=$(jq -r .release tool/release/timezone-names.json)
+          echo "latest=$tag"        >> "$GITHUB_OUTPUT"
+          echo "committed=$committed" >> "$GITHUB_OUTPUT"
+          echo "Latest upstream release: $tag (bundled: $committed)"
+
+      - name: Triage the release
+        if: steps.latest.outputs.latest != steps.latest.outputs.committed
+        id: triage
+        run: |
+          set -euo pipefail
+          # Diffs timezone-names.json — a few kilobytes — against the committed
+          # baseline, without downloading the 51 MB archive. An unchanged
+          # identifier set means a geometry-only change; a changed one can
+          # alter answers users depend on.
+          dart run tool/refresh.dart \
+            --release "${{ steps.latest.outputs.latest }}" \
+            --verify --no-tests 2>&1 | tee triage.txt || true
+          {
+            echo 'body<<TRIAGE'
+            echo "timezone-boundary-builder has published **${{ steps.latest.outputs.latest }}**."
+            echo "The bundled data is ${{ steps.latest.outputs.committed }}."
+            echo
+            echo 'Identifier triage:'
+            echo
+            echo '```'
+            sed -n '/^Triage/,/^$/p' triage.txt
+            echo '```'
+            echo
+            echo 'To refresh:'
+            echo
+            echo '```bash'
+            echo "dart run tool/refresh.dart --release ${{ steps.latest.outputs.latest }}"
+            echo '```'
+            echo
+            echo 'This regenerates `lib/data/`, updates the triage baseline and'
+            echo 'runs the suite. Review `git diff --stat lib/data`, then set the'
+            echo 'version: patch for a geometry-only change, minor if the'
+            echo 'identifier set moved.'
+            echo
+            echo 'Opened automatically. Nothing has been regenerated here — a'
+            echo 'human runs the refresh and merges.'
+            echo TRIAGE
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open an issue for the new release
+        if: steps.latest.outputs.latest != steps.latest.outputs.committed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `tzbb ${{ steps.latest.outputs.latest }} is available`;
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'boundary-release',
+            });
+            if (existing.data.some((i) => i.title === title)) {
+              core.info('Issue already open; nothing to do.');
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ['boundary-release'],
+              body: `${{ steps.triage.outputs.body }}`,
+            });
