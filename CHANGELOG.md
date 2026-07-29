@@ -26,6 +26,8 @@ README is the intended shape, not working code.
 - Packed coordinate format: rings stored as zigzag-varint deltas between
   consecutive vertices, with a vertex count prefix so a ring can be decoded
   from its offset alone.
-- 85 tests. The tests needing boundary data skip when it has not been fetched;
+- Shortcut grid: a 1° raster narrowing a lookup from 1,184 polygons to a mean
+  of 1.9 candidates before any geometry is tested.
+- 91 tests. The tests needing boundary data skip when it has not been fetched;
   the quantization tests always run.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.
