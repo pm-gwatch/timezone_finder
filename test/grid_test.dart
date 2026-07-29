@@ -12,6 +12,8 @@
 @Timeout(Duration(minutes: 10))
 library;
 
+import 'dart:math';
+
 import 'package:test/test.dart';
 import 'package:timezone_finder/src/quantization.dart';
 
@@ -107,15 +109,13 @@ void main() {
         // a grid that wrongly marked a cell empty would return null where the
         // oracle finds a zone, and only a sample this size reliably lands in
         // the thin coastal cells where that would show.
-        var seed = 20260728;
+        final random = Random(20260728);
         var checked = 0;
         var land = 0;
         final failures = <String>[];
         while (checked < 50000) {
-          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-          final lat = ((seed % 180000000) - 90000000) / 1000000;
-          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-          final lon = ((seed % 360000000) - 180000000) / 1000000;
+          final lat = (random.nextInt(180000001) - 90000000) / 1000000;
+          final lon = (random.nextInt(360000001) - 180000000) / 1000000;
           checked++;
 
           final direct = oracle.find(lat, lon);
@@ -144,13 +144,11 @@ void main() {
         // loses the precedence tiebreak must be offered to the geometry test,
         // or an overlap would resolve differently once the runtime replaces
         // the oracle's linear scan.
-        var seed = 987654321;
+        final random = Random(987654321);
         final failures = <String>[];
         for (var i = 0; i < 20000; i++) {
-          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-          final latUnits = (seed % 180000000) - 90000000;
-          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-          final lonUnits = (seed % 360000000) - 180000000;
+          final latUnits = random.nextInt(180000001) - 90000000;
+          final lonUnits = random.nextInt(360000001) - 180000000;
 
           final containing = <int>[];
           for (var p = 0; p < oracle.polygons.length; p++) {

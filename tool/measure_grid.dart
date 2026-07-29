@@ -10,6 +10,7 @@
 library;
 
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import '../test/reference/reference_finder.dart';
@@ -135,12 +136,10 @@ void _checkNoBoxWrapsTheAntimeridian(List<PolygonBox> boxes) {
   var total = 0;
   var count = 0;
   var worst = 0;
-  var seed = 20260728;
+  final random = Random(20260728);
   while (count < 4000) {
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    final lat = (seed % 180000000) - 90000000;
-    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    final lon = (seed % 360000000) - 180000000;
+    final lat = random.nextInt(180000001) - 90000000;
+    final lon = random.nextInt(360000001) - 180000000;
     if (oracle.find(lat / 1000000, lon / 1000000) == null) continue;
     final candidates = grid.candidatesAt(lon, lat).length;
     total += candidates;

@@ -15,6 +15,8 @@ library;
 
 import 'dart:typed_data';
 
+import 'dart:math';
+
 import 'package:test/test.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
@@ -115,14 +117,12 @@ void main() {
       });
 
       test('agrees with the oracle on 50,000 random points', () {
-        var seed = 424242;
+        final random = Random(424242);
         var land = 0;
         final failures = <String>[];
         for (var i = 0; i < 50000; i++) {
-          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-          final lat = ((seed % 180000000) - 90000000) / 1000000;
-          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-          final lon = ((seed % 360000000) - 180000000) / 1000000;
+          final lat = (random.nextInt(180000001) - 90000000) / 1000000;
+          final lon = (random.nextInt(360000001) - 180000000) / 1000000;
 
           final expected = oracle.find(lat, lon);
           if (expected != null) land++;

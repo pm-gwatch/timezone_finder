@@ -32,6 +32,10 @@ README is the intended shape, not working code.
   packed index, decoding ring coordinates only for the polygons it actually
   tests. The index container carries a magic number and format version, and is
   rejected rather than misparsed if either is wrong.
-- 100 tests. The tests needing boundary data skip when it has not been fetched;
+- Differential testing: the runtime is checked against the reference
+  implementation over millions of sampled coordinates, weighted toward zone
+  borders, enclaves, grid boundaries, the antimeridian and disputed-overlap
+  regions rather than spread uniformly.
+- 103 tests. The tests needing boundary data skip when it has not been fetched;
   the quantization tests always run.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.
