@@ -50,6 +50,8 @@ void main() {
               maxX: oracle.polygons[i].maxX,
               minY: oracle.polygons[i].minY,
               maxY: oracle.polygons[i].maxY,
+              area: oracle.polygons[i].area,
+              zone: oracle.polygons[i].zone,
             ),
         ]);
       });

@@ -9,6 +9,8 @@ import 'dart:typed_data';
 
 import 'package:timezone_finder/src/varint.dart';
 
+import 'geometry.dart';
+
 /// Quantized units spanned by the whole globe, per axis.
 const int _globeWidth = 360000000;
 const int _globeHeight = 180000000;
@@ -50,8 +52,17 @@ class GridSpec {
   int indexOf(int x, int y) => rowOf(y) * columns + columnOf(x);
 }
 
-/// A polygon's bounding box and its position in the polygon table.
-typedef PolygonBox = ({int id, int minX, int maxX, int minY, int maxY});
+/// A polygon's bounding box, its position in the polygon table, and the two
+/// values the precedence rule of plan §6.5 orders by.
+typedef PolygonBox = ({
+  int id,
+  int minX,
+  int maxX,
+  int minY,
+  int maxY,
+  int area,
+  String zone,
+});
 
 /// A built grid, with its serialized form and the statistics that justify the
 /// resolution.
@@ -119,6 +130,7 @@ class BuiltGrid {
 /// it.
 BuiltGrid buildGrid(GridSpec spec, List<PolygonBox> boxes) {
   final buckets = List<List<int>?>.filled(spec.cellCount, null);
+  final byId = <PolygonBox>[...boxes]..sort((a, b) => a.id.compareTo(b.id));
 
   for (final box in boxes) {
     final x0 = spec.columnOf(box.minX);
@@ -150,8 +162,21 @@ BuiltGrid buildGrid(GridSpec spec, List<PolygonBox> boxes) {
     occupied++;
     lengths.add(bucket.length);
 
-    // Ids arrive in polygon order, which is already ascending, so the delta
-    // encoding below stays positive.
+    // Sorted by precedence, so the runtime can return the first polygon that
+    // contains the point instead of collecting every hit and comparing. That
+    // is what lets the shipped index omit polygon areas entirely — they are a
+    // build-time concern once the order is baked in.
+    //
+    // Ids are therefore no longer ascending. The list codec zigzags its
+    // deltas, so that costs nothing.
+    bucket.sort(
+      (a, b) => comparePrecedence(
+        byId[a].area,
+        byId[a].zone,
+        byId[b].area,
+        byId[b].zone,
+      ),
+    );
     final key = bucket.join(',');
     final offset = interned.putIfAbsent(key, () {
       final at = pool.length;

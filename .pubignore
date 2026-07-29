@@ -14,6 +14,14 @@ docs/
 # grow large enough to be worth keeping out of every download.
 test/
 
+# Maintainer tooling: the data pipeline, the measurement scripts, the index
+# builder. Consumers never run any of it, and shipping it would be actively
+# harmful — several of these files import the reference oracle from `test/`,
+# which is excluded above, and they need `archive` and `http`, which are
+# dev_dependencies a consumer does not get. Published, they would be code whose
+# imports cannot resolve.
+tool/
+
 # Local tooling settings.
 .claude/
 
