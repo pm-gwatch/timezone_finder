@@ -23,7 +23,11 @@ dependencies:
 
 dev_dependencies:
   lints: ^6.1.0
-  # 1.31.1+ require SDK ^3.10.0/^3.11.0; ^1.27.0 resolves to 1.31.0 under ^3.8.0.
+  # Deliberately wide. dev_dependencies are invisible to consumers, and pub
+  # resolves them against the installed SDK rather than the floor above — so a
+  # current toolchain already gets the newest test (1.31.2), while a
+  # contributor on 3.8 gets 1.31.0. Raising the floor to reach 1.31.2 would buy
+  # nothing and would lock out every consumer on Dart 3.8 or 3.9.
   test: ^1.27.0
   # tool/ only — never imported from lib/.
   archive: ^4.0.0
