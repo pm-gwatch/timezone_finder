@@ -36,6 +36,9 @@ README is the intended shape, not working code.
   implementation over millions of sampled coordinates, weighted toward zone
   borders, enclaves, grid boundaries, the antimeridian and disputed-overlap
   regions rather than spread uniformly.
-- 103 tests. The tests needing boundary data skip when it has not been fetched;
+- The boundary index is now bundled: `TimeZoneFinder()` needs no configuration
+  and works offline out of the box. The data ships as base64 in `lib/data/`,
+  split into 36 chunks so no single string literal troubles the compiler.
+- 111 tests. The tests needing boundary data skip when it has not been fetched;
   the quantization tests always run.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.

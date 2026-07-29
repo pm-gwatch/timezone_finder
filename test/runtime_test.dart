@@ -190,9 +190,22 @@ void main() {
         );
       });
 
-      test('says something useful when no data is bundled', () {
-        // Until milestone 8 the default constructor has nothing to read.
-        expect(() => TimeZoneFinder().find(0, 0), throwsStateError);
+      test('an in-memory container and the bundled data agree', () {
+        // Until milestone 8 the default constructor had nothing to read and
+        // this asserted it threw. Now it reads lib/data, so the useful check
+        // is that both paths reach the same answer — the injected container
+        // this file builds, and the one a consumer gets.
+        final bundled = TimeZoneFinder();
+        for (final point in <GoldenPoint>[
+          ...bootstrapGoldens.take(20),
+          ...goldenPoints.take(20),
+        ]) {
+          expect(
+            bundled.find(point.latitude, point.longitude),
+            finder.find(point.latitude, point.longitude),
+            reason: point.name,
+          );
+        }
       });
 
       test('the packed container is the size the budget expects', () {

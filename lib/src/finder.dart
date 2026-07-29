@@ -3,21 +3,22 @@ library;
 
 import 'dart:typed_data';
 
+import '../data/exact.dart' as bundled;
 import 'index.dart';
 import 'quantization.dart';
 
 /// Supplies the packed index bytes.
 ///
-/// Milestone 8 will provide one backed by the generated base64 constants.
-/// Keeping it injectable is what let the runtime be tested against the real
-/// dataset before any generated source existed.
+/// Defaults to the data bundled in `lib/data/`. Injectable so the runtime can
+/// be tested against a container built in memory — which is how the format was
+/// exercised against the real dataset before any generated source existed.
 typedef IndexBytesProvider = Uint8List Function();
 
 /// Maps geographic coordinates to IANA time zone identifiers.
 class TimeZoneFinder {
   /// Creates a finder. Cheap — the index is decoded lazily on first lookup.
   TimeZoneFinder({IndexBytesProvider? indexBytes})
-    : _indexBytes = indexBytes ?? _noBundledData;
+    : _indexBytes = indexBytes ?? bundled.loadContainer;
 
   final IndexBytesProvider _indexBytes;
   TimeZoneIndex? _index;
@@ -68,8 +69,3 @@ class TimeZoneFinder {
   /// Every identifier in the dataset, sorted. Unmodifiable.
   List<String> get availableTimeZones => _resolved.zoneNames;
 }
-
-Never _noBundledData() => throw StateError(
-  'No index data. The generated data is not bundled yet (milestone 8); '
-  'until then construct TimeZoneFinder with an explicit indexBytes.',
-);
