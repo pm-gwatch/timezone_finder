@@ -44,6 +44,6 @@ README is the intended shape, not working code.
   and peak memory from 88 MB to 29 MB. Same API. Away from borders the two
   tiers agree on all but 0.008% of random land coordinates; close to a border
   they diverge, and the measured rates are in the README.
-- 117 tests. The tests needing boundary data skip when it has not been fetched;
+- 118 tests. The tests needing boundary data skip when it has not been fetched;
   the quantization tests always run.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.

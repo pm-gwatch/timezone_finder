@@ -14,10 +14,13 @@
 library;
 
 import 'package:test/test.dart';
+import 'package:timezone_finder/data/compact.dart' as compact_data;
 import 'package:timezone_finder/data/exact.dart' as bundled;
 import 'package:timezone_finder/timezone_finder.dart';
 
 import '../tool/src/build_index.dart';
+import '../tool/src/geometry.dart';
+import '../tool/src/simplify.dart';
 import '../tool/src/fetch.dart';
 import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/golden_points.dart';
@@ -100,7 +103,7 @@ void main() {
         : 'tzbb $defaultRelease data not cached. Run:\n'
               '  dart run tool/fetch_data.dart',
     () {
-      test('byte for byte, and answer for answer', () async {
+      test('the exact tier, byte for byte', () async {
         // The only check that the emit → base64 → decode round trip is
         // lossless. If it were not, every other test here would still pass
         // while the shipped answers quietly drifted from the source data.
@@ -148,6 +151,55 @@ void main() {
               '$firstDifference',
         );
       });
+
+      test('the compact tier, byte for byte', () async {
+        // Without this a stale compact tier would ship silently: every other
+        // compact test compares it against the exact tier's answers, which
+        // says nothing about whether it was regenerated from current source.
+        final oracle = await ReferenceTimeZoneFinder.load(
+          cachedGeoJsonFile(defaultRelease),
+        );
+        final stats = SimplifyStats();
+        final simplified = <SourcePolygon>[];
+        for (final p in oracle.polygons) {
+          final result = simplifyPolygon(p.outer, p.holes, 1000, stats);
+          if (result == null) continue;
+          simplified.add((
+            zone: p.zone,
+            area: polygonDoubledArea(result.outer, result.holes),
+            minX: _extent(result.outer, 0, min: true),
+            maxX: _extent(result.outer, 0, min: false),
+            minY: _extent(result.outer, 1, min: true),
+            maxY: _extent(result.outer, 1, min: false),
+            outer: result.outer,
+            holes: result.holes,
+          ));
+        }
+        final fresh = buildIndex(
+          dataVersion: defaultRelease,
+          cellSize: 1000000,
+          polygons: simplified,
+        );
+        final shipped = compact_data.loadContainer();
+        expect(
+          shipped.length,
+          fresh.length,
+          reason: 'compact tier is stale; regenerate with tool/refresh.dart',
+        );
+        for (var i = 0; i < fresh.length; i++) {
+          if (shipped[i] != fresh[i]) {
+            fail('compact bundled bytes differ at offset $i');
+          }
+        }
+      });
     },
   );
+}
+
+int _extent(List<int> ring, int offset, {required bool min}) {
+  var value = ring[offset];
+  for (var i = offset; i < ring.length; i += 2) {
+    if (min ? ring[i] < value : ring[i] > value) value = ring[i];
+  }
+  return value;
 }

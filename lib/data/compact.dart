@@ -28,7 +28,7 @@ import 'compact_005.dart' as c5;
 const String dataVersion = '2026c';
 
 /// Size of the packed container, in bytes.
-const int containerLength = 4202631;
+const int containerLength = 4202630;
 
 /// Decoded container bytes.
 ///

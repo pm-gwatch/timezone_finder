@@ -169,14 +169,20 @@ BuiltGrid buildGrid(GridSpec spec, List<PolygonBox> boxes) {
     //
     // Ids are therefore no longer ascending. The list codec zigzags its
     // deltas, so that costs nothing.
-    bucket.sort(
-      (a, b) => comparePrecedence(
+    bucket.sort((a, b) {
+      final byRule = comparePrecedence(
         byId[a].area,
         byId[a].zone,
         byId[b].area,
         byId[b].zone,
-      ),
-    );
+      );
+      // Polygon id as a final tiebreak. Two polygons of the same zone with
+      // identical area compare equal under the precedence rule, and
+      // `List.sort` is not stable — so without this the pool offsets could
+      // differ between runs of the same input, and the byte-identity gate in
+      // `tool/refresh.dart --verify` would be passing by luck.
+      return byRule != 0 ? byRule : a.compareTo(b);
+    });
     final key = bucket.join(',');
     final offset = interned.putIfAbsent(key, () {
       final at = pool.length;
