@@ -3,7 +3,9 @@
 Offline lookup of the IANA time zone identifier (`Continent/City`) for any
 latitude/longitude on land. Pure Dart, no network, no dependencies.
 
-> **Status: early development (0.1.0).** The package is scaffolding, licensing and metadata only — the lookup is not implemented yet and the API below is the intended shape, not working code. Not usable, and not yet published.
+> **Status: early development (0.1.0).** The lookup works and the boundary
+> data is bundled, but the package has not been published yet and the API may
+> still change.
 
 ## What it is for
 
@@ -15,7 +17,7 @@ address → geocoder (Nominatim, Photon, …) → (lat, lon) → find → Contin
 
 The boundary data is bundled in the package, so lookups work fully offline on Dart CLI/server and on Flutter for mobile and desktop.
 
-## Intended API
+## Usage
 
 ```dart
 final finder = TimeZoneFinder();
@@ -26,6 +28,35 @@ finder.find(0.0, -140.0);       // null — not inside any land time zone
 
 `find` is synchronous. The index decodes lazily on first use; the optional
 `ensurePreloaded()` pays that cost up front instead.
+
+## Two sizes
+
+The boundary data ships inside the package, so the download is not small.
+Import whichever tier suits you — **never both**, since each carries its own
+copy of the data.
+
+| | import | download | binary | peak memory |
+| --- | --- | --- | --- | --- |
+| **Exact** | `package:timezone_finder/timezone_finder.dart` | 25 MB | 43.7 MB | 88 MB |
+| **Compact** | `package:timezone_finder/compact.dart` | ~4 MB | 11.4 MB | 29 MB |
+
+The compact tier simplifies boundaries to roughly 110 m. The API is identical;
+only the accuracy near borders differs, and it differs in a measured way:
+
+| where the coordinate is | answers differing from the exact tier |
+| --- | --- |
+| anywhere on land, drawn at random | **0.008 %** |
+| within ~2 km of a boundary | 1.0 % |
+| within ~500 m of a boundary | 30 % |
+
+So for a geocoded street address the two tiers almost always agree, and within
+a few hundred metres of a border they often will not. All 265 test fixtures —
+including every enclave and small-island case, Lesotho and Vatican City among
+them — resolve identically in both.
+
+Simplification drops 33 polygons and 27 holes that collapse to nothing at this
+tolerance, so a handful of very small islands resolve to a neighbouring zone or
+to `null` in the compact tier.
 
 ## Scope
 

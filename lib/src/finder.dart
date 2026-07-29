@@ -3,22 +3,31 @@ library;
 
 import 'dart:typed_data';
 
-import '../data/exact.dart' as bundled;
 import 'index.dart';
 import 'quantization.dart';
 
 /// Supplies the packed index bytes.
 ///
-/// Defaults to the data bundled in `lib/data/`. Injectable so the runtime can
-/// be tested against a container built in memory — which is how the format was
-/// exercised against the real dataset before any generated source existed.
+/// Injectable so the runtime can be tested against a container built in
+/// memory — which is how the format was exercised against the real dataset
+/// before any generated source existed.
 typedef IndexBytesProvider = Uint8List Function();
 
 /// Maps geographic coordinates to IANA time zone identifiers.
-class TimeZoneFinder {
-  /// Creates a finder. Cheap — the index is decoded lazily on first lookup.
-  TimeZoneFinder({IndexBytesProvider? indexBytes})
-    : _indexBytes = indexBytes ?? bundled.loadContainer;
+///
+/// Not constructed directly. Each entry library declares a `TimeZoneFinder`
+/// bound to its own data — `package:timezone_finder/timezone_finder.dart` for
+/// the full-fidelity index, `package:timezone_finder/compact.dart` for the
+/// simplified one.
+///
+/// The split has to happen at import time rather than through a runtime flag.
+/// A `const` referenced by the library you import is in your binary whether or
+/// not you call anything, so a finder that could reach both datasets would
+/// ship both.
+class BaseTimeZoneFinder {
+  /// Creates a finder over [indexBytes]. Cheap — the index is decoded lazily
+  /// on first lookup.
+  BaseTimeZoneFinder(IndexBytesProvider indexBytes) : _indexBytes = indexBytes;
 
   final IndexBytesProvider _indexBytes;
   TimeZoneIndex? _index;

@@ -39,6 +39,11 @@ README is the intended shape, not working code.
 - The boundary index is now bundled: `TimeZoneFinder()` needs no configuration
   and works offline out of the box. The data ships as base64 in `lib/data/`,
   split into 36 chunks so no single string literal troubles the compiler.
-- 111 tests. The tests needing boundary data skip when it has not been fetched;
+- A compact tier: `package:timezone_finder/compact.dart` ships boundaries
+  simplified to roughly 110 m, cutting the download from 25 MB to about 4 MB
+  and peak memory from 88 MB to 29 MB. Same API. Away from borders the two
+  tiers agree on all but 0.008% of random land coordinates; close to a border
+  they diverge, and the measured rates are in the README.
+- 117 tests. The tests needing boundary data skip when it has not been fetched;
   the quantization tests always run.
 - Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.
