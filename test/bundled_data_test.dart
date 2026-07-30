@@ -29,7 +29,7 @@ import 'reference/reference_finder.dart';
 
 void main() {
   group('bundled data', () {
-    final finder = TimeZoneFinder();
+    final finder = TimeZoneFinder.exact();
 
     test('the default constructor needs no configuration', () {
       expect(finder.find(48.8566, 2.3522), 'Europe/Paris');
@@ -87,8 +87,8 @@ void main() {
     });
 
     test('two finders share nothing that would corrupt the other', () {
-      final a = TimeZoneFinder();
-      final b = TimeZoneFinder();
+      final a = TimeZoneFinder.exact();
+      final b = TimeZoneFinder.exact();
       expect(a.find(48.8566, 2.3522), 'Europe/Paris');
       expect(b.find(35.6762, 139.6503), 'Asia/Tokyo');
       expect(a.find(35.6762, 139.6503), 'Asia/Tokyo');

@@ -10,22 +10,55 @@ import 'quantization.dart';
 
 /// Supplies the packed index bytes.
 ///
-/// Injectable so the runtime can be tested against a container built in
-/// memory — which is how the format was exercised against the real dataset
-/// before any generated source existed.
-typedef IndexBytesProvider = Uint8List Function();
+/// Deliberately not exported. The factory constructors are the only ways to
+/// build a finder, so callers never hold one of these — and never need to,
+/// since the data ships with the package.
+typedef _IndexBytes = Uint8List Function();
 
-/// The lookup itself, independent of which dataset backs it.
+/// Maps geographic coordinates to IANA time zone identifiers.
 ///
-/// Not constructed directly — use [TimeZoneFinder] or [CompactTimeZoneFinder],
-/// which differ only in the data they bind. Accept this type in your own code
-/// if you want to be agnostic about which tier a caller supplies.
-class BaseTimeZoneFinder {
-  /// Creates a finder over [indexBytes]. Cheap — the index is decoded lazily
-  /// on first lookup.
-  BaseTimeZoneFinder(IndexBytesProvider indexBytes) : _indexBytes = indexBytes;
+/// Pick a tier when you construct one:
+///
+/// ```dart
+/// final finder = TimeZoneFinder.exact();    // full-fidelity boundaries
+/// final small = TimeZoneFinder.compact();   // ~110 m, far smaller binary
+/// ```
+///
+/// Only the tier you construct is compiled into your program. Both are in the
+/// published archive either way, so the constructor decides what you ship, not
+/// what you download.
+class TimeZoneFinder {
+  TimeZoneFinder._(this._indexBytes);
 
-  final IndexBytesProvider _indexBytes;
+  /// A finder over the full-fidelity index.
+  ///
+  /// Reproduces timezone-boundary-builder's published boundaries with no
+  /// simplification, storing coordinates to 1e-6° — about 11 cm at the equator,
+  /// and finer in longitude away from it.
+  ///
+  /// That figure is the *storage* resolution, not an accuracy claim. The
+  /// boundaries derive from OpenStreetMap, whose own positional error is metres
+  /// to tens of metres; the quantization is deliberately finer than the source
+  /// so that it contributes nothing of its own.
+  ///
+  /// Costs roughly 32 MB of compiled binary over [TimeZoneFinder.compact].
+  factory TimeZoneFinder.exact() => TimeZoneFinder._(exact_data.loadContainer);
+
+  /// A finder over the simplified index.
+  ///
+  /// Boundaries are reduced by Douglas-Peucker at 1e-3° — about 110 m — which
+  /// discards roughly seven eighths of the vertices. Away from borders the
+  /// answers are almost always identical to [TimeZoneFinder.exact]; within a few
+  /// hundred metres of one they often differ. The README publishes the measured
+  /// rates.
+  ///
+  /// A handful of very small islands and enclaves cannot survive simplification
+  /// and are absent here, so those coordinates resolve to a neighbouring zone
+  /// or to `null`.
+  factory TimeZoneFinder.compact() =>
+      TimeZoneFinder._(compact_data.loadContainer);
+
+  final _IndexBytes _indexBytes;
   TimeZoneIndex? _index;
 
   TimeZoneIndex get _resolved =>
@@ -63,9 +96,7 @@ class BaseTimeZoneFinder {
   ///
   /// Currently this parses the container and nothing more, which is honest
   /// rather than lazy: ring coordinates are decoded on demand by design, so
-  /// there is nothing else to do ahead of time. Whether cold-start latency
-  /// warrants moving the parse to an isolate is plan §13.2, and is deliberately
-  /// left until milestone 8 measures it.
+  /// there is nothing else to do ahead of time.
   Future<void> ensurePreloaded() async => _resolved;
 
   /// The tzbb release this index was built from, e.g. `'2026c'`.
@@ -73,29 +104,4 @@ class BaseTimeZoneFinder {
 
   /// Every identifier in the dataset, sorted. Unmodifiable.
   List<String> get availableTimeZones => _resolved.zoneNames;
-}
-
-/// Maps coordinates to IANA identifiers using the full-fidelity index.
-///
-/// Boundaries exactly as timezone-boundary-builder publishes them. Exported by
-/// `package:timezone_finder/timezone_finder.dart`.
-class TimeZoneFinder extends BaseTimeZoneFinder {
-  /// Creates a finder over the bundled full-fidelity index.
-  TimeZoneFinder({IndexBytesProvider? indexBytes})
-    : super(indexBytes ?? exact_data.loadContainer);
-}
-
-/// Maps coordinates to IANA identifiers using the simplified index.
-///
-/// Boundaries simplified to roughly 110 m: about a seventh the data, and
-/// answers near a border can differ from [TimeZoneFinder]. Exported by
-/// `package:timezone_finder/compact.dart`.
-///
-/// Importing that library rather than this one is what keeps the full-fidelity
-/// data out of a compact-only build. The two classes sit together here for
-/// readability; only what a program actually constructs ends up in its binary.
-class CompactTimeZoneFinder extends BaseTimeZoneFinder {
-  /// Creates a finder over the bundled simplified index.
-  CompactTimeZoneFinder({IndexBytesProvider? indexBytes})
-    : super(indexBytes ?? compact_data.loadContainer);
 }

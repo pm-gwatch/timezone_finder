@@ -15,8 +15,7 @@
 library;
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/compact.dart' as compact;
-import 'package:timezone_finder/timezone_finder.dart' as exact;
+import 'package:timezone_finder/timezone_finder.dart';
 
 import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/golden_points.dart';
@@ -24,8 +23,8 @@ import 'fixtures/overlap_pins.dart';
 
 void main() {
   group('compact tier', () {
-    final compactFinder = compact.CompactTimeZoneFinder();
-    final exactFinder = exact.TimeZoneFinder();
+    final compactFinder = TimeZoneFinder.compact();
+    final exactFinder = TimeZoneFinder.exact();
 
     test('works with no configuration, same API as the exact tier', () {
       expect(compactFinder.find(48.8566, 2.3522), 'Europe/Paris');

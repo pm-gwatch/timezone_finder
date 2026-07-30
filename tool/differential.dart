@@ -14,7 +14,6 @@ import '../test/fixtures/overlap_pins.dart';
 import '../test/reference/reference_finder.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
-import 'src/build_index.dart';
 import 'src/differential.dart';
 import 'src/fetch.dart';
 
@@ -38,26 +37,7 @@ Future<void> main(List<String> args) async {
 
   stdout.writeln('Loading reference oracle …');
   final oracle = await ReferenceTimeZoneFinder.load(cached);
-
-  stdout.writeln('Packing the index …');
-  final packed = buildIndex(
-    dataVersion: defaultRelease,
-    cellSize: 1000000,
-    polygons: <SourcePolygon>[
-      for (final p in oracle.polygons)
-        (
-          zone: p.zone,
-          area: p.area,
-          minX: p.minX,
-          maxX: p.maxX,
-          minY: p.minY,
-          maxY: p.maxY,
-          outer: p.outer,
-          holes: p.holes,
-        ),
-    ],
-  );
-  final runtime = TimeZoneFinder(indexBytes: () => packed);
+  final runtime = TimeZoneFinder.exact();
 
   stdout.writeln('Comparing $points points (seed $seed) …');
   final started = DateTime.now();

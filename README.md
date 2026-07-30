@@ -6,7 +6,7 @@ latitude/longitude on land. Pure Dart, no network, no dependencies.
 ```dart
 import 'package:timezone_finder/timezone_finder.dart';
 
-final finder = TimeZoneFinder();
+final finder = TimeZoneFinder.exact();
 
 finder.find(48.8566, 2.3522);    // 'Europe/Paris'
 finder.find(-33.8688, 151.2093); // 'Australia/Sydney'
@@ -50,18 +50,24 @@ The boundary data ships inside the package, so the download is not small.
 Import whichever tier suits you — **never both**, since each carries its own
 copy of the data.
 
-| | import | class | binary | peak memory |
+| | constructor | boundary resolution | binary | peak memory |
 | --- | --- | --- | --- | --- |
-| **Exact** | `package:timezone_finder/timezone_finder.dart` | `TimeZoneFinder` | 43.7 MB | 88 MB |
-| **Compact** | `package:timezone_finder/compact.dart` | `CompactTimeZoneFinder` | 11.4 MB | 29 MB |
+| **Exact** | `TimeZoneFinder.exact()` | unsimplified, stored to ~11 cm | 43.7 MB | 88 MB |
+| **Compact** | `TimeZoneFinder.compact()` | simplified to ~110 m | 11.4 MB | 29 MB |
 
-Both tiers are in the published archive either way — 29 MiB compressed, 16 % of
-pub.dev's limit. What the import decides is which one ends up in *your* binary.
-Accept `BaseTimeZoneFinder` in your own signatures if you want to stay agnostic
-about which a caller passes.
+One import, one class; the constructor picks the tier. Only the tier you
+construct is compiled in — both are in the published archive either way (29 MiB
+compressed, 16 % of pub.dev's limit), so the constructor decides what you
+*ship*, not what you download.
 
-The compact tier simplifies boundaries to roughly 110 m. The API is identical;
-only the accuracy near borders differs, and it differs in a measured way:
+**On "~11 cm".** That is the exact tier's storage resolution — coordinates are
+quantized to 1e-6°, and no vertices are dropped. It is not an accuracy claim:
+the boundaries come from OpenStreetMap, whose own positional error is metres to
+tens of metres. The quantization is deliberately finer than the source so it
+contributes nothing of its own. The compact tier's ~110 m, by contrast, *is* a
+deliberate loss.
+
+The compact tier's loss is measured, not estimated:
 
 | where the coordinate is | answers differing from the exact tier |
 | --- | --- |

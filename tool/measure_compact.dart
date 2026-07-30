@@ -11,8 +11,7 @@ library;
 
 import 'dart:io';
 
-import 'package:timezone_finder/compact.dart' as compact;
-import 'package:timezone_finder/timezone_finder.dart' as exact;
+import 'package:timezone_finder/timezone_finder.dart';
 
 import '../test/fixtures/bootstrap_goldens.dart';
 import '../test/fixtures/golden_points.dart';
@@ -38,8 +37,8 @@ Future<void> main(List<String> args) async {
 
   stdout.writeln('Loading reference oracle …');
   final oracle = await ReferenceTimeZoneFinder.load(cached);
-  final compactFinder = compact.CompactTimeZoneFinder();
-  final exactFinder = exact.TimeZoneFinder();
+  final compactFinder = TimeZoneFinder.compact();
+  final exactFinder = TimeZoneFinder.exact();
 
   // --- the fixtures, which are ground truth for the exact tier only --------
   stdout.writeln(

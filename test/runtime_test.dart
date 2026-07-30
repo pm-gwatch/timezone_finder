@@ -18,6 +18,8 @@ import 'dart:typed_data';
 import 'dart:math';
 
 import 'package:test/test.dart';
+import 'package:timezone_finder/src/index.dart';
+import 'package:timezone_finder/src/quantization.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
 import '../tool/src/build_index.dart';
@@ -62,7 +64,7 @@ void main() {
               ),
           ],
         );
-        finder = TimeZoneFinder(indexBytes: () => packed);
+        finder = TimeZoneFinder.exact();
       });
 
       test('reports the dataset it was built from', () {
@@ -157,7 +159,7 @@ void main() {
       });
 
       test('ensurePreloaded is optional and idempotent', () {
-        final fresh = TimeZoneFinder(indexBytes: () => packed);
+        final fresh = TimeZoneFinder.exact();
         expect(fresh.find(48.8566, 2.3522), 'Europe/Paris');
         expect(fresh.ensurePreloaded(), completes);
         expect(fresh.ensurePreloaded(), completes);
@@ -165,43 +167,47 @@ void main() {
       });
 
       test('rejects a container it cannot trust', () {
+        // Aimed at TimeZoneIndex rather than the finder: format validation is
+        // the index's job, and the finder no longer takes arbitrary bytes —
+        // the two factory constructors are the only ways to build one.
         expect(
-          () => TimeZoneFinder(indexBytes: () => Uint8List(4)).find(0, 0),
+          () => TimeZoneIndex.fromBytes(Uint8List(4)),
           throwsA(isA<IndexFormatException>()),
           reason: 'buffer shorter than the header',
         );
-
-        final badMagic = Uint8List.fromList(packed)..[0] ^= 0xff;
         expect(
-          () => TimeZoneFinder(indexBytes: () => badMagic).find(0, 0),
+          () =>
+              TimeZoneIndex.fromBytes(Uint8List.fromList(packed)..[0] ^= 0xff),
           throwsA(isA<IndexFormatException>()),
+          reason: 'bad magic',
         );
-
-        final badVersion = Uint8List.fromList(packed)..[4] = 99;
         expect(
-          () => TimeZoneFinder(indexBytes: () => badVersion).find(0, 0),
+          () => TimeZoneIndex.fromBytes(Uint8List.fromList(packed)..[4] = 99),
           throwsA(isA<IndexFormatException>()),
+          reason: 'unknown format version',
         );
-
-        final truncated = Uint8List.sublistView(packed, 0, 200);
         expect(
-          () => TimeZoneFinder(indexBytes: () => truncated).find(0, 0),
+          () => TimeZoneIndex.fromBytes(Uint8List.sublistView(packed, 0, 200)),
           throwsA(isA<IndexFormatException>()),
+          reason: 'truncated',
         );
       });
 
-      test('an in-memory container and the bundled data agree', () {
-        // Until milestone 8 the default constructor had nothing to read and
-        // this asserted it threw. Now it reads lib/data, so the useful check
-        // is that both paths reach the same answer — the injected container
-        // this file builds, and the one a consumer gets.
-        final bundled = TimeZoneFinder();
+      test('a freshly packed container answers as the bundled one does', () {
+        // The finder now reads bundled data, so this checks the *builder*
+        // against it: a container packed here in memory must resolve the
+        // fixtures the same way. Byte-identity is asserted separately in
+        // bundled_data_test; this is the behavioural counterpart.
+        final fresh = TimeZoneIndex.fromBytes(packed);
         for (final point in <GoldenPoint>[
-          ...bootstrapGoldens.take(20),
-          ...goldenPoints.take(20),
+          ...bootstrapGoldens.take(40),
+          ...goldenPoints.take(40),
         ]) {
           expect(
-            bundled.find(point.latitude, point.longitude),
+            fresh.lookup(
+              quantizeQueryLongitude(point.longitude),
+              quantize(point.latitude),
+            ),
             finder.find(point.latitude, point.longitude),
             reason: point.name,
           );
