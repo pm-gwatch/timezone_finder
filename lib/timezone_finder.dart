@@ -7,10 +7,15 @@
 /// ```
 ///
 /// This is the full-fidelity index: boundaries exactly as
-/// timezone-boundary-builder publishes them. For a much smaller download at
-/// the cost of metre-level border accuracy, import
-/// `package:timezone_finder/compact.dart` instead — never both, since each
-/// carries its own copy of the data.
+/// timezone-boundary-builder publishes them. For a much smaller binary at the
+/// cost of metre-level border accuracy, import
+/// `package:timezone_finder/compact.dart` instead.
+///
+/// Import one or the other. Both datasets are in the published archive either
+/// way — the import decides which is compiled into your program, not what you
+/// download. Constructing both `TimeZoneFinder` and `CompactTimeZoneFinder` in
+/// one program costs about 5.6 MB more than the exact tier alone, for answers
+/// that differ only within a few hundred metres of a border.
 ///
 /// The identifier is the whole answer. For UTC offsets, DST and civil-time
 /// arithmetic, pass it to `package:timezone`.
