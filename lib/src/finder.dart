@@ -3,6 +3,7 @@ library;
 
 import 'dart:typed_data';
 
+import '../data/compact.dart' as compact_data;
 import '../data/exact.dart' as exact_data;
 import 'index.dart';
 import 'quantization.dart';
@@ -14,17 +15,11 @@ import 'quantization.dart';
 /// before any generated source existed.
 typedef IndexBytesProvider = Uint8List Function();
 
-/// Maps geographic coordinates to IANA time zone identifiers.
+/// The lookup itself, independent of which dataset backs it.
 ///
-/// Not constructed directly. Each entry library declares a `TimeZoneFinder`
-/// bound to its own data — `package:timezone_finder/timezone_finder.dart` for
-/// the full-fidelity index, `package:timezone_finder/compact.dart` for the
-/// simplified one.
-///
-/// The split has to happen at import time rather than through a runtime flag.
-/// A `const` referenced by the library you import is in your binary whether or
-/// not you call anything, so a finder that could reach both datasets would
-/// ship both.
+/// Not constructed directly — use [TimeZoneFinder] or [CompactTimeZoneFinder],
+/// which differ only in the data they bind. Accept this type in your own code
+/// if you want to be agnostic about which tier a caller supplies.
 class BaseTimeZoneFinder {
   /// Creates a finder over [indexBytes]. Cheap — the index is decoded lazily
   /// on first lookup.
@@ -82,15 +77,25 @@ class BaseTimeZoneFinder {
 
 /// Maps coordinates to IANA identifiers using the full-fidelity index.
 ///
-/// The default. Boundaries exactly as timezone-boundary-builder publishes
-/// them, at the cost of a ~25 MB download.
-///
-/// The simplified counterpart lives in `lib/compact.dart` rather than here,
-/// and has to: both are called `TimeZoneFinder`, and Dart has no way to rename
-/// a class on export, so the only way to give consumers one identical call
-/// shape per tier is to declare each in the library they import.
+/// Boundaries exactly as timezone-boundary-builder publishes them. Exported by
+/// `package:timezone_finder/timezone_finder.dart`.
 class TimeZoneFinder extends BaseTimeZoneFinder {
   /// Creates a finder over the bundled full-fidelity index.
   TimeZoneFinder({IndexBytesProvider? indexBytes})
     : super(indexBytes ?? exact_data.loadContainer);
+}
+
+/// Maps coordinates to IANA identifiers using the simplified index.
+///
+/// Boundaries simplified to roughly 110 m: about a seventh the data, and
+/// answers near a border can differ from [TimeZoneFinder]. Exported by
+/// `package:timezone_finder/compact.dart`.
+///
+/// Importing that library rather than this one is what keeps the full-fidelity
+/// data out of a compact-only build. The two classes sit together here for
+/// readability; only what a program actually constructs ends up in its binary.
+class CompactTimeZoneFinder extends BaseTimeZoneFinder {
+  /// Creates a finder over the bundled simplified index.
+  CompactTimeZoneFinder({IndexBytesProvider? indexBytes})
+    : super(indexBytes ?? compact_data.loadContainer);
 }

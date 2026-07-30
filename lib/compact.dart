@@ -3,34 +3,24 @@
 /// ```dart
 /// import 'package:timezone_finder/compact.dart';
 ///
-/// final finder = TimeZoneFinder();
+/// final finder = CompactTimeZoneFinder();
 /// finder.find(48.8566, 2.3522); // 'Europe/Paris'
 /// ```
 ///
-/// The API is identical to `package:timezone_finder/timezone_finder.dart`;
-/// only the data differs. Boundaries here are simplified to roughly 110 m, so
-/// the index is about a seventh the size and answers near a border can differ
-/// from the full-fidelity tier. The measured disagreement rate is in the
-/// README.
+/// Boundaries are simplified to roughly 110 m, so the data is about a seventh
+/// the size and answers near a border can differ from the full-fidelity tier.
+/// The measured rates are in the README: away from borders the two agree on all
+/// but 0.008 % of random land coordinates.
 ///
-/// **Import one tier or the other, never both.** Each carries its own copy of
-/// the data, and a `const` reachable from anything you import is in your
-/// binary whether or not you call it.
+/// Importing this library instead of `timezone_finder.dart` is what keeps the
+/// full-fidelity data out of your binary. Both are always present in the
+/// published archive; only what you construct is compiled in.
 ///
 /// Some very small islands and enclaves cannot survive simplification at this
 /// tolerance and are absent here; those coordinates resolve to a neighbouring
 /// zone or to `null`.
 library;
 
-import 'data/compact.dart' as data;
-import 'src/finder.dart';
-
-export 'src/finder.dart' show BaseTimeZoneFinder, IndexBytesProvider;
+export 'src/finder.dart'
+    show BaseTimeZoneFinder, CompactTimeZoneFinder, IndexBytesProvider;
 export 'src/index.dart' show IndexFormatException;
-
-/// Maps coordinates to IANA identifiers using the simplified index.
-class TimeZoneFinder extends BaseTimeZoneFinder {
-  /// Creates a finder over the bundled simplified index.
-  TimeZoneFinder({IndexBytesProvider? indexBytes})
-    : super(indexBytes ?? data.loadContainer);
-}

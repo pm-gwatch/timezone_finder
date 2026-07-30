@@ -24,7 +24,7 @@ import 'fixtures/overlap_pins.dart';
 
 void main() {
   group('compact tier', () {
-    final compactFinder = compact.TimeZoneFinder();
+    final compactFinder = compact.CompactTimeZoneFinder();
     final exactFinder = exact.TimeZoneFinder();
 
     test('works with no configuration, same API as the exact tier', () {

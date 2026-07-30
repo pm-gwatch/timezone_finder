@@ -38,7 +38,7 @@ Future<void> main(List<String> args) async {
 
   stdout.writeln('Loading reference oracle …');
   final oracle = await ReferenceTimeZoneFinder.load(cached);
-  final compactFinder = compact.TimeZoneFinder();
+  final compactFinder = compact.CompactTimeZoneFinder();
   final exactFinder = exact.TimeZoneFinder();
 
   // --- the fixtures, which are ground truth for the exact tier only --------

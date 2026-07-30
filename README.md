@@ -50,10 +50,15 @@ The boundary data ships inside the package, so the download is not small.
 Import whichever tier suits you — **never both**, since each carries its own
 copy of the data.
 
-| | import | download | binary | peak memory |
+| | import | class | binary | peak memory |
 | --- | --- | --- | --- | --- |
-| **Exact** | `package:timezone_finder/timezone_finder.dart` | 25 MB | 43.7 MB | 88 MB |
-| **Compact** | `package:timezone_finder/compact.dart` | ~4 MB | 11.4 MB | 29 MB |
+| **Exact** | `package:timezone_finder/timezone_finder.dart` | `TimeZoneFinder` | 43.7 MB | 88 MB |
+| **Compact** | `package:timezone_finder/compact.dart` | `CompactTimeZoneFinder` | 11.4 MB | 29 MB |
+
+Both tiers are in the published archive either way — 29 MiB compressed, 16 % of
+pub.dev's limit. What the import decides is which one ends up in *your* binary.
+Accept `BaseTimeZoneFinder` in your own signatures if you want to stay agnostic
+about which a caller passes.
 
 The compact tier simplifies boundaries to roughly 110 m. The API is identical;
 only the accuracy near borders differs, and it differs in a measured way:
