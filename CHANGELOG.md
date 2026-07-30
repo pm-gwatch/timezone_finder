@@ -57,7 +57,7 @@ the source boundaries directly, over 10,000,000 sampled coordinates weighted
 toward borders, enclaves, grid boundaries, the antimeridian and the overlap
 regions, with no disagreements for the exact tier. 265 hand-authored fixtures
 cover cities, borders, enclaves, small islands, Antarctic stations, the
-antimeridian and open ocean.
+antimeridian, working ports and open ocean.
 
 `dart run tool/refresh.dart --release 2026c --verify` rebuilds the bundled data
 and confirms it matches byte for byte.

@@ -630,6 +630,30 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
         'defensible external claim about the territory.',
   ),
 
+  // ============================================================ coastal ====
+  // Working ports. The README warns that a coordinate on a beach, pier or
+  // ferry can fall outside every land polygon and return null — a real risk
+  // for the address use case, and until now an entirely untested one. A port
+  // is that risk at its sharpest: infrastructure that is on land by any human
+  // reckoning but sits right on the coastline the polygons follow.
+  GoldenPoint(
+    'Port of Dubrovnik, Croatia',
+    42.6634651,
+    18.0591377,
+    'Europe/Zagreb',
+    category: GoldenCategory.border,
+    note:
+        'Paired with the Port of Bari across the Adriatic; the sea between '
+        'them is an ocean fixture below.',
+  ),
+  GoldenPoint(
+    'Port of Bari, Italy',
+    41.137428,
+    16.8600823,
+    'Europe/Rome',
+    category: GoldenCategory.border,
+  ),
+
   // ============================================================= ocean ====
   // A land-only dataset must return nothing here. Only timezonefinder can
   // verify these: tzf ships the with-oceans variant and answers Etc/GMT±N.
@@ -682,6 +706,17 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
     88.0,
     null,
     category: GoldenCategory.ocean,
+  ),
+  GoldenPoint(
+    'Adriatic Sea, between Dubrovnik and Bari',
+    41.9004,
+    17.4596,
+    null,
+    category: GoldenCategory.ocean,
+    note:
+        'The midpoint of the two port fixtures above. A narrow sea between two '
+        'land zones, rather than open ocean — the case where a grid cell is '
+        'most likely to wrongly claim water for a neighbour.',
   ),
 
   // ============================================== additional coverage ====
