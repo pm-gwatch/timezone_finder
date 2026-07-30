@@ -30,7 +30,10 @@ void main() {
       expect(compactFinder.find(48.8566, 2.3522), 'Europe/Paris');
       expect(compactFinder.find(-33.8688, 151.2093), 'Australia/Sydney');
       expect(compactFinder.find(0, -140), isNull);
-      expect(compactFinder.dataVersion, exactFinder.dataVersion);
+      expect(
+        compactFinder.ianaDatabaseVersion,
+        exactFinder.ianaDatabaseVersion,
+      );
     });
 
     test('carries fewer zones, because some polygons cannot survive', () {

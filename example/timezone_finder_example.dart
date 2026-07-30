@@ -14,7 +14,7 @@ void main() {
   }
 
   print(
-    'built from tzbb ${finder.dataVersion}, '
+    'boundaries for IANA tzdb ${finder.ianaDatabaseVersion}, '
     '${finder.availableTimeZones.length} zones',
   );
 }

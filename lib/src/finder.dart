@@ -99,8 +99,19 @@ class TimeZoneFinder {
   /// there is nothing else to do ahead of time.
   Future<void> ensurePreloaded() async => _resolved;
 
-  /// The tzbb release this index was built from, e.g. `'2026c'`.
-  String get dataVersion => _resolved.dataVersion;
+  /// The IANA Time Zone Database version these boundaries were built for,
+  /// e.g. `'2026c'`.
+  ///
+  /// Strictly this is the timezone-boundary-builder release tag, and tzbb names
+  /// each release after the tzdb version it was built against. The sequences
+  /// are not identical — tzbb skips tzdb releases that move no boundary, so
+  /// there is no tzbb `2023a` or `2023c` — but every tag does name a real tzdb
+  /// version.
+  ///
+  /// This says nothing about the tzdb version backing `package:timezone` in
+  /// your application. That one governs UTC offsets and DST rules and is
+  /// updated on its own schedule; this one governs where the borders are.
+  String get ianaDatabaseVersion => _resolved.dataVersion;
 
   /// Every identifier in the dataset, sorted. Unmodifiable.
   List<String> get availableTimeZones => _resolved.zoneNames;

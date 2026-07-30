@@ -141,7 +141,7 @@ offering that adapted database under the ODbL too.
 
 The bundled index is built from a specific
 [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder)
-release, currently **2026c**. `finder.dataVersion` reports it at runtime.
+release, currently **2026c**. `finder.ianaDatabaseVersion` reports it at runtime.
 
 Boundary releases appear two to four times a year and are decoupled from IANA
 tzdb releases: most tzdb releases change daylight-saving *rules*, which this

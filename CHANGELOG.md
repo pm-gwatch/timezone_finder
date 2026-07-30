@@ -1,50 +1,74 @@
 ## 0.1.0
 
-Development version. No lookup implementation yet — the API described in the
-README is the intended shape, not working code.
+Initial release. Pre-1.0: the API may still change.
 
-- Package scaffolding, licensing and metadata. Package code is MIT; the bundled
-  boundary data will be ODbL (see `LICENSE-DATA`).
-- Bootstrap golden fixtures: 66 hand-authored coordinate → IANA identifier
-  pairs across 66 distinct zones, in `test/fixtures/bootstrap_goldens.dart`.
-  These are the ground truth the forthcoming reference implementation is
-  validated against. Verified against two independent implementations
-  (`timezonefinder`, `tzf`) and against the identifier list of
-  timezone-boundary-builder `2026c`; see `test/fixtures/README.md`.
-- Phase A reference oracle in `test/reference/` — a deliberately naive
-  implementation that parses the boundary GeoJSON and tests every polygon. It
-  never ships; it is the correctness authority the real index will be
-  validated against. Passes all 66 bootstrap goldens.
-- `tool/fetch_data.dart` caches the boundary data under `.dart_tool/`;
-  `tool/probe_overlaps.dart` reports which documented zone overlaps are
-  reachable in the land-only dataset.
-- Full golden set: 265 ground-truth fixtures across 237 zones, covering
-  borders, enclaves, islands, Antarctic stations, the antimeridian and open
-  ocean, plus 21 regression pins for the documented zone overlaps.
-- Query longitudes are normalised at the antimeridian so that 180° and -180°
-  return the same identifier.
-- Packed coordinate format: rings stored as zigzag-varint deltas between
-  consecutive vertices, with a vertex count prefix so a ring can be decoded
-  from its offset alone.
-- Shortcut grid: a 1° raster narrowing a lookup from 1,184 polygons to a mean
-  of 1.9 candidates before any geometry is tested.
-- Runtime lookup: `TimeZoneFinder.find` resolves a coordinate against the
-  packed index, decoding ring coordinates only for the polygons it actually
-  tests. The index container carries a magic number and format version, and is
-  rejected rather than misparsed if either is wrong.
-- Differential testing: the runtime is checked against the reference
-  implementation over millions of sampled coordinates, weighted toward zone
-  borders, enclaves, grid boundaries, the antimeridian and disputed-overlap
-  regions rather than spread uniformly.
-- The boundary index is now bundled: `TimeZoneFinder()` needs no configuration
-  and works offline out of the box. The data ships as base64 in `lib/data/`,
-  split into 36 chunks so no single string literal troubles the compiler.
-- Two tiers, chosen at the constructor. `TimeZoneFinder.exact()` reproduces the
-  published boundaries; `TimeZoneFinder.compact()` simplifies them to roughly
-  110 m, cutting the compiled binary from 43.7 MB to 11.4 MB and peak memory
-  from 88 MB to 29 MB. Away from borders the two agree on all but 0.008% of
-  random land coordinates; close to a border they diverge, and the measured
-  rates are in the README.
-- 118 tests, run on CI against the declared SDK floor as well as stable. The tests needing boundary data skip when it has not been fetched;
-  the quantization tests always run.
-- Targets Dart CLI/server and Flutter on mobile and desktop. Web is deferred.
+Offline lookup of the IANA time zone identifier for a coordinate on land, in
+pure Dart with no runtime dependencies and no network access.
+
+```dart
+final finder = TimeZoneFinder.exact();
+finder.find(48.8566, 2.3522); // 'Europe/Paris'
+finder.find(0.0, -140.0);     // null — not inside any land zone
+```
+
+### API
+
+- `TimeZoneFinder.exact()` and `TimeZoneFinder.compact()` pick a data tier;
+  `find(latitude, longitude)` returns a `Continent/City` identifier or `null`.
+- `ensurePreloaded()` optionally decodes the index up front instead of on the
+  first lookup. `ianaDatabaseVersion` and `availableTimeZones` report what
+  is bundled.
+- Out-of-range, NaN or infinite coordinates throw `ArgumentError`. `null` is
+  reserved for "no land time zone here", so a bad argument is never mistaken
+  for a legitimate answer.
+
+### Two tiers
+
+Boundary data is bundled, so the package is large. Both tiers are in the
+archive; only the one you construct is compiled into your program.
+
+| | boundary resolution | binary | peak memory |
+| --- | --- | --- | --- |
+| `TimeZoneFinder.exact()` | unsimplified, stored to ~11 cm | 43.7 MB | 88 MB |
+| `TimeZoneFinder.compact()` | simplified to ~110 m | 11.4 MB | 29 MB |
+
+Away from borders the tiers agree on all but 0.008% of random land coordinates.
+Within a few hundred metres of a border they often differ; the measured rates
+are in the README. The compact tier also omits a few very small islands and
+enclaves that cannot survive simplification.
+
+### Data
+
+Boundaries are from timezone-boundary-builder release `2026c` — 419
+identifiers, land only — built from OpenStreetMap.
+
+Package code is MIT. **The bundled boundary data is ODbL**, which is
+share-alike and requires attribution if you redistribute it; see `LICENSE-DATA`
+and the README.
+
+Where zones overlap — 25 documented pairs, mostly disputed territories — one
+identifier is returned by a fixed, documented rule. That choice is technical
+and is not a statement about sovereignty.
+
+### Correctness
+
+Answers were validated against a separate reference implementation that reads
+the source boundaries directly, over 10,000,000 sampled coordinates weighted
+toward borders, enclaves, grid boundaries, the antimeridian and the overlap
+regions, with no disagreements for the exact tier. 265 hand-authored fixtures
+cover cities, borders, enclaves, small islands, Antarctic stations, the
+antimeridian and open ocean.
+
+`dart run tool/refresh.dart --release 2026c --verify` rebuilds the bundled data
+and confirms it matches byte for byte.
+
+### Scope
+
+- Identifiers only. For UTC offsets, DST and civil-time arithmetic, pass the
+  result to [`package:timezone`](https://pub.dev/packages/timezone).
+- Land only: coordinates at sea return `null`, as can a point on a beach, pier
+  or large lake.
+- Dart CLI/server and Flutter on mobile and desktop. Web is not supported — the
+  bundled data is too large for a browser payload.
+- Requires Dart 3.8 or later, verified on CI against that floor as well as
+  stable.

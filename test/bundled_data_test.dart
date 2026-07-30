@@ -38,7 +38,7 @@ void main() {
     });
 
     test('reports the release it was generated from', () {
-      expect(finder.dataVersion, defaultRelease);
+      expect(finder.ianaDatabaseVersion, defaultRelease);
       expect(finder.availableTimeZones.length, 419);
       expect(
         finder.availableTimeZones,
