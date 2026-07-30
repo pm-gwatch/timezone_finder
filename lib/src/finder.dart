@@ -3,6 +3,7 @@ library;
 
 import 'dart:typed_data';
 
+import '../data/exact.dart' as exact_data;
 import 'index.dart';
 import 'quantization.dart';
 
@@ -77,4 +78,19 @@ class BaseTimeZoneFinder {
 
   /// Every identifier in the dataset, sorted. Unmodifiable.
   List<String> get availableTimeZones => _resolved.zoneNames;
+}
+
+/// Maps coordinates to IANA identifiers using the full-fidelity index.
+///
+/// The default. Boundaries exactly as timezone-boundary-builder publishes
+/// them, at the cost of a ~25 MB download.
+///
+/// The simplified counterpart lives in `lib/compact.dart` rather than here,
+/// and has to: both are called `TimeZoneFinder`, and Dart has no way to rename
+/// a class on export, so the only way to give consumers one identical call
+/// shape per tier is to declare each in the library they import.
+class TimeZoneFinder extends BaseTimeZoneFinder {
+  /// Creates a finder over the bundled full-fidelity index.
+  TimeZoneFinder({IndexBytesProvider? indexBytes})
+    : super(indexBytes ?? exact_data.loadContainer);
 }

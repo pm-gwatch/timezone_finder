@@ -16,15 +16,6 @@
 /// arithmetic, pass it to `package:timezone`.
 library;
 
-import 'data/exact.dart' as data;
-import 'src/finder.dart';
-
-export 'src/finder.dart' show BaseTimeZoneFinder, IndexBytesProvider;
+export 'src/finder.dart'
+    show BaseTimeZoneFinder, IndexBytesProvider, TimeZoneFinder;
 export 'src/index.dart' show IndexFormatException;
-
-/// Maps coordinates to IANA identifiers using the full-fidelity index.
-class TimeZoneFinder extends BaseTimeZoneFinder {
-  /// Creates a finder over the bundled full-fidelity index.
-  TimeZoneFinder({IndexBytesProvider? indexBytes})
-    : super(indexBytes ?? data.loadContainer);
-}
