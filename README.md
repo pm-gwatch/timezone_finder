@@ -37,12 +37,43 @@ This package answers one question: *which time zone is this coordinate in?*
 - It returns an **identifier only**. For UTC offsets, DST and civil-time
   arithmetic, pass the identifier to
   [`package:timezone`](https://pub.dev/packages/timezone).
-- The dataset covers **land only**, so a coordinate at sea returns `null`.
-  Coordinates on beaches, piers, ferries and large lakes may also fall outside
-  every polygon — expected for the address use case, worth knowing if you feed
-  it raw GPS fixes.
+- The dataset covers **land only**, so a coordinate well out to sea returns
+  `null`. Coordinates on beaches, piers, ferries and large lakes may also fall
+  outside every polygon — expected for the address use case, worth knowing if
+  you feed it raw GPS fixes. See [What `null` really means](#what-null-really-means)
+  before treating it as "this point is at sea".
 - **Web is not a target yet.** The bundled index is too large for a browser
   payload; supporting it needs a different delivery model.
+
+## What `null` really means
+
+`null` means *no time zone polygon contains this point* — which is not quite the
+same as *this point is at sea*.
+
+"Land only" is the upstream dataset's term, and it means the boundaries exclude
+the synthetic `Etc/GMT±N` ocean zones. It does not mean they stop at the
+shoreline. Country polygons follow OpenStreetMap administrative boundaries, and
+for a coastal state those extend over territorial waters — roughly 12 nautical
+miles, about 22 km, from the coast.
+
+The consequence is visible in any narrow strait. The Dover Strait is about
+42 km across, so the British and French claims meet in the middle with nothing
+unclaimed between them:
+
+```dart
+finder.find(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
+finder.find(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
+finder.find(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
+```
+
+That last one is water, and it still resolves — the boundary between the two
+zones runs down the middle of the strait, and the midpoint falls just on the
+French side of it. Sail west along the Channel and it opens out; past roughly
+100 km of width there is international water in the middle and lookups start
+returning `null`.
+
+So: a `null` tells you no country claims that point. A non-null answer does not
+promise you are standing on dry land.
 
 ## Two sizes
 

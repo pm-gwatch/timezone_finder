@@ -11,11 +11,17 @@
 // fixture or the implementation is wrong, and it must be resolved by
 // investigation, never by adopting the implementation's answer.
 //
-// One documented exception: 'Unclaimed Antarctic sector, 10°W'. Its
-// expectation is externally verified, but its coordinate came from the
-// dataset, because the region has no named place to anchor it to. It carries
-// a note saying so. Do not add a second exception without the same note —
-// the value of this file is that its provenance is knowable.
+// Two documented exceptions, each carrying a note saying so:
+//
+//   * 'Unclaimed Antarctic sector, 10°W' — expectation externally verified,
+//     but the coordinate came from the dataset, because the region has no
+//     named place to anchor it to.
+//   * 'Dover Strait, mid-channel' — coordinate derived from two named ports,
+//     but which side of the maritime boundary it lands on was verified rather
+//     than predicted.
+//
+// Do not add a third without the same note. The value of this file is that its
+// provenance is knowable, entry by entry.
 //
 // Fixtures where no external source *can* adjudicate — the documented zone
 // overlaps, where two zones genuinely contain the same point and the answer
@@ -652,6 +658,41 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
     16.8600823,
     'Europe/Rome',
     category: GoldenCategory.border,
+  ),
+
+  GoldenPoint(
+    'Port of Dover, United Kingdom',
+    51.1269705,
+    1.3230653,
+    'Europe/London',
+    category: GoldenCategory.border,
+    note: 'Paired with the Port of Calais across the Dover Strait.',
+  ),
+  GoldenPoint(
+    'Port of Calais, France',
+    50.9744815,
+    1.8765687,
+    'Europe/Paris',
+    category: GoldenCategory.border,
+  ),
+  GoldenPoint(
+    'Dover Strait, mid-channel',
+    51.050726,
+    1.599817,
+    'Europe/Paris',
+    category: GoldenCategory.border,
+    note:
+        'Open water that still resolves, and the reason `null` cannot be read '
+        'as "at sea". Country polygons follow OSM administrative boundaries, '
+        'which extend ~12 nautical miles over territorial waters; the strait '
+        'is only ~42 km across, so the British and French claims meet mid-'
+        'channel with nothing unclaimed between them.\n'
+        '\n'
+        'PROVENANCE, as for the Antarctic sector below: the coordinate is the '
+        'midpoint of the two ports, but which side of the maritime boundary it '
+        'falls on was verified rather than predicted — the ports are not '
+        'directly opposite, so their midpoint is not the median line. '
+        'timezonefinder and tzf both return Europe/Paris here.',
   ),
 
   // ============================================================= ocean ====

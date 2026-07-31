@@ -78,6 +78,28 @@ void main() {
   );
   print('');
 
+  // The Dover Strait shows what "land-only" does *not* mean. The dataset
+  // excludes the synthetic Etc/GMT ocean zones, but country polygons follow
+  // OpenStreetMap administrative boundaries, which for a coastal state extend
+  // about 12 nautical miles (~22 km) out over territorial waters.
+  //
+  // The strait is only ~42 km across, so the British and French claims meet in
+  // the middle with nothing unclaimed between them. The midpoint is open water
+  // and still resolves — it falls just on the French side of the boundary that
+  // runs down the strait. Compare the Adriatic above, ~197 km across, where the
+  // middle is international water and does return null.
+  final portOfDover = finder.find(51.1269705, 1.3230653);
+  final portOfCalais = finder.find(50.9744815, 1.8765687);
+  final midpointOfDoverAndCalais = finder.find(51.050726, 1.599817);
+
+  print('Port of Dover, United Kingdom -> $portOfDover'); // Europe/London
+  print('Port of Calais, France -> $portOfCalais'); // Europe/Paris
+  print(
+    'Midpoint (English Channel) -> $midpointOfDoverAndCalais',
+  ); // Europe/Paris — water, but inside France's claim; see README
+  print('A null means no country claims the point, not that it is dry land.');
+  print('');
+
   print(
     'Boundaries for IANA tzdb ${finder.ianaDatabaseVersion}, '
     '${finder.availableTimeZones.length} zones (exact tier)',
