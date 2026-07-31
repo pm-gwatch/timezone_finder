@@ -181,6 +181,27 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
     category: GoldenCategory.border,
   ),
 
+  // A boundary inside a single municipality. Every other border fixture here
+  // straddles a national or state line; Brazilian law (Federal Law 12,876/2013)
+  // draws the Amazonas time zone boundary as a straight line between the
+  // municipalities of Tabatinga and Porto Acre, and Pauini is large enough to
+  // sit on both sides of it.
+  GoldenPoint(
+    'Pauini, Amazonas — east of the line',
+    -7.7120204,
+    -67.0130633,
+    'America/Manaus',
+    category: GoldenCategory.border,
+    note: 'Paired with the western half of the same municipality.',
+  ),
+  GoldenPoint(
+    'Pauini, Amazonas — west of the line',
+    -7.7857015,
+    -68.5215298,
+    'America/Eirunepe',
+    category: GoldenCategory.border,
+  ),
+
   // ========================================================== enclaves ====
   // Microstates and true holes in a surrounding zone's polygon. A hole-
   // handling bug shows up here and almost nowhere else.

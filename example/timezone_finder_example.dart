@@ -93,11 +93,28 @@ void main() {
   final midpointOfDoverAndCalais = finder.find(51.050726, 1.599817);
 
   print('Port of Dover, United Kingdom -> $portOfDover'); // Europe/London
-  print('Port of Calais, France -> $portOfCalais'); // Europe/Paris
+  print('Port of Calais, France        -> $portOfCalais'); // Europe/Paris
   print(
-    'Midpoint (English Channel) -> $midpointOfDoverAndCalais',
+    'Midpoint (English Channel)    -> $midpointOfDoverAndCalais',
   ); // Europe/Paris — water, but inside France's claim; see README
   print('A null means no country claims the point, not that it is dry land.');
+  print('');
+
+  // Under Brazilian legal definitions (re-established by Federal Law No.
+  // 12,876/2013 following earlier historical legislation), the time zone
+  // boundary in the state of Amazonas is defined by an imaginary line drawn
+  // between two specific municipalities: Tabatinga (in western Amazonas) and
+  // Porto Acre (in the state of Acre). Due to the size of the municipalities
+  // in the Amazonas state, two time zones may be defined in some of them.
+  final easternPartOfPauini = compactFinder.find(-7.7120204, -67.0130633);
+  final westernPartOfPauini = compactFinder.find(-7.7857015, -68.5215298);
+  print(
+    'Eastern part of Pauini Municipality, Amazonas, Brazil -> $easternPartOfPauini',
+  ); // America/Manaus
+  print(
+    'Western part of Pauini Municipality, Amazonas, Brazil -> $westernPartOfPauini',
+  ); // America/Eirunepe
+  print('Some municipalities may be split into two time zones.');
   print('');
 
   print(

@@ -13,6 +13,8 @@
 @Timeout(Duration(minutes: 10))
 library;
 
+import 'dart:math';
+
 import 'package:test/test.dart';
 import 'package:timezone_finder/data/compact.dart' as compact_data;
 import 'package:timezone_finder/data/exact.dart' as bundled;
@@ -84,6 +86,110 @@ void main() {
       expect(() => finder.find(91, 0), throwsArgumentError);
       expect(() => finder.find(0, 181), throwsArgumentError);
       expect(() => finder.find(double.nan, 0), throwsArgumentError);
+    });
+
+    test('a straight boundary is still straight in the shipped data', () {
+      // Every other test in this suite checks *answers*: what identifier is at
+      // this coordinate. None of them would notice if the pipeline
+      // systematically bent geometry, so long as it bent it consistently.
+      //
+      // Brazilian law (Federal Law 12,876/2013) draws the Amazonas time zone
+      // boundary as a straight line between the municipalities of Tabatinga
+      // and Porto Acre. That makes it a rare natural oracle for shape rather
+      // than for answers: quantization, the grid, the varint encoder and the
+      // container all sit between the source polygon and this measurement, and
+      // any of them distorting it would show up as a bend.
+      //
+      // The bracket has to be found rather than assumed: the line is oblique,
+      // so a fixed western endpoint falls in Peru at the northern end and in
+      // Acre at the southern one. Walk east to west until the answer flips,
+      // then bisect inside that step.
+      double? crossing(double latitude) {
+        const step = 0.05;
+        var east = -66.5;
+        if (finder.find(latitude, east) != 'America/Manaus') return null;
+        var west = east;
+        while (west > -70.5) {
+          west -= step;
+          final zone = finder.find(latitude, west);
+          if (zone == 'America/Eirunepe') break;
+          if (zone != 'America/Manaus') return null; // left Amazonas entirely
+          east = west;
+        }
+        if (finder.find(latitude, west) != 'America/Eirunepe') return null;
+        for (var i = 0; i < 40; i++) {
+          final middle = (west + east) / 2;
+          if (finder.find(latitude, middle) == 'America/Eirunepe') {
+            west = middle;
+          } else {
+            east = middle;
+          }
+        }
+        return (west + east) / 2;
+      }
+
+      final samples = <(double, double)>[];
+      for (var latitude = -4.5; latitude >= -9.5; latitude -= 0.5) {
+        final longitude = crossing(latitude);
+        if (longitude != null) samples.add((latitude, longitude));
+      }
+      expect(
+        samples.length,
+        11,
+        reason:
+            'the Manaus/Eirunepe boundary is no longer where it was; '
+            'the dataset changed and this test needs re-deriving',
+      );
+
+      // Least-squares fit, then the worst residual in metres.
+      final n = samples.length;
+      final sx = samples.fold(0.0, (t, p) => t + p.$1);
+      final sy = samples.fold(0.0, (t, p) => t + p.$2);
+      final sxx = samples.fold(0.0, (t, p) => t + p.$1 * p.$1);
+      final sxy = samples.fold(0.0, (t, p) => t + p.$1 * p.$2);
+      final slope = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+      final intercept = (sy - slope * sx) / n;
+
+      var worstMetres = 0.0;
+      for (final (latitude, longitude) in samples) {
+        final predicted = slope * latitude + intercept;
+        final metres =
+            (longitude - predicted).abs() * 111320 * cos(latitude * pi / 180);
+        if (metres > worstMetres) worstMetres = metres;
+      }
+      // Measured: below 0.1 mm. The bound is set at half a metre instead,
+      // because quantization to 1e-6 deg can move a vertex by up to ~11 cm on
+      // its own — a threshold tighter than the data's own resolution would
+      // fail for a legitimate reason. Anything above this is a real bend.
+      expect(
+        worstMetres,
+        lessThan(0.5),
+        reason:
+            'a legally straight boundary bends by '
+            '${worstMetres.toStringAsFixed(2)} m over ~555 km — more than '
+            'quantization can explain, so the pipeline is distorting geometry',
+      );
+
+      // And it is the line the law describes: extrapolate to each named
+      // municipality and check it arrives.
+      for (final (name, latitude, longitude) in <(String, double, double)>[
+        ('Tabatinga', -4.2528, -69.9386),
+        ('Porto Acre', -9.5928, -67.5403),
+      ]) {
+        final predicted = slope * latitude + intercept;
+        final km =
+            (longitude - predicted).abs() *
+            111320 *
+            cos(latitude * pi / 180) /
+            1000;
+        expect(
+          km,
+          lessThan(3),
+          reason:
+              'the boundary line misses $name by '
+              '${km.toStringAsFixed(1)} km',
+        );
+      }
     });
 
     test('two finders share nothing that would corrupt the other', () {

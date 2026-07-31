@@ -124,6 +124,66 @@ void main() {
       );
     });
 
+    test('agrees exactly on a straight border, metres from the line', () {
+      // The complement of the test above, and the case the tier's framing
+      // usually leaves out. Simplification costs accuracy only where there is
+      // detail to remove: Douglas-Peucker collapses a straight run of vertices
+      // to its two endpoints with *zero* error, so a legally straight boundary
+      // survives the compact tier intact.
+      //
+      // The Amazonas line between Tabatinga and Porto Acre (Brazilian Federal
+      // Law 12,876/2013) is exactly that. The contrast is measured, not
+      // assumed: probing 22 m either side of an arbitrary land border, the
+      // tiers disagree 20.8% of the time (2000 probes worldwide). Here they
+      // must not disagree at all, down to 5.5 m.
+      var probed = 0;
+      for (var latitude = -4.5; latitude >= -9.5; latitude -= 0.25) {
+        // Bracket the crossing, then bisect. The line is oblique, so the
+        // western endpoint has to be found rather than assumed.
+        var east = -66.5;
+        if (exactFinder.find(latitude, east) != 'America/Manaus') continue;
+        var west = east;
+        var found = false;
+        while (west > -70.5) {
+          west -= 0.05;
+          final zone = exactFinder.find(latitude, west);
+          if (zone == 'America/Eirunepe') {
+            found = true;
+            break;
+          }
+          if (zone != 'America/Manaus') break;
+          east = west;
+        }
+        if (!found) continue;
+        for (var i = 0; i < 40; i++) {
+          final middle = (west + east) / 2;
+          if (exactFinder.find(latitude, middle) == 'America/Eirunepe') {
+            west = middle;
+          } else {
+            east = middle;
+          }
+        }
+        final line = (west + east) / 2;
+
+        // ~5.5 m, ~22 m, ~110 m, ~1.1 km and ~11 km either side.
+        for (final offset in <double>[0.00005, 0.0002, 0.001, 0.01, 0.1]) {
+          for (final longitude in <double>[line - offset, line + offset]) {
+            final expected = exactFinder.find(latitude, longitude);
+            probed++;
+            expect(
+              compactFinder.find(latitude, longitude),
+              expected,
+              reason:
+                  'the tiers differ ${(offset * 111320 * 0.995).round()} m '
+                  'from a straight border at $latitude, $longitude — '
+                  'simplification should have nothing to remove here',
+            );
+          }
+        }
+      }
+      expect(probed, 210, reason: 'boundary not found');
+    });
+
     test('still resolves the disputed overlaps deterministically', () {
       // Simplification can move which polygon wins in an overlap. Whatever it
       // decides must at least be stable, and must still be one of the
