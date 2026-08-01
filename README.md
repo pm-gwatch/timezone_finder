@@ -151,19 +151,27 @@ promise you are standing on dry land.
 
 ## Two sizes
 
-The boundary data ships inside the package, so the download is not small.
-Import whichever tier suits you — **never both**, since each carries its own
-copy of the data.
+**Most applications want the compact tier.** A time zone is a country or a
+state wide, so deciding which one an address falls in does not need
+street-level geometry. Simplified to ~110 m, it carries all 419 identifiers and
+compiles to a quarter of the binary:
+
+```dart
+final finder = TimeZoneFinder.compact();  // 11.4 MB compiled, not 43.7 MB
+finder.find(48.8566, 2.3522);             // 'Europe/Paris'
+```
+
+The API is identical either way — `find`, `findLocation`, `toLocation` and the
+rest behave the same — so moving between tiers is a one-word change.
 
 | | constructor | boundary resolution | binary | peak memory |
 | --- | --- | --- | --- | --- |
-| **Exact** | `TimeZoneFinder.exact()` | unsimplified, stored to ~11 cm | 43.7 MB | 88 MB |
 | **Compact** | `TimeZoneFinder.compact()` | simplified to ~110 m | 11.4 MB | 29 MB |
+| **Exact** | `TimeZoneFinder.exact()` | unsimplified, stored to ~11 cm | 43.7 MB | 88 MB |
 
-One import, one class; the constructor picks the tier. Only the tier you
-construct is compiled in — both are in the published archive either way (29 MiB
-compressed, 16 % of pub.dev's limit), so the constructor decides what you
-*ship*, not what you download.
+Only the tier you construct is compiled in — both are in the published archive
+either way (29 MiB compressed, 16 % of pub.dev's limit), so the constructor
+decides what you *ship*, not what you download.
 
 **On "~11 cm".** That is the exact tier's storage resolution — coordinates are
 quantized to 1e-6°, and no vertices are dropped. It is not an accuracy claim:
@@ -180,14 +188,21 @@ The compact tier's loss is measured, not estimated:
 | within ~2 km of a boundary | 1.0 % |
 | within ~500 m of a boundary | 30 % |
 
-So for a geocoded street address the two tiers almost always agree, and within
-a few hundred metres of a border they often will not. All 273 test fixtures —
-including every enclave and small-island case, Lesotho and Vatican City among
-them — resolve identically in both.
+That last row looks alarming and mostly is not: it measures points chosen for
+being near a boundary, which addresses are not. Sampled around 26 real border
+towns instead, the tiers differ on **0.21 %** of coordinates within 1 km of the
+town centre, and 0.11 % within 5 km — roughly one address in 500.
 
-Simplification drops 33 polygons and 27 holes that collapse to nothing at this
-tolerance, so a handful of very small islands resolve to a neighbouring zone or
-to `null` in the compact tier.
+All 273 test fixtures — every enclave and small-island case, Lesotho and
+Vatican City among them — resolve identically in both, and no identifier is
+lost: both tiers carry all 419. Simplification does drop 33 polygons and 27
+holes that collapse to nothing at this tolerance, so a few very small islands
+resolve to a neighbouring zone or to `null` in the compact tier.
+
+**Reach for `exact()` when a wrong answer near a border is expensive** — cargo
+and customs near a frontier, anything billing by local time in a split
+jurisdiction like Chihuahua — or when the binary size simply does not matter,
+as on a server.
 
 ## Disputed territories
 
