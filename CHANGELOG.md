@@ -52,11 +52,12 @@ Boundaries are bundled, so lookups need no network and no setup. They are
 simplified to roughly 110 m — far finer than a time zone — which keeps the
 published archive at about 3 MB and a compiled program at about 11 MB.
 
-All 419 identifiers are present. Against the unsimplified source geometry the
-answers differ on 0.008% of random land coordinates, and on 0.21% within 1 km
-of a border town centre. Simplification drops 33 polygons and 27 holes that
-collapse at this tolerance, so a few very small islands resolve to a
-neighbouring zone or to `null`. The README has the full table.
+All 419 identifiers are present. Measured against the unsimplified source
+geometry over 10,000,000 coordinates: 0.006% of random land points differ, and
+0.21% within 1 km of a border town centre. Two cases are worse and worth
+knowing — beside an enclave boundary about 19% differ, and 33 polygons collapse
+entirely, so a few very small islands return `null` rather than a neighbouring
+zone. Nothing differs on the antimeridian seam. The README has the full table.
 
 ### Data
 

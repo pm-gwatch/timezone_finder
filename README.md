@@ -157,24 +157,43 @@ simplified with Douglas-Peucker to **roughly 110 m**, which keeps the whole
 package to a few megabytes and a compiled program to about 11 MB.
 
 That simplification is the package's one deliberate loss, and it is measured
-rather than estimated. Against the unsimplified source geometry:
+rather than estimated. Ten million coordinates, checked against a reference
+implementation that reads the unsimplified source geometry directly:
 
-| where the coordinate is | answers that differ |
+| where the coordinate falls | answers that differ |
 | --- | --- |
-| anywhere on land, drawn at random | **0.008 %** |
-| within ~2 km of a boundary | 1.0 % |
-| within ~500 m of a boundary | 30 % |
+| anywhere on land, drawn at random | **0.006 %** |
+| on a grid-cell edge | 0.1 % |
+| inside a disputed-territory overlap | 0.3 % |
+| within ~20 km of a zone boundary | 1.4 % |
+| beside an enclave boundary | **19 %** |
+| on a zone boundary itself | 41 % |
+| on the antimeridian seam | **0 %** |
 
-That last row looks alarming and mostly is not: it measures points chosen for
-sitting near a boundary, which addresses are not. Sampled around 26 real border
-towns instead, the answers differ on **0.21 %** of coordinates within 1 km of
-the town centre and 0.11 % within 5 km — roughly one address in 500.
+The first row is the address case: 12 differing points in 191,477 drawn
+uniformly over land. An independent uniform sampling gave 0.008 %, so treat it
+as *about one in fifteen thousand* rather than a precise figure. The sampling
+deliberately over-weights borders, so the figure across all ten million points
+(17 %) describes the test harness, not the package.
 
-Nothing is missing wholesale: all **419 identifiers** are present, and all 273
-test fixtures — every enclave and small-island case, Lesotho and Vatican City
-among them — resolve exactly as the unsimplified geometry does. Simplification
-does drop 33 polygons and 27 holes that collapse to nothing at this tolerance,
-so a few very small islands resolve to a neighbouring zone or to `null`.
+Sampled around 26 real border towns — the realistic worst case for an address
+— the answers differ on **0.21 %** of coordinates within 1 km of the town
+centre and 0.11 % within 5 km, roughly one address in 500.
+
+All **419 identifiers** are present, and all 273 test fixtures resolve exactly
+as the unsimplified geometry does.
+
+**Enclaves are the exception worth knowing about.** Lesotho, Vatican City,
+Büsingen and Gibraltar all resolve correctly, because their centres are
+unambiguous. But an enclave boundary is short and intricate — precisely what
+Douglas-Peucker smooths hardest — and 27 holes collapse entirely at this
+tolerance. Beside one of those lines, close to one answer in five differs. If
+your coordinates cluster around an enclave border, measure before relying on
+this.
+
+Simplification also drops 33 polygons that vanish at this tolerance. For a few
+very small islands the result is not a wrong neighbour but **`null`** — Chagos,
+Midway and Kiritimati among them.
 
 **If a wrong answer within a few hundred metres of a border would be
 expensive** — cargo and customs at a frontier, billing by local time in a split
@@ -262,8 +281,14 @@ antimeridian rather than spread uniformly.
 Run against the unsimplified geometry — the same quantization, grid, encoder
 and container, without the Douglas-Peucker step — there are **zero
 disagreements**. The machinery introduces no error of its own, so everything
-the bundled data differs by is the simplification cost measured under
-[Resolution](#resolution-and-what-it-costs), and nothing else.
+the bundled data differs by is the simplification cost tabulated under
+[Resolution](#resolution-and-what-it-costs), and nothing else. Both runs are
+reproducible:
+
+```sh
+dart run tool/differential.dart --index unsimplified   # expects zero
+dart run tool/differential.dart --index bundled        # measures the cost
+```
 
 ## Credits
 
