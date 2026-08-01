@@ -4,7 +4,7 @@
 // documents. The consequences of choosing `latest` instead are covered in
 // locations_tzdata_test.dart, which needs a differently initialized process.
 //
-// Needs no boundary GeoJSON — both tiers are bundled.
+// Needs no boundary GeoJSON — the index is bundled.
 
 import 'package:test/test.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;

@@ -1,11 +1,11 @@
 /// Measures what simplification costs in accuracy.
 ///
-///     dart run tool/measure_compact.dart [--points 2000000]
+///     dart run tool/measure_simplification.dart [--points 2000000]
 ///
 /// The bundled data simplifies boundaries to roughly 110 m, so it *will*
 /// disagree with the full-fidelity index near borders — that is what
 /// simplification means. The number that matters is how often,
-/// and where. A tier that disagreed away from borders would be a bug in
+/// and where. Data that disagreed away from borders would be a bug in
 /// simplification rather than simplification working.
 library;
 

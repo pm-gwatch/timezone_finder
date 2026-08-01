@@ -8,7 +8,8 @@
 // agrees away from borders, that the enclaves and small islands most at risk
 // survived, and that the rate has not silently drifted.
 //
-// Needs no boundary data — both sets are bundled.
+// Needs no boundary GeoJSON: the bundled index ships, and the unsimplified
+// baseline is committed under tool/release/.
 
 @Timeout(Duration(minutes: 10))
 library;
@@ -27,7 +28,7 @@ void main() {
     final bundledFinder = TimeZoneFinder();
     final baselineFinder = finderOverIndex(unsimplified.loadContainer);
 
-    test('works with no configuration, no tier to choose', () {
+    test('works with no configuration', () {
       expect(bundledFinder.find(48.8566, 2.3522), 'Europe/Paris');
       expect(bundledFinder.find(-33.8688, 151.2093), 'Australia/Sydney');
       expect(bundledFinder.find(0, -140), isNull);
@@ -76,7 +77,7 @@ void main() {
           isEmpty,
           reason:
               'the bundled data now differs on fixtures it used to match. '
-              'Re-run tool/measure_compact.dart and update the published rate '
+              'Re-run tool/measure_simplification.dart and update the rate '
               'rather than changing the fixture.\n${differing.join('\n')}',
         );
       },
@@ -85,7 +86,7 @@ void main() {
     test('keeps the enclaves and small islands most at risk', () {
       // These are the shapes simplification would erase first: a country
       // inside another country, microstates, and specks of land with their own
-      // zone. If any of these vanished the tier would be much less useful than
+      // zone. If any of these vanished the package would be far less useful
       // its size suggests.
       const fragile = <(String, double, double)>[
         ('Maseru, Lesotho', -29.3151, 27.4869),
@@ -125,14 +126,14 @@ void main() {
         rate,
         lessThan(0.02),
         reason:
-            'away from borders the tiers should almost always agree; '
+            'away from borders the two should almost always agree; '
             'measured ${(100 * rate).toStringAsFixed(3)}% over $checked '
             'land points',
       );
     });
 
     test('agrees exactly on a straight border, metres from the line', () {
-      // The complement of the test above, and the case the tier's framing
+      // The complement of the test above, and the case the usual framing
       // usually leaves out. Simplification costs accuracy only where there is
       // detail to remove: Douglas-Peucker collapses a straight run of vertices
       // to its two endpoints with *zero* error, so a legally straight boundary
@@ -141,7 +142,7 @@ void main() {
       // The Amazonas line between Tabatinga and Porto Acre (Brazilian Federal
       // Law 12,876/2013) is exactly that. The contrast is measured, not
       // assumed: probing 22 m either side of an arbitrary land border, the
-      // tiers disagree 20.8% of the time (2000 probes worldwide). Here they
+      // two disagree 20.8% of the time (2000 probes worldwide). Here they
       // must not disagree at all, down to 5.5 m.
       var probed = 0;
       for (var latitude = -4.5; latitude >= -9.5; latitude -= 0.25) {
@@ -181,7 +182,7 @@ void main() {
               bundledFinder.find(latitude, longitude),
               expected,
               reason:
-                  'the tiers differ ${(offset * 111320 * 0.995).round()} m '
+                  'the two differ ${(offset * 111320 * 0.995).round()} m '
                   'from a straight border at $latitude, $longitude — '
                   'simplification should have nothing to remove here',
             );
@@ -202,7 +203,7 @@ void main() {
           pin.contenders,
           contains(answer),
           reason:
-              '${pin.description}: compact returned $answer, which is '
+              '${pin.description}: the bundled data returned $answer, which is '
               'neither contender',
         );
         expect(bundledFinder.find(pin.latitude, pin.longitude), answer);

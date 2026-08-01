@@ -6,7 +6,7 @@
 /// recognisable.
 ///
 /// This is lossy by design and the loss is measured, not hoped about — see the
-/// disagreement rate reported by `tool/measure_compact.dart`.
+/// disagreement rate reported by `tool/measure_simplification.dart`.
 library;
 
 import 'dart:typed_data';
@@ -118,9 +118,9 @@ Int32List simplifyRing(Int32List ring, int tolerance) {
 /// island the bundled data simply cannot represent at this tolerance.
 ///
 /// Simplification can in principle make a ring self-intersect. For an
-/// explicitly approximate tier that is tolerable: the effect is a slightly
-/// wrong answer near a border, which is what the tier already trades away and
-/// what the measured disagreement rate accounts for.
+/// deliberately approximate boundary that is tolerable: the effect is a
+/// slightly wrong answer near a border, which is what simplification already
+/// trades away and what the measured disagreement rate accounts for.
 ({Int32List outer, List<Int32List> holes})? simplifyPolygon(
   Int32List outer,
   List<Int32List> holes,

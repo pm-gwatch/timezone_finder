@@ -64,10 +64,12 @@ jobs:
             echo "dart run tool/refresh.dart --release ${{ steps.latest.outputs.latest }}"
             echo '```'
             echo
-            echo 'This regenerates `lib/data/`, updates the triage baseline and'
-            echo 'runs the suite. Review `git diff --stat lib/data`, then set the'
-            echo 'version: patch for a geometry-only change, minor if the'
-            echo 'identifier set moved.'
+            echo 'This regenerates both the bundled index in `lib/data/` and'
+            echo 'the unsimplified baseline in `tool/release/`, which is what'
+            echo 'the accuracy numbers are measured against. Review'
+            echo '`git diff --stat lib/data tool/release`, then set the version:'
+            echo 'patch for a geometry-only change, minor if the identifier set'
+            echo 'moved.'
             echo
             echo 'Opened automatically. Nothing has been regenerated here — a'
             echo 'human runs the refresh and merges.'

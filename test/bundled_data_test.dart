@@ -317,7 +317,7 @@ void main() {
         );
         for (var i = 0; i < fresh.length; i++) {
           if (shipped[i] != fresh[i]) {
-            fail('compact bundled bytes differ at offset $i');
+            fail('bundled bytes differ at offset $i');
           }
         }
       });

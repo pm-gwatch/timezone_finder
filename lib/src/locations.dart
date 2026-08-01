@@ -17,8 +17,9 @@ extension TimeZoneLocation on String {
   /// **Latitude first.** GeoJSON orders coordinates the other way, and a
   /// swapped pair usually parses fine and returns a confidently wrong answer.
   ///
-  /// The finder is required rather than defaulted: it names the tier, and a
-  /// default would link both tiers into every program that ever omitted it.
+  /// Required rather than defaulted, so the call uses the finder you already
+  /// hold. A default would construct its own and decode a second copy of the
+  /// index.
   ///
   /// Returns `null` only when no land time zone covers the point. Throws
   /// [FormatException] if this is not two comma-separated numbers, and

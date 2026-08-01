@@ -71,6 +71,13 @@ Both preserve the moment and change only the wall clock. To keep the wall clock
 and change the moment — *move* a meeting to New York's 17:30 rather than
 *translate* it — construct a new `TZDateTime` with the other location.
 
+**Not in scope: ambiguous and nonexistent wall-clock times.** On the night a
+zone springs forward, 02:30 does not exist; on the night it falls back, it
+happens twice. `TZDateTime` picks one silently, and this package does not
+change that — it resolves *where* a coordinate is, not which of two instants a
+local time means. If your application schedules by wall clock across DST
+transitions, handle those cases yourself.
+
 ### Two things to know
 
 **Initialize the database yourself, from `latest_all`.** This package depends on
