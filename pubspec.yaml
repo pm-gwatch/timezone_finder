@@ -25,7 +25,10 @@ environment:
 # Only the offset engine. No tzdata variant is depended on, so your
 # application picks one and initializes it — see the README.
 dependencies:
-  timezone: any
+  # Ranged, not `^0.11.1`: below 1.0.0 the caret means `<0.12.0`, which would
+  # block any app already on a newer 0.x. The surface used here has been
+  # stable since 0.9.4.
+  timezone: ">=0.11.1 <1.0.0"
 
 dev_dependencies:
   lints: ^6.1.0
