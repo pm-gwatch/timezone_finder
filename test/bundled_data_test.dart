@@ -16,8 +16,9 @@ library;
 import 'dart:math';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/data/compact.dart' as compact_data;
-import 'package:timezone_finder/data/exact.dart' as bundled;
+import 'package:timezone_finder/data/boundaries.dart' as bundled_data;
+import 'package:timezone_finder/data/boundaries_unsimplified.dart'
+    as unsimplified_data;
 import 'package:timezone_finder/timezone_finder.dart';
 
 import '../tool/src/build_index.dart';
@@ -234,7 +235,7 @@ void main() {
           ],
         );
 
-        final bundledBytes = bundled.loadContainer();
+        final bundledBytes = unsimplified_data.loadContainer();
         expect(
           bundledBytes.length,
           fresh.length,
@@ -286,7 +287,7 @@ void main() {
           cellSize: 1000000,
           polygons: simplified,
         );
-        final shipped = compact_data.loadContainer();
+        final shipped = bundled_data.loadContainer();
         expect(
           shipped.length,
           fresh.length,

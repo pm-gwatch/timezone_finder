@@ -5,8 +5,8 @@ import 'dart:typed_data';
 
 import 'package:timezone/timezone.dart';
 
-import '../data/compact.dart' as compact_data;
-import '../data/exact.dart' as exact_data;
+import '../data/boundaries.dart' as bundled_data;
+import '../data/boundaries_unsimplified.dart' as unsimplified_data;
 import 'index.dart';
 import 'quantization.dart';
 
@@ -44,7 +44,8 @@ class TimeZoneFinder {
   /// so that it contributes nothing of its own.
   ///
   /// Costs roughly 32 MB of compiled binary over [TimeZoneFinder.compact].
-  factory TimeZoneFinder.exact() => TimeZoneFinder._(exact_data.loadContainer);
+  factory TimeZoneFinder.exact() =>
+      TimeZoneFinder._(unsimplified_data.loadContainer);
 
   /// A finder over the simplified index.
   ///
@@ -58,7 +59,7 @@ class TimeZoneFinder {
   /// and are absent here, so those coordinates resolve to a neighbouring zone
   /// or to `null`.
   factory TimeZoneFinder.compact() =>
-      TimeZoneFinder._(compact_data.loadContainer);
+      TimeZoneFinder._(bundled_data.loadContainer);
 
   final _IndexBytes _indexBytes;
   TimeZoneIndex? _index;
