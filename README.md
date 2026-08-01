@@ -1,16 +1,21 @@
 # timezone_finder
 
-Offline lookup of the IANA time zone identifier (`Continent/City`) for any
-latitude/longitude on land. Pure Dart, no network, no dependencies.
+Offline IANA time zone lookup for any coordinate on land, returning a
+`package:timezone` `Location` — so you can build correct local dates and times
+for many places at once. Pure Dart, no network.
 
 ```dart
+import 'package:timezone/data/latest_all.dart';
+import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
+initializeTimeZones();
 final finder = TimeZoneFinder.exact();
 
-finder.find(48.8566, 2.3522);    // 'Europe/Paris'
-finder.find(-33.8688, 151.2093); // 'Australia/Sydney'
-finder.find(0.0, -140.0);        // null — not inside any land zone
+finder.find(48.8566, 2.3522);          // 'Europe/Paris' — the identifier
+finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
+'48.8566,2.3522'.toLocation(finder);   // the same, from text
+finder.find(0.0, -140.0);              // null — not inside any land zone
 ```
 
 > **Status: 0.1.0, not yet published.** The lookup works and the boundary data
@@ -18,10 +23,11 @@ finder.find(0.0, -140.0);        // null — not inside any land zone
 
 ## What it is for
 
-Resolving the time zone of a geocoded postal or street address:
+Resolving the time zone of a geocoded postal or street address, and then
+showing times there:
 
 ```text
-address → geocoder (Nominatim, Photon, …) → (lat, lon) → find → Continent/City
+address → geocoder (Nominatim, Photon, …) → (lat, lon) → Continent/City → Location
 ```
 
 The boundary data ships inside the package, so lookups work fully offline on
@@ -30,13 +36,67 @@ Dart CLI/server and on Flutter for mobile and desktop.
 `find` is synchronous. The index decodes lazily on first use; the optional
 `ensurePreloaded()` pays that cost up front instead.
 
+## One instant, several places
+
+`package:timezone` models zones correctly — transition tables, DST rules,
+historical changes — but it starts from an identifier you already know, and it
+assumes a single ambient local zone per process. That second assumption is the
+one that breaks whenever a program handles more than one place at a time: a
+flight with a departure and an arrival, a meeting with participants in nine
+countries, a fleet, a photo library.
+
+This package supplies the missing half. Coordinates in, `Location` out, and one
+instant rendered wherever it needs to be read:
+
+```dart
+final charlesDeGaulle = '49.0097,2.5479'.toLocation(finder)!;
+final jfk = '40.6413,-73.7781'.toLocation(finder)!;
+
+final takeOff = TZDateTime(charlesDeGaulle, 2026, 8, 23, 10, 15);
+final landing = takeOff.add(const Duration(hours: 8, minutes: 20));
+
+takeOff;                  // 10:15, Paris
+landing.inLocation(jfk);  // 12:35 the same day, New York — the same instant
+```
+
+`inLocation` re-expresses an instant in one other zone; `inLocations` takes a
+list and returns one entry per place, in order:
+
+```dart
+final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+start.inLocations([newYork, tokyo, sydney]);
+```
+
+Both preserve the moment and change only the wall clock. To keep the wall clock
+and change the moment — *move* a meeting to New York's 17:30 rather than
+*translate* it — construct a new `TZDateTime` with the other location.
+
+### Two things to know
+
+**Initialize the database yourself, from `latest_all`.** This package depends on
+`package:timezone`'s engine, never on a tzdata variant, so the payload stays
+your choice and nothing is initialized behind your back. Use
+`package:timezone/data/latest_all.dart`: the default `data/latest.dart` drops the
+tzdb link identifiers and carries 341 locations against this dataset's 419, so
+`Europe/Zagreb`, `Africa/Accra` and 104 others would fail to resolve.
+`findLocation` raises a `StateError` naming the fix if either problem occurs.
+
+**Latitude first.** `toLocation` parses `"latitude,longitude"`, matching `find`.
+GeoJSON orders coordinates the other way, and a swapped pair is usually still a
+valid coordinate somewhere else entirely — `'2.3522,48.8566'` is not Paris and
+will not tell you so.
+
 ## Scope
 
-This package answers one question: *which time zone is this coordinate in?*
+This package answers one question: *which time zone is this coordinate in?* —
+and hands the answer to `package:timezone` in a usable form.
 
-- It returns an **identifier only**. For UTC offsets, DST and civil-time
-  arithmetic, pass the identifier to
-  [`package:timezone`](https://pub.dev/packages/timezone).
+- It resolves coordinates to a zone. **UTC offsets, DST and civil-time
+  arithmetic are [`package:timezone`](https://pub.dev/packages/timezone)'s
+  work**, and this package does not reimplement them.
+- `find` returns the **identifier**, which is what you store: it stays correct
+  when daylight-saving rules change under it, where a stored UTC offset does
+  not.
 - The dataset covers **land only**, so a coordinate well out to sea returns
   `null`. Coordinates on beaches, piers, ferries and large lakes may also fall
   outside every polygon — expected for the address use case, worth knowing if
@@ -107,7 +167,7 @@ The compact tier's loss is measured, not estimated:
 | within ~500 m of a boundary | 30 % |
 
 So for a geocoded street address the two tiers almost always agree, and within
-a few hundred metres of a border they often will not. All 265 test fixtures —
+a few hundred metres of a border they often will not. All 273 test fixtures —
 including every enclave and small-island case, Lesotho and Vatican City among
 them — resolve identically in both.
 

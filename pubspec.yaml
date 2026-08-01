@@ -1,7 +1,8 @@
 name: timezone_finder
 description: >-
-  Offline lookup of the IANA time zone identifier (Continent/City) for any
-  latitude/longitude on land. Pure Dart, no network, no dependencies.
+  Offline IANA time zone lookup for any coordinate on land, returning a
+  package:timezone Location — so you can build correct local dates and times
+  for many places at once.
 version: 0.1.0
 repository: https://github.com/pm-gwatch/timezone_finder
 issue_tracker: https://github.com/pm-gwatch/timezone_finder/issues
@@ -24,22 +25,31 @@ false_secrets:
   - /lib/data/**
 
 environment:
-  # Floor is set by lints ^6.1.0, which requires ^3.8.0 (Dart 3.8, 2025-05-20).
-  # The package itself needs nothing beyond Dart 3.0.
-  sdk: ^3.8.0
+  # Floor is set by timezone 0.11.1, which requires ^3.10.0. Before that
+  # dependency the floor was ^3.8.0, set by lints ^6.1.0. The lookup itself
+  # still needs nothing beyond Dart 3.0.
+  sdk: ^3.10.0
 
-# Intentionally empty. Zero runtime dependencies is a hard constraint:
-# the runtime uses only dart:convert, dart:typed_data and dart:math.
-# See docs/implementation-plan_claude_v3.md §4.4.
+# timezone supplies the offset engine: transition tables, DST rules and the
+# civil-time arithmetic this package deliberately does not reimplement. The
+# lookup itself still uses only dart:convert, dart:typed_data and dart:math.
+#
+# Note that we depend on the engine, never on a tzdata variant: the caller
+# chooses and initializes `package:timezone/data/...` themselves, so this
+# package never forces that payload on anyone.
 dependencies:
+  # Constrained rather than `any` because `pub publish` treats an unbounded
+  # constraint as an error, not a warning — it exits 65, which fails the
+  # publish-dry-run CI job.
+  timezone: ^0.11.1
 
 dev_dependencies:
   lints: ^6.1.0
-  # 1.31.0 is the newest release satisfiable across the whole supported SDK
-  # range: it needs ^3.7.0, while 1.31.1 and 1.31.2 need ^3.10.0 and ^3.11.0.
-  # A current toolchain still resolves to 1.31.2, since pub picks dev
-  # dependencies against the installed SDK rather than the floor above.
-  test: ^1.31.0
+  # 1.31.1 is the newest release satisfiable across the whole supported SDK
+  # range: it needs ^3.10.0, matching the floor above, while 1.31.2 needs
+  # ^3.11.0. A current toolchain still resolves to 1.31.2, since pub picks dev
+  # dependencies against the installed SDK rather than the floor.
+  test: ^1.31.1
   # tool/ only — never imported from lib/.
   archive: ^4.0.0
   http: ^1.6.0

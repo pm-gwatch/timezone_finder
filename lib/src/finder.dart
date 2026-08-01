@@ -3,6 +3,8 @@ library;
 
 import 'dart:typed_data';
 
+import 'package:timezone/timezone.dart';
+
 import '../data/compact.dart' as compact_data;
 import '../data/exact.dart' as exact_data;
 import 'index.dart';
@@ -89,6 +91,45 @@ class TimeZoneFinder {
       quantizeQueryLongitude(longitude),
       quantize(latitude),
     );
+  }
+
+  /// Returns the `package:timezone` [Location] containing
+  /// ([latitude], [longitude]), or `null` if no land time zone covers it.
+  ///
+  /// The identifier from [find] is looked up in the time zone database your
+  /// application initialized. Use it to build civil times:
+  ///
+  /// ```dart
+  /// final paris = finder.findLocation(48.8566, 2.3522)!;
+  /// TZDateTime(paris, 2026, 8, 23, 17, 30);
+  /// ```
+  ///
+  /// Throws [ArgumentError] on the same coordinates [find] rejects, and
+  /// [StateError] if the database has not been initialized or does not contain
+  /// the identifier — see [ianaDatabaseVersion] for why the two can disagree.
+  Location? findLocation(double latitude, double longitude) {
+    final identifier = find(latitude, longitude);
+    if (identifier == null) return null;
+    if (!timeZoneDatabase.isInitialized) {
+      throw StateError(
+        'The time zone database is not initialized, so $identifier cannot be '
+        'resolved to a Location. Call initializeTimeZones() from '
+        "package:timezone/data/latest_all.dart before using findLocation.",
+      );
+    }
+    try {
+      return getLocation(identifier);
+    } on LocationNotFoundException {
+      // Not a boundary-data problem, which is where the upstream message
+      // sends people. data/latest.dart drops the tzdb link identifiers and
+      // carries 341 of our 419; latest_all.dart carries every one.
+      throw StateError(
+        'The boundary data resolved this coordinate to $identifier, but the '
+        'initialized time zone database has no such location. Initialize from '
+        'package:timezone/data/latest_all.dart rather than data/latest.dart, '
+        'which omits the tzdb link identifiers.',
+      );
+    }
   }
 
   /// Optional. Decodes the index ahead of time so the first [find] is not

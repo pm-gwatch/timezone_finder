@@ -12,10 +12,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.8 is the floor declared in pubspec.yaml. Everything has been
-        # developed on a much newer SDK, so this entry is the only thing that
-        # verifies the floor is real rather than arithmetic.
-        sdk: ['3.8.0', stable]
+        # 3.10 is the floor declared in pubspec.yaml, raised from 3.8 by the
+        # timezone dependency. Everything has been developed on a much newer
+        # SDK, so this entry is the only thing that verifies the floor is real
+        # rather than arithmetic.
+        sdk: ['3.10.0', stable]
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
