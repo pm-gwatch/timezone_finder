@@ -116,9 +116,11 @@ shoreline. Country polygons follow OpenStreetMap administrative boundaries, and
 for a coastal state those extend over territorial waters — roughly 12 nautical
 miles, about 22 km, from the coast.
 
-The consequence is visible in any narrow strait. The Dover Strait is about
-42 km across, so the British and French claims meet in the middle with nothing
-unclaimed between them:
+The consequence is easiest to see by comparing two stretches of open water.
+
+**A narrow strait resolves.** The Dover Strait is about 42 km across, so the
+British and French claims meet in the middle with nothing unclaimed between
+them:
 
 ```dart
 finder.find(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
@@ -126,11 +128,23 @@ finder.find(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
 finder.find(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
 ```
 
-That last one is water, and it still resolves — the boundary between the two
-zones runs down the middle of the strait, and the midpoint falls just on the
-French side of it. Sail west along the Channel and it opens out; past roughly
-100 km of width there is international water in the middle and lookups start
-returning `null`.
+That last coordinate is water, and it still resolves — the boundary between the
+two zones runs down the middle of the strait, and the midpoint falls just on the
+French side of it.
+
+**A wide sea does not.** The Port of Dubrovnik and the Port of Bari face each
+other across the Adriatic, 197 km apart. That is far more than two 22 km claims
+can span, so the middle belongs to nobody:
+
+```dart
+finder.find(42.6634651, 18.0591377); // Port of Dubrovnik -> Europe/Zagreb
+finder.find(41.137428,  16.8600823); // Port of Bari      -> Europe/Rome
+finder.find(41.900447,  17.459610);  // mid-Adriatic      -> null
+```
+
+Both ports are onshore and resolve normally; only the water between them is
+unclaimed. The crossover sits somewhere near 100 km of width — sail west along
+the Channel as it widens and lookups start returning `null` there too.
 
 So: a `null` tells you no country claims that point. A non-null answer does not
 promise you are standing on dry land.
