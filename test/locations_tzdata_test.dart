@@ -13,7 +13,7 @@ import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
 void main() {
-  final finder = TimeZoneFinder.exact();
+  final finder = TimeZoneFinder();
 
   test('says so when the database was never initialized', () {
     // Must run first: nothing has called initializeTimeZones() yet.

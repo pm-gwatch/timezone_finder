@@ -7,7 +7,7 @@
 import 'package:timezone_finder/timezone_finder.dart';
 
 void main() {
-  final finder = TimeZoneFinder.exact();
+  final finder = TimeZoneFinder();
 
   // Across the US–Mexico border: El Paso, Texas and Ciudad Juárez, Chihuahua
   // sit almost opposite each other, yet each follows its own country's zone.
@@ -40,6 +40,6 @@ void main() {
 
   print(
     'Boundaries for IANA tzdb ${finder.ianaDatabaseVersion}, '
-    '${finder.availableTimeZones.length} zones (exact tier)',
+    '${finder.availableTimeZones.length} zones',
   );
 }

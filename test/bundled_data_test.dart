@@ -17,9 +17,9 @@ import 'dart:math';
 
 import 'package:test/test.dart';
 import 'package:timezone_finder/data/boundaries.dart' as bundled_data;
-import 'package:timezone_finder/data/boundaries_unsimplified.dart'
-    as unsimplified_data;
-import 'package:timezone_finder/timezone_finder.dart';
+import 'package:timezone_finder/src/finder.dart';
+
+import '../tool/release/boundaries_unsimplified.dart' as unsimplified_data;
 
 import '../tool/src/build_index.dart';
 import '../tool/src/geometry.dart';
@@ -32,7 +32,7 @@ import 'reference/reference_finder.dart';
 
 void main() {
   group('bundled data', () {
-    final finder = TimeZoneFinder.exact();
+    final finder = TimeZoneFinder();
 
     test('the default constructor needs no configuration', () {
       expect(finder.find(48.8566, 2.3522), 'Europe/Paris');
@@ -63,15 +63,37 @@ void main() {
       expect(failures, isEmpty, reason: failures.join('\n'));
     });
 
-    test('reproduces the overlap tiebreak', () {
+    test('resolves every overlap to one of its contenders, stably', () {
+      // `selected` records what the tiebreak returns on the unsimplified
+      // geometry. The rule orders by polygon area, and simplification changes
+      // areas, so the shipped data can pick the other contender — 1 of 22
+      // pins does, at the Bolivia–Brazil border. What must hold is that the
+      // answer is always one of the two zones that genuinely cover the point,
+      // and that it does not vary between calls.
       for (final pin in overlapPins) {
-        expect(
-          finder.find(pin.latitude, pin.longitude),
-          pin.selected,
-          reason: pin.description,
-        );
+        final answer = finder.find(pin.latitude, pin.longitude);
+        expect(answer, isNotNull, reason: pin.description);
+        expect(pin.contenders, contains(answer), reason: pin.description);
+        expect(finder.find(pin.latitude, pin.longitude), answer);
       }
     });
+
+    test(
+      'the unsimplified baseline still reproduces the recorded tiebreak',
+      () {
+        // The pins were derived from this geometry, so here the selection is
+        // exact. A failure means the precedence rule or the pipeline moved, not
+        // that simplification did.
+        final baseline = finderOverIndex(unsimplified_data.loadContainer);
+        for (final pin in overlapPins) {
+          expect(
+            baseline.find(pin.latitude, pin.longitude),
+            pin.selected,
+            reason: pin.description,
+          );
+        }
+      },
+    );
 
     test('treats the antimeridian as one seam', () {
       for (final lat in <double>[-85, -80, 51.88, 66]) {
@@ -194,8 +216,8 @@ void main() {
     });
 
     test('two finders share nothing that would corrupt the other', () {
-      final a = TimeZoneFinder.exact();
-      final b = TimeZoneFinder.exact();
+      final a = TimeZoneFinder();
+      final b = TimeZoneFinder();
       expect(a.find(48.8566, 2.3522), 'Europe/Paris');
       expect(b.find(35.6762, 139.6503), 'Asia/Tokyo');
       expect(a.find(35.6762, 139.6503), 'Asia/Tokyo');
@@ -210,7 +232,7 @@ void main() {
         : 'tzbb $defaultRelease data not cached. Run:\n'
               '  dart run tool/fetch_data.dart',
     () {
-      test('the exact tier, byte for byte', () async {
+      test('the unsimplified baseline, byte for byte', () async {
         // The only check that the emit → base64 → decode round trip is
         // lossless. If it were not, every other test here would still pass
         // while the shipped answers quietly drifted from the source data.
@@ -259,9 +281,9 @@ void main() {
         );
       });
 
-      test('the compact tier, byte for byte', () async {
-        // Without this a stale compact tier would ship silently: every other
-        // compact test compares it against the exact tier's answers, which
+      test('the bundled data, byte for byte', () async {
+        // Without this stale bundled data would ship silently: every other
+        // simplification test compares it against the baseline's answers, which
         // says nothing about whether it was regenerated from current source.
         final oracle = await ReferenceTimeZoneFinder.load(
           cachedGeoJsonFile(defaultRelease),
@@ -291,7 +313,7 @@ void main() {
         expect(
           shipped.length,
           fresh.length,
-          reason: 'compact tier is stale; regenerate with tool/refresh.dart',
+          reason: 'bundled data is stale; regenerate with tool/refresh.dart',
         );
         for (var i = 0; i < fresh.length; i++) {
           if (shipped[i] != fresh[i]) {

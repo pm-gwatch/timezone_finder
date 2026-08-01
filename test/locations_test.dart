@@ -12,7 +12,7 @@ import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
 void main() {
-  final finder = TimeZoneFinder.exact();
+  final finder = TimeZoneFinder();
 
   // Bound in setUpAll, not at declaration: group bodies run while tests are
   // being collected, which is before any setUpAll has initialized the
@@ -66,14 +66,6 @@ void main() {
             'package:timezone (tzdata) no longer carries every identifier in '
             'boundary release ${finder.ianaDatabaseVersion}: '
             '${missing.join(', ')}',
-      );
-    });
-
-    test('agrees with the compact tier on the identifier it resolves', () {
-      final compact = TimeZoneFinder.compact();
-      expect(
-        compact.findLocation(48.8566, 2.3522)!.name,
-        finder.findLocation(48.8566, 2.3522)!.name,
       );
     });
   });

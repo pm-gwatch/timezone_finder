@@ -95,13 +95,18 @@ Future<void> _emitTier({
   required List<SourcePolygon> polygons,
   required int chunkKb,
 }) async {
+  // Only the simplified set ships. The unsimplified one is the baseline the
+  // tests measure against, so it is committed but excluded from the archive.
+  final directory = Directory(
+    name == 'boundaries' ? 'lib/data' : 'tool/release',
+  );
   final container = buildIndex(
     dataVersion: defaultRelease,
     cellSize: 1000000,
     polygons: polygons,
   );
   final result = emitDartData(
-    directory: Directory('lib/data'),
+    directory: directory,
     name: name,
     container: container,
     dataVersion: defaultRelease,

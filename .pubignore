@@ -20,6 +20,11 @@ test/
 # which is excluded above, and they need `archive` and `http`, which are
 # dev_dependencies a consumer does not get. Published, they would be code whose
 # imports cannot resolve.
+#
+# This also excludes `tool/release/`, which holds the unsimplified boundaries.
+# They are the baseline the bundled ones are measured against, and at 25 MiB
+# compressed they are the reason the published archive is a few megabytes
+# rather than thirty.
 tool/
 
 # Local tooling settings.

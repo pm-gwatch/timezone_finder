@@ -10,7 +10,7 @@ import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
 initializeTimeZones();
-final finder = TimeZoneFinder.exact();
+final finder = TimeZoneFinder();
 
 finder.find(48.8566, 2.3522);          // 'Europe/Paris' — the identifier
 finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
@@ -149,60 +149,40 @@ the Channel as it widens and lookups start returning `null` there too.
 So: a `null` tells you no country claims that point. A non-null answer does not
 promise you are standing on dry land.
 
-## Two sizes
+## Resolution, and what it costs
 
-**Most applications want the compact tier.** A time zone is a country or a
-state wide, so deciding which one an address falls in does not need
-street-level geometry. Simplified to ~110 m, it carries all 419 identifiers and
-compiles to a quarter of the binary:
+A time zone is a country or a state wide, so deciding which one an address
+falls in does not need street-level geometry. The bundled boundaries are
+simplified with Douglas-Peucker to **roughly 110 m**, which keeps the whole
+package to a few megabytes and a compiled program to about 11 MB.
 
-```dart
-final finder = TimeZoneFinder.compact();  // 11.4 MB compiled, not 43.7 MB
-finder.find(48.8566, 2.3522);             // 'Europe/Paris'
-```
+That simplification is the package's one deliberate loss, and it is measured
+rather than estimated. Against the unsimplified source geometry:
 
-The API is identical either way — `find`, `findLocation`, `toLocation` and the
-rest behave the same — so moving between tiers is a one-word change.
-
-| | constructor | boundary resolution | binary | peak memory |
-| --- | --- | --- | --- | --- |
-| **Compact** | `TimeZoneFinder.compact()` | simplified to ~110 m | 11.4 MB | 29 MB |
-| **Exact** | `TimeZoneFinder.exact()` | unsimplified, stored to ~11 cm | 43.7 MB | 88 MB |
-
-Only the tier you construct is compiled in — both are in the published archive
-either way (29 MiB compressed, 16 % of pub.dev's limit), so the constructor
-decides what you *ship*, not what you download.
-
-**On "~11 cm".** That is the exact tier's storage resolution — coordinates are
-quantized to 1e-6°, and no vertices are dropped. It is not an accuracy claim:
-the boundaries come from OpenStreetMap, whose own positional error is metres to
-tens of metres. The quantization is deliberately finer than the source so it
-contributes nothing of its own. The compact tier's ~110 m, by contrast, *is* a
-deliberate loss.
-
-The compact tier's loss is measured, not estimated:
-
-| where the coordinate is | answers differing from the exact tier |
+| where the coordinate is | answers that differ |
 | --- | --- |
 | anywhere on land, drawn at random | **0.008 %** |
 | within ~2 km of a boundary | 1.0 % |
 | within ~500 m of a boundary | 30 % |
 
 That last row looks alarming and mostly is not: it measures points chosen for
-being near a boundary, which addresses are not. Sampled around 26 real border
-towns instead, the tiers differ on **0.21 %** of coordinates within 1 km of the
-town centre, and 0.11 % within 5 km — roughly one address in 500.
+sitting near a boundary, which addresses are not. Sampled around 26 real border
+towns instead, the answers differ on **0.21 %** of coordinates within 1 km of
+the town centre and 0.11 % within 5 km — roughly one address in 500.
 
-All 273 test fixtures — every enclave and small-island case, Lesotho and
-Vatican City among them — resolve identically in both, and no identifier is
-lost: both tiers carry all 419. Simplification does drop 33 polygons and 27
-holes that collapse to nothing at this tolerance, so a few very small islands
-resolve to a neighbouring zone or to `null` in the compact tier.
+Nothing is missing wholesale: all **419 identifiers** are present, and all 273
+test fixtures — every enclave and small-island case, Lesotho and Vatican City
+among them — resolve exactly as the unsimplified geometry does. Simplification
+does drop 33 polygons and 27 holes that collapse to nothing at this tolerance,
+so a few very small islands resolve to a neighbouring zone or to `null`.
 
-**Reach for `exact()` when a wrong answer near a border is expensive** — cargo
-and customs near a frontier, anything billing by local time in a split
-jurisdiction like Chihuahua — or when the binary size simply does not matter,
-as on a server.
+**If a wrong answer within a few hundred metres of a border would be
+expensive** — cargo and customs at a frontier, billing by local time in a split
+jurisdiction like Chihuahua — this package is not the right tool, and there is
+no higher-resolution option inside it. The unsimplified boundaries exist in the
+repository as the baseline these numbers are measured against, but they are
+25 MiB compressed and are not published; shipping them would make every
+consumer download thirty megabytes for a precision almost none of them need.
 
 ## Disputed territories
 
@@ -275,10 +255,15 @@ boundary release, not a tzdb one.
 ## Accuracy
 
 Answers are validated against a deliberately naive reference implementation
-that reads the source boundaries directly. The two are compared over **ten
-million sampled coordinates**, weighted toward zone borders, enclaves, grid
-boundaries and the antimeridian rather than spread uniformly — **zero
-disagreements** for the exact tier.
+that reads the source boundaries directly, over **ten million sampled
+coordinates** weighted toward zone borders, enclaves, grid boundaries and the
+antimeridian rather than spread uniformly.
+
+Run against the unsimplified geometry — the same quantization, grid, encoder
+and container, without the Douglas-Peucker step — there are **zero
+disagreements**. The machinery introduces no error of its own, so everything
+the bundled data differs by is the simplification cost measured under
+[Resolution](#resolution-and-what-it-costs), and nothing else.
 
 ## Credits
 

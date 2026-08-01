@@ -15,7 +15,9 @@
 library;
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/timezone_finder.dart';
+import 'package:timezone_finder/src/finder.dart';
+
+import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
 import '../tool/src/differential.dart';
 import '../tool/src/fetch.dart';
@@ -42,7 +44,7 @@ void main() {
 
       setUpAll(() async {
         final oracle = await ReferenceTimeZoneFinder.load(cached);
-        final runtime = TimeZoneFinder.exact();
+        final runtime = finderOverIndex(unsimplified.loadContainer);
         report = runDifferential(
           oracle: oracle,
           subject: runtime.find,
@@ -60,7 +62,7 @@ void main() {
           report.disagreements,
           0,
           reason:
-              'the exact tier must not disagree with the oracle at all.\n'
+              'the unsimplified baseline must not disagree with the oracle at all.\n'
               '$report\n\n${report.examples.join('\n')}',
         );
       });

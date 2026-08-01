@@ -21,6 +21,9 @@ import 'package:test/test.dart';
 import 'package:timezone_finder/src/index.dart';
 import 'package:timezone_finder/src/quantization.dart';
 import 'package:timezone_finder/timezone_finder.dart';
+import 'package:timezone_finder/src/finder.dart';
+
+import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
 import '../tool/src/build_index.dart';
 import '../tool/src/fetch.dart';
@@ -64,7 +67,7 @@ void main() {
               ),
           ],
         );
-        finder = TimeZoneFinder.exact();
+        finder = finderOverIndex(unsimplified.loadContainer);
       });
 
       test('reports the dataset it was built from', () {
@@ -159,7 +162,7 @@ void main() {
       });
 
       test('ensurePreloaded is optional and idempotent', () {
-        final fresh = TimeZoneFinder.exact();
+        final fresh = finderOverIndex(unsimplified.loadContainer);
         expect(fresh.find(48.8566, 2.3522), 'Europe/Paris');
         expect(fresh.ensurePreloaded(), completes);
         expect(fresh.ensurePreloaded(), completes);

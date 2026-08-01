@@ -6,60 +6,37 @@ import 'dart:typed_data';
 import 'package:timezone/timezone.dart';
 
 import '../data/boundaries.dart' as bundled_data;
-import '../data/boundaries_unsimplified.dart' as unsimplified_data;
 import 'index.dart';
 import 'quantization.dart';
 
 /// Supplies the packed index bytes.
-///
-/// Deliberately not exported. The factory constructors are the only ways to
-/// build a finder, so callers never hold one of these — and never need to,
-/// since the data ships with the package.
 typedef _IndexBytes = Uint8List Function();
+
+/// Builds a finder over an arbitrary index, for the build pipeline and the
+/// tests.
+///
+/// Not exported from `package:timezone_finder/timezone_finder.dart`, so it is
+/// not public API. It exists because the unsimplified boundaries under
+/// `tool/release/` are the baseline the bundled ones are measured against, and
+/// they do not ship.
+TimeZoneFinder finderOverIndex(Uint8List Function() indexBytes) =>
+    TimeZoneFinder._(indexBytes);
 
 /// Maps geographic coordinates to IANA time zone identifiers.
 ///
-/// Pick a tier when you construct one:
-///
 /// ```dart
-/// final finder = TimeZoneFinder.exact();    // full-fidelity boundaries
-/// final small = TimeZoneFinder.compact();   // ~110 m, far smaller binary
+/// final finder = TimeZoneFinder();
+/// finder.find(48.8566, 2.3522);  // 'Europe/Paris'
 /// ```
 ///
-/// Only the tier you construct is compiled into your program. Both are in the
-/// published archive either way, so the constructor decides what you ship, not
-/// what you download.
+/// Boundaries are simplified to roughly 110 m, which is far finer than a time
+/// zone and keeps the compiled program to about 11 MB. The README publishes
+/// the measured cost of that simplification.
 class TimeZoneFinder {
+  /// A finder over the bundled boundaries.
+  factory TimeZoneFinder() => TimeZoneFinder._(bundled_data.loadContainer);
+
   TimeZoneFinder._(this._indexBytes);
-
-  /// A finder over the full-fidelity index.
-  ///
-  /// Reproduces timezone-boundary-builder's published boundaries with no
-  /// simplification, storing coordinates to 1e-6° — about 11 cm at the equator,
-  /// and finer in longitude away from it.
-  ///
-  /// That figure is the *storage* resolution, not an accuracy claim. The
-  /// boundaries derive from OpenStreetMap, whose own positional error is metres
-  /// to tens of metres; the quantization is deliberately finer than the source
-  /// so that it contributes nothing of its own.
-  ///
-  /// Costs roughly 32 MB of compiled binary over [TimeZoneFinder.compact].
-  factory TimeZoneFinder.exact() =>
-      TimeZoneFinder._(unsimplified_data.loadContainer);
-
-  /// A finder over the simplified index.
-  ///
-  /// Boundaries are reduced by Douglas-Peucker at 1e-3° — about 110 m — which
-  /// discards roughly seven eighths of the vertices. Away from borders the
-  /// answers are almost always identical to [TimeZoneFinder.exact]; within a few
-  /// hundred metres of one they often differ. The README publishes the measured
-  /// rates.
-  ///
-  /// A handful of very small islands and enclaves cannot survive simplification
-  /// and are absent here, so those coordinates resolve to a neighbouring zone
-  /// or to `null`.
-  factory TimeZoneFinder.compact() =>
-      TimeZoneFinder._(bundled_data.loadContainer);
 
   final _IndexBytes _indexBytes;
   TimeZoneIndex? _index;

@@ -1,8 +1,8 @@
-/// Measures what the compact tier costs in accuracy.
+/// Measures what simplification costs in accuracy.
 ///
 ///     dart run tool/measure_compact.dart [--points 2000000]
 ///
-/// The compact tier simplifies boundaries to roughly 110 m, so it *will*
+/// The bundled data simplifies boundaries to roughly 110 m, so it *will*
 /// disagree with the full-fidelity index near borders — that is what
 /// simplification means. The number that matters is how often,
 /// and where. A tier that disagreed away from borders would be a bug in
@@ -11,7 +11,9 @@ library;
 
 import 'dart:io';
 
-import 'package:timezone_finder/timezone_finder.dart';
+import 'package:timezone_finder/src/finder.dart';
+
+import 'release/boundaries_unsimplified.dart' as unsimplified;
 
 import '../test/fixtures/bootstrap_goldens.dart';
 import '../test/fixtures/golden_points.dart';
@@ -37,12 +39,12 @@ Future<void> main(List<String> args) async {
 
   stdout.writeln('Loading reference oracle …');
   final oracle = await ReferenceTimeZoneFinder.load(cached);
-  final compactFinder = TimeZoneFinder.compact();
-  final exactFinder = TimeZoneFinder.exact();
+  final bundledFinder = TimeZoneFinder();
+  final baselineFinder = finderOverIndex(unsimplified.loadContainer);
 
-  // --- the fixtures, which are ground truth for the exact tier only --------
+  // --- the fixtures, which are ground truth for the unsimplified baseline only --------
   stdout.writeln(
-    '\nGround-truth fixtures (the compact tier is measured '
+    '\nGround-truth fixtures (the bundled data is measured '
     'against these, not gated by them):',
   );
   final byCategory = <String, ({int total, int missed})>{};
@@ -50,7 +52,7 @@ Future<void> main(List<String> args) async {
   for (final point in <GoldenPoint>[...bootstrapGoldens, ...goldenPoints]) {
     final key = point.category.name;
     final current = byCategory[key] ?? (total: 0, missed: 0);
-    final actual = compactFinder.find(point.latitude, point.longitude);
+    final actual = bundledFinder.find(point.latitude, point.longitude);
     final wrong = actual != point.zone;
     if (wrong) {
       missedNames.add(
@@ -78,7 +80,7 @@ Future<void> main(List<String> args) async {
   // --- overlap pins ---------------------------------------------------------
   var pinsDiffering = 0;
   for (final pin in overlapPins) {
-    if (compactFinder.find(pin.latitude, pin.longitude) != pin.selected) {
+    if (bundledFinder.find(pin.latitude, pin.longitude) != pin.selected) {
       pinsDiffering++;
     }
   }
@@ -91,7 +93,7 @@ Future<void> main(List<String> args) async {
   stdout.writeln('\nSampling $points points …');
   final report = runDifferential(
     oracle: oracle,
-    subject: compactFinder.find,
+    subject: bundledFinder.find,
     points: points,
     seed: 9,
     overlapSeeds: <({double lat, double lon})>[
@@ -115,12 +117,12 @@ Future<void> main(List<String> args) async {
     '${report.checked} sampled points',
   );
 
-  // A control: the exact tier over the same samplers must stay at zero, or the
+  // A control: the baseline over the same samplers must stay at zero, or the
   // rate above is measuring something other than simplification.
-  stdout.writeln('\nControl — the exact tier over the same samplers:');
+  stdout.writeln('\nControl — the baseline over the same samplers:');
   final control = runDifferential(
     oracle: oracle,
-    subject: exactFinder.find,
+    subject: baselineFinder.find,
     points: points ~/ 10,
     seed: 9,
     overlapSeeds: <({double lat, double lon})>[

@@ -1,6 +1,6 @@
 // Douglas-Peucker simplification, tested on its own terms.
 //
-// Until now this code was only exercised through the compact tier, whose
+// Until now this code was only exercised through the bundled data, whose
 // expected output *is* whatever simplification produces. The byte-identity
 // check in bundled_data_test catches any change to it — but that is a
 // regression guard, not a correctness one: had the algorithm been wrong from

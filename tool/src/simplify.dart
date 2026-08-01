@@ -1,6 +1,6 @@
-/// Douglas-Peucker simplification, for the compact tier.
+/// Douglas-Peucker simplification of the bundled boundaries.
 ///
-/// Build-time only. The compact tier trades border accuracy for download size:
+/// Build-time only. The bundled data trades border accuracy for download size:
 /// dropping vertices that lie within a tolerance of the line between their
 /// neighbours removes most of the coastline detail while leaving the shape
 /// recognisable.
@@ -19,11 +19,11 @@ class SimplifyStats {
   int verticesOut = 0;
 
   /// Polygons whose outer ring collapsed below three vertices and were
-  /// dropped. Each is a small island that the compact tier cannot answer for.
+  /// dropped. Each is a small island that the bundled data cannot answer for.
   int polygonsDropped = 0;
 
   /// Holes that collapsed and were dropped. Each is an enclave that the
-  /// compact tier folds into its surrounding zone.
+  /// bundled data folds into its surrounding zone.
   int holesDropped = 0;
 
   double get vertexRetention => verticesIn == 0 ? 0 : verticesOut / verticesIn;
@@ -115,7 +115,7 @@ Int32List simplifyRing(Int32List ring, int tolerance) {
 /// Simplifies one polygon, dropping rings that collapse.
 ///
 /// Returns `null` when the outer ring no longer encloses anything — a small
-/// island the compact tier simply cannot represent at this tolerance.
+/// island the bundled data simply cannot represent at this tolerance.
 ///
 /// Simplification can in principle make a ring self-intersect. For an
 /// explicitly approximate tier that is tolerable: the effect is a slightly

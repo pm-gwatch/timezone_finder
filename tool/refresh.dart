@@ -16,8 +16,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:timezone_finder/data/boundaries.dart' as bundled_container;
-import 'package:timezone_finder/data/boundaries_unsimplified.dart'
-    as unsimplified_container;
+import 'release/boundaries_unsimplified.dart' as unsimplified_container;
 
 import '../test/reference/reference_finder.dart';
 import 'src/build_index.dart';
@@ -103,7 +102,7 @@ Future<void> main(List<String> args) async {
     ('boundaries', bundled),
   ]) {
     final result = emitDartData(
-      directory: Directory('lib/data'),
+      directory: Directory(name == 'boundaries' ? 'lib/data' : 'tool/release'),
       name: name,
       container: container,
       dataVersion: release,

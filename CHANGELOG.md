@@ -7,7 +7,7 @@ with no network access, bridged to `package:timezone` for civil time.
 
 ```dart
 initializeTimeZones();
-final finder = TimeZoneFinder.exact();
+final finder = TimeZoneFinder();
 finder.find(48.8566, 2.3522);          // 'Europe/Paris'
 finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
 finder.find(0.0, -140.0);              // null — not inside any land zone
@@ -15,8 +15,8 @@ finder.find(0.0, -140.0);              // null — not inside any land zone
 
 ### API
 
-- `TimeZoneFinder.exact()` and `TimeZoneFinder.compact()` pick a data tier;
-  `find(latitude, longitude)` returns a `Continent/City` identifier or `null`.
+- `TimeZoneFinder()` takes no configuration; `find(latitude, longitude)`
+  returns a `Continent/City` identifier or `null`.
 - `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
   instead, and `'48.8566,2.3522'.toLocation(using: finder)` does the same from
   text. Latitude comes first, matching `find` — note that GeoJSON is the
@@ -46,20 +46,17 @@ drops the tzdb link identifiers and carries 341 locations against this dataset's
 raises a `StateError` naming the fix rather than letting the underlying
 `LocationNotFoundException` point at the boundary data.
 
-### Two tiers
+### Resolution
 
-Boundary data is bundled, so the package is large. Both tiers are in the
-archive; only the one you construct is compiled into your program.
+Boundaries are bundled, so lookups need no network and no setup. They are
+simplified to roughly 110 m — far finer than a time zone — which keeps the
+published archive at about 3 MB and a compiled program at about 11 MB.
 
-| | boundary resolution | binary | peak memory |
-| --- | --- | --- | --- |
-| `TimeZoneFinder.exact()` | unsimplified, stored to ~11 cm | 43.7 MB | 88 MB |
-| `TimeZoneFinder.compact()` | simplified to ~110 m | 11.4 MB | 29 MB |
-
-Away from borders the tiers agree on all but 0.008% of random land coordinates.
-Within a few hundred metres of a border they often differ; the measured rates
-are in the README. The compact tier also omits a few very small islands and
-enclaves that cannot survive simplification.
+All 419 identifiers are present. Against the unsimplified source geometry the
+answers differ on 0.008% of random land coordinates, and on 0.21% within 1 km
+of a border town centre. Simplification drops 33 polygons and 27 holes that
+collapse at this tolerance, so a few very small islands resolve to a
+neighbouring zone or to `null`. The README has the full table.
 
 ### Data
 
@@ -79,7 +76,9 @@ and is not a statement about sovereignty.
 Answers were validated against a separate reference implementation that reads
 the source boundaries directly, over 10,000,000 sampled coordinates weighted
 toward borders, enclaves, grid boundaries, the antimeridian and the overlap
-regions, with no disagreements for the exact tier. 273 hand-authored fixtures
+regions. Run against the unsimplified geometry the pipeline shows no
+disagreements at all, so the bundled data's only deviation is the
+simplification measured above. 273 hand-authored fixtures
 cover cities, borders, enclaves, small islands, Antarctic stations, the
 antimeridian, working ports and open ocean.
 

@@ -1,16 +1,15 @@
 /// Offline lookup of the IANA time zone for a coordinate on land.
 ///
 /// ```dart
-/// final finder = TimeZoneFinder.exact();
+/// final finder = TimeZoneFinder();
 /// finder.find(48.8566, 2.3522);          // 'Europe/Paris'
 /// finder.findLocation(48.8566, 2.3522);  // a package:timezone Location
 /// finder.find(0.0, -140.0);              // null — not inside any land zone
 /// ```
 ///
-/// Two tiers ship with the package, chosen at the constructor:
-/// [TimeZoneFinder.exact] reproduces the published boundaries, and
-/// [TimeZoneFinder.compact] simplifies them to roughly 110 m for a far smaller
-/// binary. Only the tier you construct is compiled in.
+/// Boundaries are bundled, so lookups work offline with no network and no
+/// setup. They are simplified to roughly 110 m — far finer than a time zone,
+/// and small enough that the whole package is a few megabytes.
 ///
 /// [find] returns the identifier, which is what you store: it stays correct
 /// when daylight-saving rules change under it. [TimeZoneFinder.findLocation]
