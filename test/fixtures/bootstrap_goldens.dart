@@ -1,10 +1,10 @@
-// Bootstrap golden fixtures — milestone 1.
+// Bootstrap golden fixtures.
 //
 // These pairs are the ONLY ground truth in this package that does not come
 // from the timezone-boundary-builder data. They exist to break a circular
-// dependency: the Phase A reference oracle (milestone 2) is validated against
-// this set, and only once it passes does the oracle become the authority for
-// the wider fixture set (milestone 3) and for differential testing.
+// dependency: the reference oracle is validated against this set, and only
+// once it passes does it become the authority for the wider fixture set and
+// for differential testing.
 //
 // Provenance and rules:
 //
@@ -20,7 +20,7 @@
 //
 // Selection criteria: major city centres, well inside a country, chosen to be
 // unambiguous rather than interesting. Border cases, enclaves, antimeridian
-// zones and the 25 documented overlap pairs belong in the milestone 3 set —
+// zones and the 25 documented overlap pairs belong in golden_points.dart —
 // deliberately NOT here, because a bootstrap set must be beyond doubt.
 //
 // Do not add a pair to this file by running an implementation and recording

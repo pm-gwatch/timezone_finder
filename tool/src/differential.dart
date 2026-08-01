@@ -1,4 +1,4 @@
-/// Phase B differential testing: the runtime against the reference oracle.
+/// Differential testing: the runtime against the reference oracle.
 ///
 /// Uniform sampling is nearly worthless here — most of the globe is ocean and
 /// re-tests empty cells. The samplers below aim at the machinery that has

@@ -1,10 +1,10 @@
-// Milestone 3: the full golden set, run against the Phase A oracle.
+// The full golden set, run against the reference oracle.
 //
 // Two fixture sets with two different contracts:
 //
 //   * `bootstrapGoldens` + `goldenPoints` are external ground truth. A failure
 //     means the oracle or the fixture is wrong.
-//   * `overlapPins` pin the §6.5 tiebreak in regions where two zones genuinely
+//   * `overlapPins` pin the overlap tiebreak in regions where two zones genuinely
 //     contain the point. A failure means the rule changed.
 //
 // Failures are reported grouped by category, because a cluster in one category
@@ -140,7 +140,7 @@ void main() {
       });
 
       test('the antimeridian is a seam, not a wall', () {
-        // Plan §9.3: lon 180 and lon -180 are the same meridian and must give
+        // Lon 180 and lon -180 are the same meridian and must give
         // the same answer. Sampled across latitudes that cross the five split
         // zones and open ocean alike.
         for (var lat = -80.0; lat <= 80.0; lat += 5) {

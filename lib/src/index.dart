@@ -186,9 +186,9 @@ class TimeZoneIndex {
 
   /// Resolves quantized coordinates, or `null` if no polygon contains them.
   ///
-  /// Candidates arrive from the grid already ordered by the precedence rule of
-  /// plan §6.5, so the first polygon that contains the point is the answer and
-  /// no areas need to ship.
+  /// Candidates arrive from the grid already ordered by the overlap tiebreak,
+  /// so the first polygon containing the point is the answer and no polygon
+  /// areas need to ship.
   String? lookup(int x, int y) {
     final cell = _gridCells[_cellIndex(x, y)];
     if (cell == 0) return null;

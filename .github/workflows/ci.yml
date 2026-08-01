@@ -12,10 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.10 is the floor declared in pubspec.yaml, raised from 3.8 by the
-        # timezone dependency. Everything has been developed on a much newer
-        # SDK, so this entry is the only thing that verifies the floor is real
-        # rather than arithmetic.
+        # Pin the floor from pubspec.yaml as well as stable: development
+        # happens on a much newer SDK, so this is the only check that the
+        # declared floor actually works.
         sdk: ['3.10.0', stable]
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +24,9 @@ jobs:
       - run: dart pub get
       - run: dart analyze --fatal-infos
       - run: dart format --output=none --set-exit-if-changed .
-      # The tests that need the 170 MB boundary GeoJSON skip themselves when it
-      # is absent, so CI exercises the bundled data and the unit suites without
-      # a 51 MB download on every run. The full oracle comparison is the
-      # maintainer's job before a data refresh lands.
+      # Tests needing the 170 MB source GeoJSON skip themselves when it is
+      # absent, so CI runs without the download. The full oracle comparison is
+      # the maintainer's job before a data refresh lands.
       - run: dart test
 
   publish-dry-run:

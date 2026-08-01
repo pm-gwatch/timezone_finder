@@ -1,4 +1,4 @@
-/// Phase A reference implementation — the correctness oracle.
+/// The reference implementation — the correctness oracle.
 ///
 /// This is deliberately the dumbest thing that can be correct: parse the
 /// GeoJSON, keep every polygon, test them all. No spatial index, no encoding,
@@ -23,7 +23,7 @@
 /// This oracle quantizes coordinates with the same [quantize] the index uses.
 /// That is required — if the index compared quantized geometry and the oracle
 /// compared raw doubles, points within ~11 cm of a border would legitimately
-/// resolve differently, and the zero-disagreement gate at plan §10.3 could not
+/// resolve differently, and the zero-disagreement gate could not
 /// be met.
 ///
 /// The cost is that **this oracle cannot catch a bug in quantization itself**.
@@ -32,7 +32,7 @@
 /// would still pass. The bootstrap goldens cannot catch it either: all 66 are
 /// deep inland, so an 11 cm shift cannot move any of them across a border.
 ///
-/// Milestone 4's round-trip test is therefore the *only* guard on
+/// The round-trip test is therefore the *only* guard on
 /// quantization correctness, and it must exercise negative coordinates and
 /// values that land near a half-unit boundary.
 library;
@@ -74,7 +74,7 @@ class ReferencePolygon {
 
   /// Twice the planar area in square quantized units, holes subtracted.
   ///
-  /// This is the overlap tiebreak of plan §6.5 and carries no geographic
+  /// This is the overlap tiebreak and carries no geographic
   /// meaning — it is distorted near the poles and ignores the ellipsoid. It
   /// only has to be stable and reproducible. Doubled so it stays an exact
   /// integer; see `polygonDoubledArea`.
@@ -94,7 +94,7 @@ class ReferencePolygon {
   }
 }
 
-/// The Phase A oracle.
+/// The oracle.
 class ReferenceTimeZoneFinder {
   ReferenceTimeZoneFinder._(this.polygons, this.zones);
 
@@ -158,7 +158,7 @@ class ReferenceTimeZoneFinder {
   /// when the coordinate is not inside any land polygon.
   ///
   /// Where polygons overlap — 25 pairs are documented upstream, mostly
-  /// disputed territories — applies the precedence rule of plan §6.5: the
+  /// disputed territories — applies the overlap tiebreak: the
   /// smallest containing polygon by planar area, then lexicographic
   /// identifier.
   ///
@@ -177,7 +177,7 @@ class ReferenceTimeZoneFinder {
   /// the same precedence [find] applies.
   ///
   /// A diagnostic for probing the documented overlap regions. This is **not**
-  /// the `findAll()` public API, which is deferred (plan §2.5).
+  /// the `findAll()` public API, which is deferred.
   List<String> zonesContaining(double latitude, double longitude) {
     _validate(latitude, longitude);
     final hits = _containing(latitude, longitude)..sort(comparePolygons);
@@ -219,7 +219,7 @@ class ReferenceTimeZoneFinder {
   }
 }
 
-/// Orders overlapping polygons by the precedence rule of plan §6.5.
+/// Orders overlapping polygons by the overlap tiebreak.
 ///
 /// Delegates to the shared [comparePrecedence] so the oracle and the index
 /// builder cannot drift apart on the rule that decides disputed territories.

@@ -2,7 +2,7 @@
 ///
 /// A pure Dart package cannot ship binary assets: `dart:io` is unavailable on
 /// some targets, AOT binaries cannot read their own package directory, and
-/// Flutter's asset system does not exist for CLI consumers (plan §4.3). So the
+/// Flutter's asset system does not exist for CLI consumers. So the
 /// index travels as base64 inside `const` strings.
 ///
 /// The chunking is a **compiler** concern, not a memory one. A single ~37 MB
@@ -16,7 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-/// ODbL notice required on every generated data file by plan §4.5.
+/// ODbL notice required on every generated data file.
 const String _dataLicenceHeader = '''
 // GENERATED FILE — DO NOT EDIT.
 //

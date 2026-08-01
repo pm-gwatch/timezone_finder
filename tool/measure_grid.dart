@@ -2,9 +2,8 @@
 ///
 ///     dart run tool/measure_grid.dart
 ///
-/// Milestone 5 has to replace plan §5.3's "shortcut grid: 1–3 MB, unmeasured"
-/// with a real number, and choose a resolution from evidence rather than
-/// taste. Grid size trades against filter strength: coarse grids are small but
+/// Chooses the grid resolution from evidence rather than taste. Grid size
+/// trades against filter strength: coarse grids are small but
 /// hand long candidate lists to point-in-polygon, fine grids are the reverse.
 /// The table below is where that curve turns.
 library;

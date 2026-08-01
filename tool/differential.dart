@@ -1,9 +1,9 @@
-/// Runs the Phase B differential gate.
+/// Runs the differential gate.
 ///
 ///     dart run tool/differential.dart [--points 10000000] [--seed 1]
 ///
-/// Plan §10.3 sets the exit criterion for milestone 7: ten million points, zero
-/// disagreements between the runtime and the reference oracle. The oracle scans
+/// The release gate: ten million points, zero disagreements between the
+/// runtime and the reference oracle. The oracle scans
 /// every polygon linearly, so a full run takes minutes — which is why the
 /// suite runs a smaller sample and this exists for the gate itself.
 library;

@@ -1,4 +1,4 @@
-// Milestone 9: the compact tier.
+// The compact tier.
 //
 // The compact tier is *measured against* the ground-truth fixtures, not gated
 // by them. Its boundaries are simplified to roughly 110 m, so disagreeing near

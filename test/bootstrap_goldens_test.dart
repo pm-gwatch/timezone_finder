@@ -1,6 +1,6 @@
 // Integrity tests for the bootstrap golden fixtures.
 //
-// There is no lookup implementation yet (milestone 1), so these tests validate
+// These tests validate
 // the fixture file's own consistency rather than any behaviour. They make the
 // integrity of the ground-truth set a CI concern instead of a review-time hope.
 //

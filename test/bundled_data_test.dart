@@ -1,4 +1,4 @@
-// Milestone 8: the data actually shipped.
+// The data actually shipped.
 //
 // Everything until now tested a container packed in memory. These tests use
 // what a consumer gets — the base64 chunks under `lib/data/`, decoded through

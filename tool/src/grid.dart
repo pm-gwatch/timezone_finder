@@ -1,8 +1,7 @@
 /// The shortcut grid: a uniform lat/lon raster that narrows a lookup from
 /// 1,184 polygons to a handful before any geometry is tested.
 ///
-/// Build-time only. The runtime reads the serialized form; milestone 6 owns
-/// that reader.
+/// Build-time only — the runtime reads the serialized form.
 library;
 
 import 'dart:typed_data';
@@ -53,7 +52,7 @@ class GridSpec {
 }
 
 /// A polygon's bounding box, its position in the polygon table, and the two
-/// values the precedence rule of plan §6.5 orders by.
+/// values the overlap tiebreak orders by.
 typedef PolygonBox = ({
   int id,
   int minX,

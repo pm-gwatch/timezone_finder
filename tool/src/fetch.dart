@@ -4,8 +4,8 @@
 /// never committed. It is cached under `.dart_tool/`, which is gitignored and
 /// is the conventional place for tool-generated artifacts.
 ///
-/// This is used by the Phase A reference oracle in `test/reference/` and, from
-/// milestone 10, by `tool/refresh.dart`. Nothing under `lib/` may import it.
+/// This is used by the reference oracle in `test/reference/` and
+/// by `tool/refresh.dart`. Nothing under `lib/` may import it.
 library;
 
 import 'dart:io';
@@ -16,7 +16,7 @@ import 'package:http/http.dart' as http;
 /// The tzbb release this package currently targets.
 const String defaultRelease = '2026c';
 
-/// The land-only, full-fidelity release asset. See plan §2.2 for why this
+/// The land-only, full-fidelity release asset. See the README for why this
 /// variant rather than `with-oceans` or the `1970`/`now` merges.
 const String _assetName = 'timezones.geojson.zip';
 

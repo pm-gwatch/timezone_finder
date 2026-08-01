@@ -1,6 +1,6 @@
-// Milestone 6: the runtime, against a container built from the real dataset.
+// The runtime, against a container built from the real dataset.
 //
-// The bundled data arrives at milestone 8, so the index here is packed in
+// The bundled data is generated separately, so the index here is packed in
 // memory from the oracle. That is the point of making the byte source
 // injectable: the format and the lookup get exercised against all 7.6M real
 // vertices before any generated source exists.
@@ -220,7 +220,7 @@ void main() {
           megabytes,
           inInclusiveRange(27.5, 29.0),
           reason:
-              'container is ${megabytes.toStringAsFixed(2)} MB; plan §5.3 '
+              'container is ${megabytes.toStringAsFixed(2)} MB; '
               'budgets ~28.16 MB',
         );
       });

@@ -4,7 +4,7 @@
 ///
 /// The compact tier simplifies boundaries to roughly 110 m, so it *will*
 /// disagree with the full-fidelity index near borders — that is what
-/// simplification means (plan §10.3). The number that matters is how often,
+/// simplification means. The number that matters is how often,
 /// and where. A tier that disagreed away from borders would be a bug in
 /// simplification rather than simplification working.
 library;

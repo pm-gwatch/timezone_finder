@@ -4,8 +4,7 @@
 ///
 /// Fetches the boundary data if it is not cached, packs the container, and
 /// writes it out as base64 Dart source. Maintainers run this; consumers never
-/// do. Milestone 10 folds it into `tool/refresh.dart` along with the release
-/// triage.
+/// do — `tool/refresh.dart` wraps it with the release triage.
 library;
 
 import 'dart:io';
@@ -21,7 +20,7 @@ import 'src/fetch.dart';
 Future<void> main(List<String> args) async {
   var chunkKb = 1024;
   var tier = 'both';
-  // 1e-3 degrees, about 110 m. Plan §5.2 measured this as the point where the
+  // 1e-3 degrees, about 110 m. Measured as this as the point where the
   // coordinate blob falls to 3.89 MB.
   var tolerance = 1000;
   for (var i = 0; i < args.length; i++) {

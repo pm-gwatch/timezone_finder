@@ -1,4 +1,4 @@
-// Milestone 5: the shortcut grid must never drop a polygon.
+// The shortcut grid must never drop a polygon.
 //
 // The grid is a filter, not an answer: it narrows 1,184 polygons to a handful
 // and point-in-polygon decides among those. That is only sound if the handful
@@ -24,7 +24,7 @@ import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/golden_points.dart';
 import 'reference/reference_finder.dart';
 
-/// The resolution milestone 5 selected. See plan §6.1.
+/// The selected resolution.
 const _chosenCellSize = 1000000;
 
 void main() {
@@ -197,7 +197,7 @@ void main() {
       });
 
       test('the serialized grid is far smaller than the coordinate blob', () {
-        // Plan §5.3 estimated 1–3 MB for the grid. Measured, the raw cell
+        // The original estimate was 1–3 MB for the grid. Measured, the raw cell
         // array at this resolution is ~275 KB, so the index total is
         // essentially the 27.8 MB of coordinates.
         expect(grid.serializedBytes, lessThan(1000000));

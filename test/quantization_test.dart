@@ -3,8 +3,7 @@
 // These need no boundary data and always run. That matters more here than
 // elsewhere: the reference oracle quantizes with the same functions the index
 // will use, so a bug in quantization corrupts both sides identically and the
-// differential test at plan §10.3 cannot see it. This file is the guard that
-// plan §10.2 names as the only one covering quantization itself.
+// differential test cannot see it. This file is the only guard on it.
 
 import 'package:test/test.dart';
 import 'package:timezone_finder/src/quantization.dart';
