@@ -1,8 +1,8 @@
 // Interesting border, same-state, coastal, and compact-tier timezone lookups.
 //
 // These lookups return IANA identifiers. To turn one into a civil time, use
-// finder.findLocation() or '<lat>,<lon>'.toLocation(finder) and pass the
-// Location to package:timezone's TZDateTime.
+// finder.findLocation() or '<lat>,<lon>'.toLocation(using: finder), then pass
+// the Location to package:timezone's TZDateTime.
 
 import 'package:timezone_finder/timezone_finder.dart';
 

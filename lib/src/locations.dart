@@ -7,20 +7,23 @@ import 'finder.dart';
 
 /// Resolves a `"latitude,longitude"` string to a time zone.
 extension TimeZoneLocation on String {
-  /// Parses this as `"latitude,longitude"` and resolves it with [finder].
+  /// Parses this as `"latitude,longitude"` and resolves it [using] a finder.
   ///
   /// ```dart
-  /// '48.8566,2.3522'.toLocation(finder);   // Europe/Paris
-  /// '48.8566, 2.3522'.toLocation(finder);  // same, spaces allowed
+  /// '48.8566,2.3522'.toLocation(using: finder);   // Europe/Paris
+  /// '48.8566, 2.3522'.toLocation(using: finder);  // same, spaces allowed
   /// ```
   ///
   /// **Latitude first.** GeoJSON orders coordinates the other way, and a
   /// swapped pair usually parses fine and returns a confidently wrong answer.
   ///
+  /// The finder is required rather than defaulted: it names the tier, and a
+  /// default would link both tiers into every program that ever omitted it.
+  ///
   /// Returns `null` only when no land time zone covers the point. Throws
   /// [FormatException] if this is not two comma-separated numbers, and
   /// whatever [TimeZoneFinder.findLocation] throws otherwise.
-  Location? toLocation(TimeZoneFinder finder) {
+  Location? toLocation({required TimeZoneFinder using}) {
     final comma = indexOf(',');
     // Exactly one comma: '1,2,3' is a mistake, not a coordinate.
     if (comma < 0 || indexOf(',', comma + 1) >= 0) {
@@ -38,7 +41,7 @@ extension TimeZoneLocation on String {
         latitude == null ? 0 : comma + 1,
       );
     }
-    return finder.findLocation(latitude, longitude);
+    return using.findLocation(latitude, longitude);
   }
 }
 

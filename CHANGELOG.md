@@ -18,8 +18,9 @@ finder.find(0.0, -140.0);              // null — not inside any land zone
 - `TimeZoneFinder.exact()` and `TimeZoneFinder.compact()` pick a data tier;
   `find(latitude, longitude)` returns a `Continent/City` identifier or `null`.
 - `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
-  instead, and `'48.8566,2.3522'.toLocation(finder)` does the same from text.
-  Latitude comes first, matching `find` — note that GeoJSON is the reverse.
+  instead, and `'48.8566,2.3522'.toLocation(using: finder)` does the same from
+  text. Latitude comes first, matching `find` — note that GeoJSON is the
+  reverse.
 - `TZDateTime.inLocation(location)` and `.inLocations([...])` re-express one
   instant in other places' zones, preserving the moment and changing only the
   wall clock. That is the multi-place case `package:timezone`'s single ambient

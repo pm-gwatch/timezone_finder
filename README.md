@@ -14,7 +14,7 @@ final finder = TimeZoneFinder.exact();
 
 finder.find(48.8566, 2.3522);          // 'Europe/Paris' — the identifier
 finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
-'48.8566,2.3522'.toLocation(finder);   // the same, from text
+'48.8566,2.3522'.toLocation(using: finder);   // the same, from text
 finder.find(0.0, -140.0);              // null — not inside any land zone
 ```
 
@@ -49,8 +49,8 @@ This package supplies the missing half. Coordinates in, `Location` out, and one
 instant rendered wherever it needs to be read:
 
 ```dart
-final charlesDeGaulle = '49.0097,2.5479'.toLocation(finder)!;
-final jfk = '40.6413,-73.7781'.toLocation(finder)!;
+final charlesDeGaulle = '49.0097,2.5479'.toLocation(using: finder)!;
+final jfk = '40.6413,-73.7781'.toLocation(using: finder)!;
 
 final takeOff = TZDateTime(charlesDeGaulle, 2026, 8, 23, 10, 15);
 final landing = takeOff.add(const Duration(hours: 8, minutes: 20));
