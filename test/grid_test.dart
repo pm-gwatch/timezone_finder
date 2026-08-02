@@ -87,7 +87,7 @@ void main() {
           ...goldenPoints,
         ]) {
           final viaGrid = gridFind(point.latitude, point.longitude);
-          final direct = oracle.find(point.latitude, point.longitude);
+          final direct = oracle.findId(point.latitude, point.longitude);
           if (viaGrid != direct) {
             failures.add(
               '${point.name}: grid ${viaGrid ?? 'null'}, '
@@ -118,7 +118,7 @@ void main() {
           final lon = (random.nextInt(360000001) - 180000000) / 1000000;
           checked++;
 
-          final direct = oracle.find(lat, lon);
+          final direct = oracle.findId(lat, lon);
           if (direct != null) land++;
           final viaGrid = gridFind(lat, lon);
           if (viaGrid != direct) {
@@ -177,7 +177,7 @@ void main() {
           for (final lat in <double>[-90, -89, 89, 90]) {
             expect(
               gridFind(lat, lon),
-              oracle.find(lat, lon),
+              oracle.findId(lat, lon),
               reason: 'grid and oracle disagree at ($lat, $lon)',
             );
           }

@@ -57,7 +57,7 @@ Future<void> main(List<String> args) async {
   final started = DateTime.now();
   final report = runDifferential(
     oracle: oracle,
-    subject: runtime.find,
+    subject: runtime.findId,
     points: points,
     seed: seed,
     overlapSeeds: <({double lat, double lon})>[

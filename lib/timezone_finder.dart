@@ -2,16 +2,16 @@
 ///
 /// ```dart
 /// final finder = TimeZoneFinder();
-/// finder.find(48.8566, 2.3522);          // 'Europe/Paris'
+/// finder.findId(48.8566, 2.3522);          // 'Europe/Paris'
 /// finder.findLocation(48.8566, 2.3522);  // a package:timezone Location
-/// finder.find(0.0, -140.0);              // null — not inside any land zone
+/// finder.findId(0.0, -140.0);              // null — not inside any land zone
 /// ```
 ///
 /// Boundaries are bundled, so lookups work offline with no network and no
 /// setup. They are simplified to roughly 110 m — far finer than a time zone,
 /// and small enough that the whole package is a few megabytes.
 ///
-/// [find] returns the identifier, which is what you store: it stays correct
+/// [findId] returns the identifier, which is what you store: it stays correct
 /// when daylight-saving rules change under it. [TimeZoneFinder.findLocation]
 /// and [TimeZoneLocation.toLocation] return a `package:timezone` `Location`,
 /// which is what you render with — pair it with

@@ -165,7 +165,7 @@ class ReferenceTimeZoneFinder {
   /// Unlike the real index, which sorts candidates and returns the first hit,
   /// this collects every containing polygon before choosing. Same answer, but
   /// hand-checkable, and it makes [zonesContaining] free.
-  String? find(double latitude, double longitude) {
+  String? findId(double latitude, double longitude) {
     _validate(latitude, longitude);
     final hits = _containing(latitude, longitude);
     if (hits.isEmpty) return null;
@@ -174,7 +174,7 @@ class ReferenceTimeZoneFinder {
   }
 
   /// Every distinct identifier whose polygons contain the point, ordered by
-  /// the same precedence [find] applies.
+  /// the same precedence [findId] applies.
   ///
   /// A diagnostic for probing the documented overlap regions. This is **not**
   /// the `findAll()` public API, which is deferred.

@@ -35,9 +35,9 @@ void main() {
     final finder = TimeZoneFinder();
 
     test('the default constructor needs no configuration', () {
-      expect(finder.find(48.8566, 2.3522), 'Europe/Paris');
-      expect(finder.find(-33.8688, 151.2093), 'Australia/Sydney');
-      expect(finder.find(0, -140), isNull);
+      expect(finder.findId(48.8566, 2.3522), 'Europe/Paris');
+      expect(finder.findId(-33.8688, 151.2093), 'Australia/Sydney');
+      expect(finder.findId(0, -140), isNull);
     });
 
     test('reports the release it was generated from', () {
@@ -52,7 +52,7 @@ void main() {
     test('resolves every ground-truth fixture', () {
       final failures = <String>[];
       for (final point in <GoldenPoint>[...bootstrapGoldens, ...goldenPoints]) {
-        final actual = finder.find(point.latitude, point.longitude);
+        final actual = finder.findId(point.latitude, point.longitude);
         if (actual != point.zone) {
           failures.add(
             '${point.name}: expected ${point.zone ?? 'null'}, '
@@ -71,10 +71,10 @@ void main() {
       // answer is always one of the two zones that genuinely cover the point,
       // and that it does not vary between calls.
       for (final pin in overlapPins) {
-        final answer = finder.find(pin.latitude, pin.longitude);
+        final answer = finder.findId(pin.latitude, pin.longitude);
         expect(answer, isNotNull, reason: pin.description);
         expect(pin.contenders, contains(answer), reason: pin.description);
-        expect(finder.find(pin.latitude, pin.longitude), answer);
+        expect(finder.findId(pin.latitude, pin.longitude), answer);
       }
     });
 
@@ -87,7 +87,7 @@ void main() {
         final baseline = finderOverIndex(unsimplified_data.loadContainer);
         for (final pin in overlapPins) {
           expect(
-            baseline.find(pin.latitude, pin.longitude),
+            baseline.findId(pin.latitude, pin.longitude),
             pin.selected,
             reason: pin.description,
           );
@@ -97,18 +97,18 @@ void main() {
 
     test('treats the antimeridian as one seam', () {
       for (final lat in <double>[-85, -80, 51.88, 66]) {
-        final west = finder.find(lat, -180);
+        final west = finder.findId(lat, -180);
         expect(west, isNotNull);
         for (final lon in <double>[180, 179.9999999, 179.9999995]) {
-          expect(finder.find(lat, lon), west, reason: 'seam broken at $lat');
+          expect(finder.findId(lat, lon), west, reason: 'seam broken at $lat');
         }
       }
     });
 
     test('rejects coordinates that are not coordinates', () {
-      expect(() => finder.find(91, 0), throwsArgumentError);
-      expect(() => finder.find(0, 181), throwsArgumentError);
-      expect(() => finder.find(double.nan, 0), throwsArgumentError);
+      expect(() => finder.findId(91, 0), throwsArgumentError);
+      expect(() => finder.findId(0, 181), throwsArgumentError);
+      expect(() => finder.findId(double.nan, 0), throwsArgumentError);
     });
 
     test('a straight boundary is still straight in the shipped data', () {
@@ -130,19 +130,19 @@ void main() {
       double? crossing(double latitude) {
         const step = 0.05;
         var east = -66.5;
-        if (finder.find(latitude, east) != 'America/Manaus') return null;
+        if (finder.findId(latitude, east) != 'America/Manaus') return null;
         var west = east;
         while (west > -70.5) {
           west -= step;
-          final zone = finder.find(latitude, west);
+          final zone = finder.findId(latitude, west);
           if (zone == 'America/Eirunepe') break;
           if (zone != 'America/Manaus') return null; // left Amazonas entirely
           east = west;
         }
-        if (finder.find(latitude, west) != 'America/Eirunepe') return null;
+        if (finder.findId(latitude, west) != 'America/Eirunepe') return null;
         for (var i = 0; i < 40; i++) {
           final middle = (west + east) / 2;
-          if (finder.find(latitude, middle) == 'America/Eirunepe') {
+          if (finder.findId(latitude, middle) == 'America/Eirunepe') {
             west = middle;
           } else {
             east = middle;
@@ -215,13 +215,54 @@ void main() {
       }
     });
 
-    test('two finders share nothing that would corrupt the other', () {
+    test('default finders share one decoded index', () {
+      // Deliberate, not incidental. Each finder used to decode its own copy;
+      // they now read one. Asserting equal answers would pass either way, so
+      // this counts decodes.
+      TimeZoneFinder().findId(48.8566, 2.3522); // ensure it is decoded at all
+      final decodes = indexDecodeCount;
+      expect(decodes, greaterThan(0));
+
+      for (var i = 0; i < 5; i++) {
+        expect(TimeZoneFinder().findId(48.8566, 2.3522), 'Europe/Paris');
+      }
+      expect(
+        indexDecodeCount,
+        decodes,
+        reason: 'a default finder decoded its own copy of the index',
+      );
+    });
+
+    test('sharing an index cannot let one finder corrupt another', () {
+      // The property the previous test used to establish by keeping the
+      // finders apart. It has to hold now that they are not: a TimeZoneIndex
+      // is read-only after construction, and lookups must not disturb it.
       final a = TimeZoneFinder();
       final b = TimeZoneFinder();
-      expect(a.find(48.8566, 2.3522), 'Europe/Paris');
-      expect(b.find(35.6762, 139.6503), 'Asia/Tokyo');
-      expect(a.find(35.6762, 139.6503), 'Asia/Tokyo');
-      expect(b.find(48.8566, 2.3522), 'Europe/Paris');
+      expect(a.findId(48.8566, 2.3522), 'Europe/Paris');
+      expect(b.findId(35.6762, 139.6503), 'Asia/Tokyo');
+      expect(a.findId(35.6762, 139.6503), 'Asia/Tokyo');
+      expect(b.findId(48.8566, 2.3522), 'Europe/Paris');
+      expect(a.availableTimeZones, b.availableTimeZones);
+      expect(a.ianaDatabaseVersion, b.ianaDatabaseVersion);
+    });
+
+    test('finderOverIndex stays isolated from the bundled index', () {
+      // What every accuracy number depends on: the unsimplified baseline and
+      // the bundled data must be usable in one process. If finderOverIndex
+      // ever resolved through the shared index, the comparison would silently
+      // become the bundled data against itself.
+      final decodes = indexDecodeCount;
+      final baseline = finderOverIndex(unsimplified_data.loadContainer);
+      expect(baseline.availableTimeZones.length, 419);
+      expect(
+        indexDecodeCount,
+        decodes + 1,
+        reason: 'finderOverIndex must decode its own index, exactly once',
+      );
+      // Same coordinate, two different indexes, both answering.
+      expect(baseline.findId(48.8566, 2.3522), 'Europe/Paris');
+      expect(TimeZoneFinder().findId(48.8566, 2.3522), 'Europe/Paris');
     });
   });
 

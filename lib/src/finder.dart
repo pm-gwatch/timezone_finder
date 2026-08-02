@@ -9,8 +9,36 @@ import '../data/boundaries.dart' as bundled_data;
 import 'index.dart';
 import 'quantization.dart';
 
-/// Supplies the packed index bytes.
-typedef _IndexBytes = Uint8List Function();
+/// Resolves the index a finder reads, decoding it at most once.
+typedef _IndexSource = TimeZoneIndex Function();
+
+TimeZoneIndex? _bundledIndex;
+int _decodes = 0;
+
+/// Every index decode goes through here, so [indexDecodeCount] cannot be
+/// bypassed by a change that decodes somewhere else in this library.
+TimeZoneIndex _decode(Uint8List Function() bytes) {
+  _decodes++;
+  return TimeZoneIndex.fromBytes(bytes());
+}
+
+/// The bundled index, decoded on first use and shared by every
+/// [TimeZoneFinder] built with the default constructor.
+///
+/// One copy per isolate. Holding several finders costs nothing beyond the
+/// objects themselves, and `ensurePreloaded` on any of them warms the index
+/// all of them read.
+TimeZoneIndex get _sharedIndex {
+  final existing = _bundledIndex;
+  if (existing != null) return existing;
+  return _bundledIndex = _decode(bundled_data.loadContainer);
+}
+
+/// How many indexes this library has decoded in this isolate.
+///
+/// Not exported, and present only so the tests can prove the sharing above is
+/// real rather than merely producing equal answers.
+int get indexDecodeCount => _decodes;
 
 /// Builds a finder over an arbitrary index, for the build pipeline and the
 /// tests.
@@ -19,14 +47,20 @@ typedef _IndexBytes = Uint8List Function();
 /// not public API. It exists because the unsimplified boundaries under
 /// `tool/release/` are the baseline the bundled ones are measured against, and
 /// they do not ship.
-TimeZoneFinder finderOverIndex(Uint8List Function() indexBytes) =>
-    TimeZoneFinder._(indexBytes);
+///
+/// The returned finder decodes its own index and shares nothing with the
+/// bundled one, so both can be held at once — which is how the accuracy
+/// numbers are measured.
+TimeZoneFinder finderOverIndex(Uint8List Function() indexBytes) {
+  TimeZoneIndex? own;
+  return TimeZoneFinder._(() => own ??= _decode(indexBytes));
+}
 
 /// Maps geographic coordinates to IANA time zone identifiers.
 ///
 /// ```dart
 /// final finder = TimeZoneFinder();
-/// finder.find(48.8566, 2.3522);  // 'Europe/Paris'
+/// finder.findId(48.8566, 2.3522);  // 'Europe/Paris'
 /// ```
 ///
 /// Boundaries are simplified to roughly 110 m, which is far finer than a time
@@ -34,15 +68,15 @@ TimeZoneFinder finderOverIndex(Uint8List Function() indexBytes) =>
 /// the measured cost of that simplification.
 class TimeZoneFinder {
   /// A finder over the bundled boundaries.
-  factory TimeZoneFinder() => TimeZoneFinder._(bundled_data.loadContainer);
+  ///
+  /// Cheap: every instance reads one shared index, decoded on first use.
+  factory TimeZoneFinder() => TimeZoneFinder._(() => _sharedIndex);
 
-  TimeZoneFinder._(this._indexBytes);
+  TimeZoneFinder._(this._index);
 
-  final _IndexBytes _indexBytes;
-  TimeZoneIndex? _index;
+  final _IndexSource _index;
 
-  TimeZoneIndex get _resolved =>
-      _index ??= TimeZoneIndex.fromBytes(_indexBytes());
+  TimeZoneIndex get _resolved => _index();
 
   /// Returns the IANA identifier containing ([latitude], [longitude]),
   /// e.g. `'Europe/Paris'`, or `null` if the coordinate is not inside any
@@ -54,7 +88,7 @@ class TimeZoneFinder {
   ///
   /// Throws [ArgumentError] if [latitude] is outside [-90, 90], [longitude] is
   /// outside [-180, 180], or either is NaN or infinite.
-  String? find(double latitude, double longitude) {
+  String? findId(double latitude, double longitude) {
     if (!latitude.isFinite || latitude < -90 || latitude > 90) {
       throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
     }
@@ -74,7 +108,7 @@ class TimeZoneFinder {
   /// Returns the `package:timezone` [Location] containing
   /// ([latitude], [longitude]), or `null` if no land time zone covers it.
   ///
-  /// The identifier from [find] is looked up in the time zone database your
+  /// The identifier from [findId] is looked up in the time zone database your
   /// application initialized. Use it to build civil times:
   ///
   /// ```dart
@@ -82,11 +116,11 @@ class TimeZoneFinder {
   /// TZDateTime(paris, 2026, 8, 23, 17, 30);
   /// ```
   ///
-  /// Throws [ArgumentError] on the same coordinates [find] rejects, and
+  /// Throws [ArgumentError] on the same coordinates [findId] rejects, and
   /// [StateError] if the database has not been initialized or does not contain
   /// the identifier — see [ianaDatabaseVersion] for why the two can disagree.
   Location? findLocation(double latitude, double longitude) {
-    final identifier = find(latitude, longitude);
+    final identifier = findId(latitude, longitude);
     if (identifier == null) return null;
     if (!timeZoneDatabase.isInitialized) {
       throw StateError(
@@ -110,8 +144,8 @@ class TimeZoneFinder {
     }
   }
 
-  /// Optional. Decodes the index ahead of time so the first [find] is not
-  /// slower than the ones after it. Calling [find] without this works fine.
+  /// Optional. Decodes the index ahead of time so the first [findId] is not
+  /// slower than the ones after it. Calling [findId] without this works fine.
   ///
   /// Currently this parses the container and nothing more, which is honest
   /// rather than lazy: ring coordinates are decoded on demand by design, so

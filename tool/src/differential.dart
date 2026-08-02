@@ -134,7 +134,7 @@ DifferentialReport runDifferential({
     final entry = stats[name]!;
     entry.checked++;
 
-    final expected = oracle.find(point.lat, point.lon);
+    final expected = oracle.findId(point.lat, point.lon);
     if (expected != null) entry.landHits++;
     final actual = subject(point.lat, point.lon);
     if (actual != expected) {

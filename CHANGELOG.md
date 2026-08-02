@@ -8,18 +8,18 @@ with no network access, bridged to `package:timezone` for civil time.
 ```dart
 initializeTimeZones();
 final finder = TimeZoneFinder();
-finder.find(48.8566, 2.3522);          // 'Europe/Paris'
+finder.findId(48.8566, 2.3522);          // 'Europe/Paris'
 finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
-finder.find(0.0, -140.0);              // null — not inside any land zone
+finder.findId(0.0, -140.0);              // null — not inside any land zone
 ```
 
 ### API
 
-- `TimeZoneFinder()` takes no configuration; `find(latitude, longitude)`
+- `TimeZoneFinder()` takes no configuration; `findId(latitude, longitude)`
   returns a `Continent/City` identifier or `null`.
 - `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
   instead, and `'48.8566,2.3522'.toLocation(using: finder)` does the same from
-  text. Latitude comes first, matching `find` — note that GeoJSON is the
+  text. Latitude comes first, matching `findId` — note that GeoJSON is the
   reverse.
 - `TZDateTime.inLocation(location)` and `.inLocations([...])` re-express one
   instant in other places' zones, preserving the moment and changing only the

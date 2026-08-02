@@ -9,13 +9,13 @@ import 'package:timezone/data/latest_all.dart';
 import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
-initializeTimeZones();
+initializeTimeZones();                 // required to create any Location
 final finder = TimeZoneFinder();
 
-finder.find(48.8566, 2.3522);          // 'Europe/Paris' — the identifier
+finder.findId(48.8566, 2.3522);          // 'Europe/Paris' — the identifier
 finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
 '48.8566,2.3522'.toLocation(using: finder);   // the same, from text
-finder.find(0.0, -140.0);              // null — not inside any land zone
+finder.findId(0.0, -140.0);              // null — not inside any land zone
 ```
 
 > **Status: 0.1.0, not yet published.** The lookup works and the boundary data
@@ -33,7 +33,7 @@ address → geocoder (Nominatim, Photon, …) → (lat, lon) → Continent/City 
 The boundary data ships inside the package, so lookups work fully offline on
 Dart CLI/server and on Flutter for mobile and desktop.
 
-`find` is synchronous. The index decodes lazily on first use; the optional
+`findId` is synchronous. The index decodes lazily on first use; the optional
 `ensurePreloaded()` pays that cost up front instead.
 
 ## One instant, several places
@@ -88,7 +88,7 @@ tzdb link identifiers and carries 341 locations against this dataset's 419, so
 `Europe/Zagreb`, `Africa/Accra` and 104 others would fail to resolve.
 `findLocation` raises a `StateError` naming the fix if either problem occurs.
 
-**Latitude first.** `toLocation` parses `"latitude,longitude"`, matching `find`.
+**Latitude first.** `toLocation` parses `"latitude,longitude"`, matching `findId`.
 GeoJSON orders coordinates the other way, and a swapped pair is usually still a
 valid coordinate somewhere else entirely — `'2.3522,48.8566'` is not Paris and
 will not tell you so.
@@ -101,7 +101,7 @@ and hands the answer to `package:timezone` in a usable form.
 - It resolves coordinates to a zone. **UTC offsets, DST and civil-time
   arithmetic are [`package:timezone`](https://pub.dev/packages/timezone)'s
   work**, and this package does not reimplement them.
-- `find` returns the **identifier**, which is what you store: it stays correct
+- `findId` returns the **identifier**, which is what you store: it stays correct
   when daylight-saving rules change under it, where a stored UTC offset does
   not.
 - The dataset covers **land only**, so a coordinate well out to sea returns
@@ -130,9 +130,9 @@ British and French claims meet in the middle with nothing unclaimed between
 them:
 
 ```dart
-finder.find(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
-finder.find(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
-finder.find(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
+finder.findId(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
+finder.findId(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
+finder.findId(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
 ```
 
 That last coordinate is water, and it still resolves — the boundary between the
@@ -144,9 +144,9 @@ other across the Adriatic, 197 km apart. That is far more than two 22 km claims
 can span, so the middle belongs to nobody:
 
 ```dart
-finder.find(42.6634651, 18.0591377); // Port of Dubrovnik -> Europe/Zagreb
-finder.find(41.137428,  16.8600823); // Port of Bari      -> Europe/Rome
-finder.find(41.900447,  17.459610);  // mid-Adriatic      -> null
+finder.findId(42.6634651, 18.0591377); // Port of Dubrovnik -> Europe/Zagreb
+finder.findId(41.137428,  16.8600823); // Port of Bari      -> Europe/Rome
+finder.findId(41.900447,  17.459610);  // mid-Adriatic      -> null
 ```
 
 Both ports are onshore and resolve normally; only the water between them is

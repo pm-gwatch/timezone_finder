@@ -29,18 +29,18 @@ void main() {
   });
 
   group('findLocation', () {
-    test('returns the Location for the identifier find returns', () {
+    test('returns the Location for the identifier findId returns', () {
       final paris = finder.findLocation(48.8566, 2.3522)!;
       expect(paris.name, 'Europe/Paris');
       expect(paris, same(getLocation('Europe/Paris')));
     });
 
-    test('returns null exactly where find returns null', () {
-      expect(finder.find(0, -140), isNull);
+    test('returns null exactly where findId returns null', () {
+      expect(finder.findId(0, -140), isNull);
       expect(finder.findLocation(0, -140), isNull);
     });
 
-    test('rejects the same coordinates find rejects', () {
+    test('rejects the same coordinates findId rejects', () {
       expect(() => finder.findLocation(91, 0), throwsArgumentError);
       expect(() => finder.findLocation(0, 181), throwsArgumentError);
       expect(() => finder.findLocation(double.nan, 0), throwsArgumentError);

@@ -88,7 +88,7 @@ void main() {
           ...bootstrapGoldens,
           ...goldenPoints,
         ]) {
-          final actual = finder.find(point.latitude, point.longitude);
+          final actual = finder.findId(point.latitude, point.longitude);
           if (actual != point.zone) {
             failures.add(
               '${point.name}: expected ${point.zone ?? 'null'}, '
@@ -104,7 +104,7 @@ void main() {
         // first of a pre-sorted list. Same rule, different paths.
         final drift = <String>[];
         for (final pin in overlapPins) {
-          final actual = finder.find(pin.latitude, pin.longitude);
+          final actual = finder.findId(pin.latitude, pin.longitude);
           if (actual != pin.selected) {
             drift.add(
               '${pin.description}: runtime $actual, '
@@ -129,9 +129,9 @@ void main() {
           final lat = (random.nextInt(180000001) - 90000000) / 1000000;
           final lon = (random.nextInt(360000001) - 180000000) / 1000000;
 
-          final expected = oracle.find(lat, lon);
+          final expected = oracle.findId(lat, lon);
           if (expected != null) land++;
-          final actual = finder.find(lat, lon);
+          final actual = finder.findId(lat, lon);
           if (actual != expected) {
             failures.add(
               '($lat, $lon): runtime ${actual ?? 'null'}, '
@@ -146,27 +146,31 @@ void main() {
 
       test('treats the antimeridian as one seam', () {
         for (final lat in <double>[-85, -80, 51.88, 66]) {
-          final west = finder.find(lat, -180);
+          final west = finder.findId(lat, -180);
           expect(west, isNotNull, reason: 'seam has land at $lat');
           for (final lon in <double>[180, 179.9999999, 179.9999995]) {
-            expect(finder.find(lat, lon), west, reason: 'seam broken at $lat');
+            expect(
+              finder.findId(lat, lon),
+              west,
+              reason: 'seam broken at $lat',
+            );
           }
         }
       });
 
       test('rejects coordinates that are not coordinates', () {
-        expect(() => finder.find(91, 0), throwsArgumentError);
-        expect(() => finder.find(0, 181), throwsArgumentError);
-        expect(() => finder.find(double.nan, 0), throwsArgumentError);
-        expect(() => finder.find(0, double.infinity), throwsArgumentError);
+        expect(() => finder.findId(91, 0), throwsArgumentError);
+        expect(() => finder.findId(0, 181), throwsArgumentError);
+        expect(() => finder.findId(double.nan, 0), throwsArgumentError);
+        expect(() => finder.findId(0, double.infinity), throwsArgumentError);
       });
 
       test('ensurePreloaded is optional and idempotent', () {
         final fresh = finderOverIndex(unsimplified.loadContainer);
-        expect(fresh.find(48.8566, 2.3522), 'Europe/Paris');
+        expect(fresh.findId(48.8566, 2.3522), 'Europe/Paris');
         expect(fresh.ensurePreloaded(), completes);
         expect(fresh.ensurePreloaded(), completes);
-        expect(fresh.find(48.8566, 2.3522), 'Europe/Paris');
+        expect(fresh.findId(48.8566, 2.3522), 'Europe/Paris');
       });
 
       test('rejects a container it cannot trust', () {
@@ -211,7 +215,7 @@ void main() {
               quantizeQueryLongitude(point.longitude),
               quantize(point.latitude),
             ),
-            finder.find(point.latitude, point.longitude),
+            finder.findId(point.latitude, point.longitude),
             reason: point.name,
           );
         }
