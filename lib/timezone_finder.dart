@@ -21,4 +21,5 @@ library;
 
 export 'src/finder.dart' show TimeZoneFinder;
 export 'src/index.dart' show IndexFormatException;
-export 'src/locations.dart' show TZDateTimeInLocation, TimeZoneLocation;
+export 'src/locations.dart'
+    show TZDateTimeInLocation, TZDateTimeInPlace, TimeZoneLocation;

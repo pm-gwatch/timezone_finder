@@ -227,6 +227,125 @@ void main() {
     });
   });
 
+  group('String.toLocation without a finder', () {
+    test('omitting `using` matches passing the default finder', () {
+      expect(
+        '48.8566,2.3522'.toLocation()!.name,
+        '48.8566,2.3522'.toLocation(using: TimeZoneFinder())!.name,
+      );
+    });
+
+    test('the null and throwing contracts are unchanged without `using`', () {
+      expect('0,-140'.toLocation(), isNull);
+      expect(() => 'oops'.toLocation(), throwsFormatException);
+      expect(() => '91,0'.toLocation(), throwsArgumentError);
+    });
+  });
+
+  group('TZDateTime.inPlace', () {
+    test('re-expresses the instant at a coordinate', () {
+      final takeOff = TZDateTime(paris, 2026, 8, 23, 10, 15);
+      final there = takeOff.inPlace('40.6413,-73.7781')!;
+
+      expect(there.location.name, 'America/New_York');
+      expect(there.millisecondsSinceEpoch, takeOff.millisecondsSinceEpoch);
+      expect(there.hour, 4);
+    });
+
+    test('agrees with resolving the coordinate by hand', () {
+      final takeOff = TZDateTime(paris, 2026, 8, 23, 10, 15);
+      expect(
+        takeOff.inPlace('40.6413,-73.7781'),
+        takeOff.inLocation('40.6413,-73.7781'.toLocation()!),
+      );
+    });
+
+    test('returns null where no zone covers the point', () {
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      expect(start.inPlace('0,-140'), isNull);
+    });
+
+    test('separates a bad coordinate from open ocean', () {
+      // The same distinction the rest of the package draws: a typo throws,
+      // unclaimed water returns null.
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      expect(() => start.inPlace('oops'), throwsFormatException);
+      expect(() => start.inPlace('91,0'), throwsArgumentError);
+      expect(start.inPlace('0,-140'), isNull);
+    });
+
+    test('honours an explicit finder', () {
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      expect(
+        start.inPlace('40.6413,-73.7781', using: TimeZoneFinder())!.location,
+        same(newYork),
+      );
+    });
+  });
+
+  group('TZDateTime.inPlaces', () {
+    test('returns one entry per coordinate, in order', () {
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      final elsewhere = start.inPlaces(<String>[
+        '40.6413,-73.7781',
+        '35.6762,139.6503',
+      ]);
+
+      expect(elsewhere, hasLength(2));
+      expect(elsewhere[0]!.location.name, 'America/New_York');
+      expect(elsewhere[1]!.location.name, 'Asia/Tokyo');
+    });
+
+    test('an unresolvable coordinate becomes a null in place', () {
+      // The contract that makes the plural form usable: entry i always
+      // corresponds to place i, so a hole cannot shift the others.
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      final elsewhere = start.inPlaces(<String>[
+        '40.6413,-73.7781',
+        '0,-140', // open ocean
+        '35.6762,139.6503',
+      ]);
+
+      expect(elsewhere, hasLength(3));
+      expect(elsewhere[0]!.location.name, 'America/New_York');
+      expect(elsewhere[1], isNull);
+      expect(elsewhere[2]!.location.name, 'Asia/Tokyo');
+    });
+
+    test('every entry is the same instant as the receiver', () {
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      for (final other in start.inPlaces(<String>[
+        '40.6413,-73.7781',
+        '35.6762,139.6503',
+      ])) {
+        expect(other!.millisecondsSinceEpoch, start.millisecondsSinceEpoch);
+      }
+    });
+
+    test('an empty list yields an empty list', () {
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      expect(start.inPlaces(const <String>[]), isEmpty);
+    });
+
+    test('agrees with inPlace applied one at a time', () {
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      const places = <String>['40.6413,-73.7781', '0,-140'];
+      expect(start.inPlaces(places), <TZDateTime?>[
+        for (final p in places) start.inPlace(p),
+      ]);
+    });
+
+    test('one bad coordinate throws rather than discarding the good ones', () {
+      // Deliberate: a malformed string is a programming error, unlike a
+      // coordinate that simply has no zone.
+      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
+      expect(
+        () => start.inPlaces(<String>['40.6413,-73.7781', 'oops']),
+        throwsFormatException,
+      );
+    });
+  });
+
   test('a coordinate string reaches a civil time end to end', () {
     // The path the package exists to make short: two coordinates, one
     // instant, each rendered where it belongs.

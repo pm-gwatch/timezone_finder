@@ -18,13 +18,18 @@ finder.findId(0.0, -140.0);              // null — not inside any land zone
 - `TimeZoneFinder()` takes no configuration; `findId(latitude, longitude)`
   returns a `Continent/City` identifier or `null`.
 - `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
-  instead, and `'48.8566,2.3522'.toLocation(using: finder)` does the same from
-  text. Latitude comes first, matching `findId` — note that GeoJSON is the
-  reverse.
-- `TZDateTime.inLocation(location)` and `.inLocations([...])` re-express one
-  instant in other places' zones, preserving the moment and changing only the
-  wall clock. That is the multi-place case `package:timezone`'s single ambient
-  `local` cannot serve.
+  instead, and `'48.8566,2.3522'.toLocation()` does the same from text.
+  Latitude comes first, matching `findId` — note that GeoJSON is the reverse.
+- `TZDateTime.inPlace(coordinates)` and `.inPlaces([...])` re-express one
+  instant at places given as coordinates; `.inLocation` and `.inLocations` do
+  the same from `Location` objects. All preserve the moment and change only
+  the wall clock — the multi-place case `package:timezone`'s single ambient
+  `local` cannot serve. `inPlaces` returns `List<TZDateTime?>`, one entry per
+  place in order, `null` where no zone covers the coordinate.
+- Every `TimeZoneFinder()` shares one index, decoded on first use, so holding
+  several costs nothing and `ensurePreloaded()` warms them all. `toLocation`,
+  `inPlace` and `inPlaces` take an optional `using:` finder for reading a
+  different index.
 - `ensurePreloaded()` optionally decodes the index up front instead of on the
   first lookup. `ianaDatabaseVersion` and `availableTimeZones` report what
   is bundled.

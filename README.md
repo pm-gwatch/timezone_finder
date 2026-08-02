@@ -12,10 +12,10 @@ import 'package:timezone_finder/timezone_finder.dart';
 initializeTimeZones();                 // required to create any Location
 final finder = TimeZoneFinder();
 
-finder.findId(48.8566, 2.3522);          // 'Europe/Paris' — the identifier
+finder.findId(48.8566, 2.3522);        // 'Europe/Paris' — the identifier
 finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
-'48.8566,2.3522'.toLocation(using: finder);   // the same, from text
-finder.findId(0.0, -140.0);              // null — not inside any land zone
+'48.8566,2.3522'.toLocation();         // the same, from text
+finder.findId(0.0, -140.0);            // null — not inside any land zone
 ```
 
 > **Status: 0.1.0, not yet published.** The lookup works and the boundary data
@@ -49,23 +49,26 @@ This package supplies the missing half. Coordinates in, `Location` out, and one
 instant rendered wherever it needs to be read:
 
 ```dart
-final charlesDeGaulle = '49.0097,2.5479'.toLocation(using: finder)!;
-final jfk = '40.6413,-73.7781'.toLocation(using: finder)!;
+final charlesDeGaulle = '49.0097,2.5479'.toLocation()!;
 
 final takeOff = TZDateTime(charlesDeGaulle, 2026, 8, 23, 10, 15);
 final landing = takeOff.add(const Duration(hours: 8, minutes: 20));
 
-takeOff;                  // 10:15, Paris
-landing.inLocation(jfk);  // 12:35 the same day, New York — the same instant
+takeOff;                                // 10:15, Paris
+landing.inPlace('40.6413,-73.7781');    // 12:35 at JFK — the same instant
 ```
 
-`inLocation` re-expresses an instant in one other zone; `inLocations` takes a
-list and returns one entry per place, in order:
+`inPlace` takes a coordinate; `inLocation` takes a `Location` you already
+hold. Each has a plural form returning one entry per place, in order:
 
 ```dart
-final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-start.inLocations([newYork, tokyo, sydney]);
+start.inPlaces(['40.64,-73.77', '35.67,139.65']);  // List<TZDateTime?>
+start.inLocations([newYork, tokyo]);               // List<TZDateTime>
 ```
+
+`inPlaces` is nullable per entry because a coordinate may fall where no zone
+covers it. Entry *i* always corresponds to place *i*, so an unresolvable
+coordinate becomes a `null` in position rather than a missing element.
 
 Both preserve the moment and change only the wall clock. To keep the wall clock
 and change the moment — *move* a meeting to New York's 17:30 rather than
@@ -87,6 +90,11 @@ your choice and nothing is initialized behind your back. Use
 tzdb link identifiers and carries 341 locations against this dataset's 419, so
 `Europe/Zagreb`, `Africa/Accra` and 104 others would fail to resolve.
 `findLocation` raises a `StateError` naming the fix if either problem occurs.
+
+**`using:` is rarely needed.** `toLocation`, `inPlace` and `inPlaces` accept an
+optional `using:` finder. Omitted, they read the bundled boundaries that every
+`TimeZoneFinder()` shares — one index per isolate, decoded once. Pass one only
+to read a different index.
 
 **Latitude first.** `toLocation` parses `"latitude,longitude"`, matching `findId`.
 GeoJSON orders coordinates the other way, and a swapped pair is usually still a

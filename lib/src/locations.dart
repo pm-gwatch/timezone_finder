@@ -10,21 +10,20 @@ extension TimeZoneLocation on String {
   /// Parses this as `"latitude,longitude"` and resolves it [using] a finder.
   ///
   /// ```dart
-  /// '48.8566,2.3522'.toLocation(using: finder);   // Europe/Paris
-  /// '48.8566, 2.3522'.toLocation(using: finder);  // same, spaces allowed
+  /// '48.8566,2.3522'.toLocation();   // Europe/Paris
+  /// '48.8566, 2.3522'.toLocation();  // same, spaces allowed
   /// ```
   ///
   /// **Latitude first.** GeoJSON orders coordinates the other way, and a
   /// swapped pair usually parses fine and returns a confidently wrong answer.
   ///
-  /// Required rather than defaulted, so the call uses the finder you already
-  /// hold. A default would construct its own and decode a second copy of the
-  /// index.
+  /// [using] is only needed to read a non-default index; omitted, the call
+  /// goes through the bundled boundaries every finder shares.
   ///
   /// Returns `null` only when no land time zone covers the point. Throws
   /// [FormatException] if this is not two comma-separated numbers, and
   /// whatever [TimeZoneFinder.findLocation] throws otherwise.
-  Location? toLocation({required TimeZoneFinder using}) {
+  Location? toLocation({TimeZoneFinder? using}) {
     final comma = indexOf(',');
     // Exactly one comma: '1,2,3' is a mistake, not a coordinate.
     if (comma < 0 || indexOf(',', comma + 1) >= 0) {
@@ -42,7 +41,7 @@ extension TimeZoneLocation on String {
         latitude == null ? 0 : comma + 1,
       );
     }
-    return using.findLocation(latitude, longitude);
+    return (using ?? TimeZoneFinder()).findLocation(latitude, longitude);
   }
 }
 
@@ -70,5 +69,46 @@ extension TZDateTimeInLocation on TZDateTime {
   /// An empty list yields an empty list.
   List<TZDateTime> inLocations(List<Location> locations) => <TZDateTime>[
     for (final location in locations) TZDateTime.from(this, location),
+  ];
+}
+
+/// Re-expresses an instant at places given as coordinates.
+extension TZDateTimeInPlace on TZDateTime {
+  /// This same instant, as the wall clock reads it where [coordinates] is.
+  ///
+  /// ```dart
+  /// takeOff.inPlace('40.6413,-73.7781');  // 04:15, if takeOff is 10:15 Paris
+  /// ```
+  ///
+  /// Shorthand for resolving the coordinate and calling
+  /// [TZDateTimeInLocation.inLocation]. Returns `null` when no land time zone
+  /// covers the point — which is why it is nullable and `inLocation` is not.
+  ///
+  /// Throws whatever [TimeZoneLocation.toLocation] throws: [FormatException]
+  /// for text that is not two comma-separated numbers, [ArgumentError] for
+  /// numbers that are not coordinates.
+  TZDateTime? inPlace(String coordinates, {TimeZoneFinder? using}) {
+    final location = coordinates.toLocation(using: using);
+    return location == null ? null : TZDateTime.from(this, location);
+  }
+
+  /// This same instant at each of [coordinates], in the order given.
+  ///
+  /// ```dart
+  /// meetingStart.inPlaces(['40.64,-73.77', '35.67,139.65']);
+  /// ```
+  ///
+  /// **Entry `i` always corresponds to place `i`**, so an unresolvable
+  /// coordinate becomes a `null` in place rather than a missing element. That
+  /// is the point of the plural form: dropping it would silently break the
+  /// correspondence, and throwing would let one bad coordinate discard every
+  /// good result.
+  ///
+  /// An empty list yields an empty list.
+  List<TZDateTime?> inPlaces(
+    List<String> coordinates, {
+    TimeZoneFinder? using,
+  }) => <TZDateTime?>[
+    for (final each in coordinates) inPlace(each, using: using),
   ];
 }
