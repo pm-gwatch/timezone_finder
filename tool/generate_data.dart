@@ -3,8 +3,8 @@
 ///     dart run tool/generate_data.dart [--chunk-kb 1024]
 ///         [--emit bundled|unsimplified|both]
 ///
-/// The bundled index goes to `lib/data/` and ships; the unsimplified baseline
-/// goes to `tool/release/` and does not. Maintainers run this; consumers never
+/// The bundled index goes to `lib/src/data/` and ships; the unsimplified
+/// baseline goes to `tool/release/` and does not. Maintainers run this; consumers never
 /// do — `tool/refresh.dart` wraps it with the release triage.
 library;
 
@@ -87,7 +87,7 @@ Future<void> main(List<String> args) async {
     await _emitTier(name: 'boundaries', polygons: simplified, chunkKb: chunkKb);
   }
 
-  stdout.writeln('\nNow run: dart format lib/data && dart analyze');
+  stdout.writeln('\nNow run: dart format lib/src/data && dart analyze');
 }
 
 Future<void> _emitTier({
@@ -98,7 +98,7 @@ Future<void> _emitTier({
   // Only the simplified set ships. The unsimplified one is the baseline the
   // tests measure against, so it is committed but excluded from the archive.
   final directory = Directory(
-    name == 'boundaries' ? 'lib/data' : 'tool/release',
+    name == 'boundaries' ? 'lib/src/data' : 'tool/release',
   );
   final container = buildIndex(
     dataVersion: defaultRelease,

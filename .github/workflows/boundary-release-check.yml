@@ -64,7 +64,7 @@ jobs:
             echo "dart run tool/refresh.dart --release ${{ steps.latest.outputs.latest }}"
             echo '```'
             echo
-            echo 'This regenerates both the bundled index in `lib/data/` and'
+            echo 'This regenerates both the bundled index in `lib/src/data/` and'
             echo 'the unsimplified baseline in `tool/release/`, which is what'
             echo 'the accuracy numbers are measured against. Review'
             echo '`git diff --stat lib/data tool/release`, then set the version:'

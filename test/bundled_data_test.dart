@@ -1,8 +1,8 @@
 // The data actually shipped.
 //
 // Everything until now tested a container packed in memory. These tests use
-// what a consumer gets — the base64 chunks under `lib/data/`, decoded through
-// the default constructor.
+// what a consumer gets — the base64 chunks under `lib/src/data/`, decoded
+// through the default constructor.
 //
 // Most of this needs no boundary data at all, which is the point: once the
 // index is bundled, the fixtures can be checked on a fresh clone with no 51 MB
@@ -16,7 +16,7 @@ library;
 import 'dart:math';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/data/boundaries.dart' as bundled_data;
+import 'package:timezone_finder/src/data/boundaries.dart' as bundled_data;
 import 'package:timezone_finder/src/finder.dart';
 
 import '../tool/release/boundaries_unsimplified.dart' as unsimplified_data;
@@ -321,7 +321,7 @@ void main() {
           fresh.length,
           reason:
               'bundled container is a different size from a fresh pack — '
-              'lib/data is stale, regenerate with tool/generate_data.dart',
+              'lib/src/data is stale, regenerate with tool/generate_data.dart',
         );
         var firstDifference = -1;
         for (var i = 0; i < fresh.length; i++) {

@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:timezone/timezone.dart';
 
-import '../data/boundaries.dart' as bundled_data;
+import 'data/boundaries.dart' as bundled_data;
 import 'index.dart';
 import 'quantization.dart';
 

@@ -12,11 +12,11 @@ topics:
   - geospatial
   - iana
 
-# Over 42 MB of base64, byte sequences that look like credentials occur by
-# chance; pub's scanner flagged three. Scoped to the generated data only —
+# Across megabytes of base64, byte sequences that look like credentials occur
+# by chance; pub's scanner flagged three. Scoped to the generated data only —
 # every file there is built by tool/refresh.dart from a public release.
 false_secrets:
-  - /lib/data/**
+  - /lib/src/data/**
 
 environment:
   # Required by package:timezone; the lookup itself needs only Dart 3.0.

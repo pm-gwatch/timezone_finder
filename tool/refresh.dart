@@ -3,8 +3,8 @@
 ///     dart run tool/refresh.dart --release 2026c            # regenerate
 ///     dart run tool/refresh.dart --release 2026c --verify   # check only
 ///
-/// Writes the bundled index to `lib/data/` and the unsimplified baseline to
-/// `tool/release/`. The release is a parameter rather than "latest" so any
+/// Writes the bundled index to `lib/src/data/` and the unsimplified baseline
+/// to `tool/release/`. The release is a parameter rather than "latest" so any
 /// past one can be reproduced. Generated files are committed; consumers never
 /// run this.
 ///
@@ -17,7 +17,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:timezone_finder/data/boundaries.dart' as bundled_container;
+import 'package:timezone_finder/src/data/boundaries.dart' as bundled_container;
 import 'release/boundaries_unsimplified.dart' as unsimplified_container;
 
 import '../test/reference/reference_finder.dart';
@@ -104,7 +104,9 @@ Future<void> main(List<String> args) async {
     ('boundaries', bundled),
   ]) {
     final result = emitDartData(
-      directory: Directory(name == 'boundaries' ? 'lib/data' : 'tool/release'),
+      directory: Directory(
+        name == 'boundaries' ? 'lib/src/data' : 'tool/release',
+      ),
       name: name,
       container: container,
       dataVersion: release,
@@ -117,7 +119,7 @@ Future<void> main(List<String> args) async {
   }
   await _writeCommittedNames(release, oracle.zones);
 
-  await _run('dart', <String>['format', 'lib/data']);
+  await _run('dart', <String>['format', 'lib/src/data']);
   if (!skipTests) {
     stdout.writeln(
       '\nRunning the suite — regenerated data must not land '
@@ -134,7 +136,9 @@ Future<void> main(List<String> args) async {
   }
 
   stdout
-    ..writeln('\nDone. Review `git diff --stat lib/data` before committing,')
+    ..writeln(
+      '\nDone. Review `git diff --stat lib/src/data` before committing,',
+    )
     ..writeln('and record the release in CHANGELOG.md.');
 }
 

@@ -33,9 +33,8 @@ address → geocoder (Nominatim, Photon, …) → (lat, lon) → Continent/City 
 The boundary data ships inside the package, so lookups work fully offline on
 Dart CLI/server and on Flutter for mobile and desktop.
 
-Lookups are synchronous. The index decodes lazily on first use and is shared
-by every `TimeZoneFinder()`, so holding several costs nothing; the optional
-`ensurePreloaded()` pays the decode up front instead.
+Lookups are synchronous. Every `TimeZoneFinder()` shares one lazily decoded
+index; `ensurePreloaded()` pays that cost up front.
 
 ## One instant, several places
 
@@ -82,25 +81,22 @@ change that — it resolves *where* a coordinate is, not which of two instants a
 local time means. If your application schedules by wall clock across DST
 transitions, handle those cases yourself.
 
-### Two things to know
+### Three things to know
 
-**Initialize the database yourself, from `latest_all`.** This package depends on
-`package:timezone`'s engine, never on a tzdata variant, so the payload stays
-your choice and nothing is initialized behind your back. Use
-`package:timezone/data/latest_all.dart`: the default `data/latest.dart` drops the
-tzdb link identifiers and carries 341 locations against this dataset's 419, so
+**Initialize from `latest_all`.** This package depends on `package:timezone`'s
+engine, never on a tzdata variant. Use
+`package:timezone/data/latest_all.dart`: `data/latest.dart` drops the tzdb link
+identifiers and carries 341 locations against this dataset's 419, so
 `Europe/Zagreb`, `Africa/Accra` and 104 others would fail to resolve.
 `findLocation` raises a `StateError` naming the fix if either problem occurs.
 
-**`using:` is rarely needed.** `toLocation`, `inPlace` and `inPlaces` accept an
-optional `using:` finder. Omitted, they read the bundled boundaries that every
-`TimeZoneFinder()` shares — one index per isolate, decoded once. Pass one only
-to read a different index.
+**`using:` is rarely needed.** `toLocation`, `inPlace` and `inPlaces` take an
+optional finder. Omitted, they use the shared bundled index. Pass one only to
+read a different index (tests / custom bytes).
 
-**Latitude first.** `toLocation` parses `"latitude,longitude"`, matching `findId`.
-GeoJSON orders coordinates the other way, and a swapped pair is usually still a
-valid coordinate somewhere else entirely — `'2.3522,48.8566'` is not Paris and
-will not tell you so.
+**Latitude first.** `toLocation` parses `"latitude,longitude"`, matching
+`findId`. GeoJSON is the reverse — `'2.3522,48.8566'` is not Paris and will not
+tell you so.
 
 ## Scope
 
@@ -289,17 +285,10 @@ boundary release, not a tzdb one.
 
 ## Accuracy
 
-Answers are validated against a deliberately naive reference implementation
-that reads the source boundaries directly, over **ten million sampled
-coordinates** weighted toward zone borders, enclaves, grid boundaries and the
-antimeridian rather than spread uniformly.
-
-Run against the unsimplified geometry — the same quantization, grid, encoder
-and container, without the Douglas-Peucker step — there are **zero
-disagreements**. The machinery introduces no error of its own, so everything
-the bundled data differs by is the simplification cost tabulated under
-[Resolution](#resolution-and-what-it-costs), and nothing else. Both runs are
-reproducible:
+Against the unsimplified source geometry (same quantization, grid and encoder,
+no Douglas-Peucker), the pipeline shows **zero disagreements** over ten million
+sampled coordinates. Everything the bundled data differs by is the
+simplification cost under [Resolution](#resolution-and-what-it-costs).
 
 ```sh
 dart run tool/differential.dart --index unsimplified   # expects zero

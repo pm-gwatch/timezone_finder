@@ -18,7 +18,7 @@ import '../test/fixtures/overlap_pins.dart';
 import '../test/reference/reference_finder.dart';
 import 'package:timezone_finder/src/finder.dart';
 
-import 'package:timezone_finder/data/boundaries.dart' as bundled;
+import 'package:timezone_finder/src/data/boundaries.dart' as bundled;
 
 import 'release/boundaries_unsimplified.dart' as unsimplified;
 
