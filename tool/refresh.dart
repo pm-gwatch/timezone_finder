@@ -1,10 +1,12 @@
-/// Regenerates the bundled index from a timezone-boundary-builder release.
+/// Regenerates both indexes from a timezone-boundary-builder release.
 ///
 ///     dart run tool/refresh.dart --release 2026c            # regenerate
 ///     dart run tool/refresh.dart --release 2026c --verify   # check only
 ///
-/// The release is a parameter rather than "latest" so any past release can be
-/// reproduced. Generated files are committed; consumers never run this.
+/// Writes the bundled index to `lib/data/` and the unsimplified baseline to
+/// `tool/release/`. The release is a parameter rather than "latest" so any
+/// past one can be reproduced. Generated files are committed; consumers never
+/// run this.
 ///
 /// **Byte-identity is claimed only for the same release.** `--verify` asserts
 /// that 2026c regenerates 2026c's committed bytes exactly. A different release

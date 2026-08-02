@@ -1,10 +1,10 @@
-/// Generates the bundled index under `lib/data/`.
+/// Generates the indexes as base64 Dart source.
 ///
 ///     dart run tool/generate_data.dart [--chunk-kb 1024]
 ///         [--emit bundled|unsimplified|both]
 ///
-/// Fetches the boundary data if it is not cached, packs the container, and
-/// writes it out as base64 Dart source. Maintainers run this; consumers never
+/// The bundled index goes to `lib/data/` and ships; the unsimplified baseline
+/// goes to `tool/release/` and does not. Maintainers run this; consumers never
 /// do — `tool/refresh.dart` wraps it with the release triage.
 library;
 

@@ -72,7 +72,7 @@ extension TZDateTimeInLocation on TZDateTime {
   ];
 }
 
-/// Re-expresses an instant at places given as coordinates.
+/// The same, for places given as `"latitude,longitude"` rather than resolved.
 extension TZDateTimeInPlace on TZDateTime {
   /// This same instant, as the wall clock reads it where [coordinates] is.
   ///
@@ -98,11 +98,12 @@ extension TZDateTimeInPlace on TZDateTime {
   /// meetingStart.inPlaces(['40.64,-73.77', '35.67,139.65']);
   /// ```
   ///
-  /// **Entry `i` always corresponds to place `i`**, so an unresolvable
-  /// coordinate becomes a `null` in place rather than a missing element. That
-  /// is the point of the plural form: dropping it would silently break the
-  /// correspondence, and throwing would let one bad coordinate discard every
-  /// good result.
+  /// **Entry `i` always corresponds to place `i`.** A coordinate no zone
+  /// covers becomes a `null` in position rather than a missing element, so a
+  /// gap cannot shift the entries after it.
+  ///
+  /// A coordinate that is not two numbers still throws, as [inPlace] does:
+  /// unclaimed water is a result, a malformed string is a mistake.
   ///
   /// An empty list yields an empty list.
   List<TZDateTime?> inPlaces(

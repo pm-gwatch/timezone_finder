@@ -9,14 +9,14 @@ import '../data/boundaries.dart' as bundled_data;
 import 'index.dart';
 import 'quantization.dart';
 
-/// Resolves the index a finder reads, decoding it at most once.
+/// Supplies the index a finder reads.
 typedef _IndexSource = TimeZoneIndex Function();
 
 TimeZoneIndex? _bundledIndex;
 int _decodes = 0;
 
-/// Every index decode goes through here, so [indexDecodeCount] cannot be
-/// bypassed by a change that decodes somewhere else in this library.
+/// Every decode routes through here, so [indexDecodeCount] cannot be bypassed
+/// by one added elsewhere.
 TimeZoneIndex _decode(Uint8List Function() bytes) {
   _decodes++;
   return TimeZoneIndex.fromBytes(bytes());
@@ -40,17 +40,12 @@ TimeZoneIndex get _sharedIndex {
 /// real rather than merely producing equal answers.
 int get indexDecodeCount => _decodes;
 
-/// Builds a finder over an arbitrary index, for the build pipeline and the
-/// tests.
+/// Builds a finder over an arbitrary index. Not exported, so not public API.
 ///
-/// Not exported from `package:timezone_finder/timezone_finder.dart`, so it is
-/// not public API. It exists because the unsimplified boundaries under
-/// `tool/release/` are the baseline the bundled ones are measured against, and
-/// they do not ship.
-///
-/// The returned finder decodes its own index and shares nothing with the
-/// bundled one, so both can be held at once — which is how the accuracy
-/// numbers are measured.
+/// Exists for the unsimplified boundaries under `tool/release/`, which are the
+/// baseline the bundled ones are measured against and do not ship. The finder
+/// decodes its own index rather than the shared one, so both can be held at
+/// once — which is how the accuracy numbers are produced.
 TimeZoneFinder finderOverIndex(Uint8List Function() indexBytes) {
   TimeZoneIndex? own;
   return TimeZoneFinder._(() => own ??= _decode(indexBytes));
@@ -86,8 +81,8 @@ class TimeZoneFinder {
   /// identifier by a documented deterministic rule: the smallest containing
   /// polygon by planar area, then lexicographic identifier.
   ///
-  /// Throws [ArgumentError] if [latitude] is outside [-90, 90], [longitude] is
-  /// outside [-180, 180], or either is NaN or infinite.
+  /// Throws [ArgumentError] if [latitude] is outside `-90 .. 90`, [longitude]
+  /// is outside `-180 .. 180`, or either is NaN or infinite.
   String? findId(double latitude, double longitude) {
     if (!latitude.isFinite || latitude < -90 || latitude > 90) {
       throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
@@ -144,12 +139,11 @@ class TimeZoneFinder {
     }
   }
 
-  /// Optional. Decodes the index ahead of time so the first [findId] is not
-  /// slower than the ones after it. Calling [findId] without this works fine.
+  /// Optional. Decodes the index now rather than on the first [findId].
   ///
-  /// Currently this parses the container and nothing more, which is honest
-  /// rather than lazy: ring coordinates are decoded on demand by design, so
-  /// there is nothing else to do ahead of time.
+  /// Warms the index *every* default finder reads, not just this one, so it
+  /// needs calling at most once per isolate. Ring coordinates are still
+  /// decoded on demand by design, so this parses the container and no more.
   Future<void> ensurePreloaded() async => _resolved;
 
   /// The IANA Time Zone Database version these boundaries were built for,

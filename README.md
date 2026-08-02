@@ -33,8 +33,9 @@ address → geocoder (Nominatim, Photon, …) → (lat, lon) → Continent/City 
 The boundary data ships inside the package, so lookups work fully offline on
 Dart CLI/server and on Flutter for mobile and desktop.
 
-`findId` is synchronous. The index decodes lazily on first use; the optional
-`ensurePreloaded()` pays that cost up front instead.
+Lookups are synchronous. The index decodes lazily on first use and is shared
+by every `TimeZoneFinder()`, so holding several costs nothing; the optional
+`ensurePreloaded()` pays the decode up front instead.
 
 ## One instant, several places
 

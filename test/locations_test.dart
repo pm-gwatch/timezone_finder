@@ -1,4 +1,5 @@
-// The package:timezone bridge: findLocation, toLocation, inLocation(s).
+// The package:timezone bridge: findLocation, toLocation, inLocation(s) and
+// inPlace(s).
 //
 // Initialized from `latest_all` here, which is the variant the package
 // documents. The consequences of choosing `latest` instead are covered in
