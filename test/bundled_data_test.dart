@@ -233,6 +233,23 @@ void main() {
       );
     });
 
+    test('ensurePreloaded on one default finder warms every other', () async {
+      // This is why the package needs no initializeTimeZoneBoundaries():
+      // preloading through any default finder decodes the index that every
+      // default finder reads, so there is nothing left for a separate
+      // initializer to do.
+      await TimeZoneFinder().ensurePreloaded();
+      final decodes = indexDecodeCount;
+
+      final other = TimeZoneFinder();
+      expect(other.findId(48.8566, 2.3522), 'Europe/Paris');
+      expect(
+        indexDecodeCount,
+        decodes,
+        reason: 'a later finder decoded despite an earlier one preloading',
+      );
+    });
+
     test('sharing an index cannot let one finder corrupt another', () {
       // The property the previous test used to establish by keeping the
       // finders apart. It has to hold now that they are not: a TimeZoneIndex
