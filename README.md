@@ -81,7 +81,7 @@ change that — it resolves *where* a coordinate is, not which of two instants a
 local time means. If your application schedules by wall clock across DST
 transitions, handle those cases yourself.
 
-### Three things to know
+### Two things to know
 
 **Initialize from `latest_all`.** This package depends on `package:timezone`'s
 engine, never on a tzdata variant. Use
@@ -89,10 +89,6 @@ engine, never on a tzdata variant. Use
 identifiers and carries 341 locations against this dataset's 419, so
 `Europe/Zagreb`, `Africa/Accra` and 104 others would fail to resolve.
 `findLocation` raises a `StateError` naming the fix if either problem occurs.
-
-**`using:` is rarely needed.** `toLocation`, `inPlace` and `inPlaces` take an
-optional finder. Omitted, they use the shared bundled index. Pass one only to
-read a different index (tests / custom bytes).
 
 **Latitude first.** `toLocation` parses `"latitude,longitude"`, matching
 `findId`. GeoJSON is the reverse — `'2.3522,48.8566'` is not Paris and will not

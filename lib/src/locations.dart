@@ -7,7 +7,7 @@ import 'finder.dart';
 
 /// Resolves a `"latitude,longitude"` string to a time zone.
 extension TimeZoneLocation on String {
-  /// Parses this as `"latitude,longitude"` and resolves it [using] a finder.
+  /// Parses this as `"latitude,longitude"` and resolves it.
   ///
   /// ```dart
   /// '48.8566,2.3522'.toLocation();   // Europe/Paris
@@ -17,13 +17,10 @@ extension TimeZoneLocation on String {
   /// **Latitude first.** GeoJSON orders coordinates the other way, and a
   /// swapped pair usually parses fine and returns a confidently wrong answer.
   ///
-  /// [using] is only needed to read a non-default index; omitted, the call
-  /// goes through the bundled boundaries every finder shares.
-  ///
   /// Returns `null` only when no land time zone covers the point. Throws
   /// [FormatException] if this is not two comma-separated numbers, and
   /// whatever [TimeZoneFinder.findLocation] throws otherwise.
-  Location? toLocation({TimeZoneFinder? using}) {
+  Location? toLocation() {
     final comma = indexOf(',');
     // Exactly one comma: '1,2,3' is a mistake, not a coordinate.
     if (comma < 0 || indexOf(',', comma + 1) >= 0) {
@@ -41,7 +38,7 @@ extension TimeZoneLocation on String {
         latitude == null ? 0 : comma + 1,
       );
     }
-    return (using ?? TimeZoneFinder()).findLocation(latitude, longitude);
+    return TimeZoneFinder().findLocation(latitude, longitude);
   }
 }
 
@@ -87,8 +84,8 @@ extension TZDateTimeInPlace on TZDateTime {
   /// Throws whatever [TimeZoneLocation.toLocation] throws: [FormatException]
   /// for text that is not two comma-separated numbers, [ArgumentError] for
   /// numbers that are not coordinates.
-  TZDateTime? inPlace(String coordinates, {TimeZoneFinder? using}) {
-    final location = coordinates.toLocation(using: using);
+  TZDateTime? inPlace(String coordinates) {
+    final location = coordinates.toLocation();
     return location == null ? null : TZDateTime.from(this, location);
   }
 
@@ -106,10 +103,7 @@ extension TZDateTimeInPlace on TZDateTime {
   /// unclaimed water is a result, a malformed string is a mistake.
   ///
   /// An empty list yields an empty list.
-  List<TZDateTime?> inPlaces(
-    List<String> coordinates, {
-    TimeZoneFinder? using,
-  }) => <TZDateTime?>[
-    for (final each in coordinates) inPlace(each, using: using),
+  List<TZDateTime?> inPlaces(List<String> coordinates) => <TZDateTime?>[
+    for (final each in coordinates) inPlace(each),
   ];
 }

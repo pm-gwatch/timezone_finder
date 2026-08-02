@@ -73,7 +73,7 @@ void main() {
 
   group('String.toLocation', () {
     test('parses a coordinate pair', () {
-      expect('48.8566,2.3522'.toLocation(using: finder)!.name, 'Europe/Paris');
+      expect('48.8566,2.3522'.toLocation()!.name, 'Europe/Paris');
     });
 
     test('tolerates whitespace around either number', () {
@@ -82,24 +82,17 @@ void main() {
         ' 48.8566,2.3522 ',
         '48.8566 , 2.3522',
       ]) {
-        expect(
-          text.toLocation(using: finder)!.name,
-          'Europe/Paris',
-          reason: text,
-        );
+        expect(text.toLocation()!.name, 'Europe/Paris', reason: text);
       }
     });
 
     test('handles negative and integer-valued coordinates', () {
-      expect(
-        '-33.8688,151.2093'.toLocation(using: finder)!.name,
-        'Australia/Sydney',
-      );
-      expect('51,0'.toLocation(using: finder)!.name, 'Europe/London');
+      expect('-33.8688,151.2093'.toLocation()!.name, 'Australia/Sydney');
+      expect('51,0'.toLocation()!.name, 'Europe/London');
     });
 
     test('returns null for a point no zone covers', () {
-      expect('0,-140'.toLocation(using: finder), isNull);
+      expect('0,-140'.toLocation(), isNull);
     });
 
     test('throws FormatException on anything that is not two numbers', () {
@@ -117,7 +110,7 @@ void main() {
         '48,8566, 2,3522',
       ]) {
         expect(
-          () => text.toLocation(using: finder),
+          () => text.toLocation(),
           throwsFormatException,
           reason: 'accepted ${text.isEmpty ? '<empty>' : text}',
         );
@@ -125,26 +118,23 @@ void main() {
     });
 
     test('throws ArgumentError when the numbers are not coordinates', () {
-      expect(() => '91,0'.toLocation(using: finder), throwsArgumentError);
-      expect(() => '0,181'.toLocation(using: finder), throwsArgumentError);
-      expect(() => 'NaN,0'.toLocation(using: finder), throwsArgumentError);
+      expect(() => '91,0'.toLocation(), throwsArgumentError);
+      expect(() => '0,181'.toLocation(), throwsArgumentError);
+      expect(() => 'NaN,0'.toLocation(), throwsArgumentError);
     });
 
     test('separates "not a coordinate" from "no zone here"', () {
       // The distinction the whole contract rests on: a typo must not look
       // like the middle of the Pacific.
-      expect(() => 'oops'.toLocation(using: finder), throwsFormatException);
-      expect('0,-140'.toLocation(using: finder), isNull);
+      expect(() => 'oops'.toLocation(), throwsFormatException);
+      expect('0,-140'.toLocation(), isNull);
     });
 
     test('reversed coordinates parse, which is why order is documented', () {
       // Not a bug to fix — a hazard to pin. GeoJSON is lon,lat, and a swapped
       // pair is usually still a valid coordinate somewhere else entirely.
-      expect('48.8566,2.3522'.toLocation(using: finder)!.name, 'Europe/Paris');
-      expect(
-        '2.3522,48.8566'.toLocation(using: finder)?.name,
-        isNot('Europe/Paris'),
-      );
+      expect('48.8566,2.3522'.toLocation()!.name, 'Europe/Paris');
+      expect('2.3522,48.8566'.toLocation()?.name, isNot('Europe/Paris'));
     });
   });
 
@@ -228,21 +218,6 @@ void main() {
     });
   });
 
-  group('String.toLocation without a finder', () {
-    test('omitting `using` matches passing the default finder', () {
-      expect(
-        '48.8566,2.3522'.toLocation()!.name,
-        '48.8566,2.3522'.toLocation(using: TimeZoneFinder())!.name,
-      );
-    });
-
-    test('the null and throwing contracts are unchanged without `using`', () {
-      expect('0,-140'.toLocation(), isNull);
-      expect(() => 'oops'.toLocation(), throwsFormatException);
-      expect(() => '91,0'.toLocation(), throwsArgumentError);
-    });
-  });
-
   group('TZDateTime.inPlace', () {
     test('re-expresses the instant at a coordinate', () {
       final takeOff = TZDateTime(paris, 2026, 8, 23, 10, 15);
@@ -273,14 +248,6 @@ void main() {
       expect(() => start.inPlace('oops'), throwsFormatException);
       expect(() => start.inPlace('91,0'), throwsArgumentError);
       expect(start.inPlace('0,-140'), isNull);
-    });
-
-    test('honours an explicit finder', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(
-        start.inPlace('40.6413,-73.7781', using: TimeZoneFinder())!.location,
-        same(newYork),
-      );
     });
   });
 
@@ -350,8 +317,8 @@ void main() {
   test('a coordinate string reaches a civil time end to end', () {
     // The path the package exists to make short: two coordinates, one
     // instant, each rendered where it belongs.
-    final charlesDeGaulle = '49.0097,2.5479'.toLocation(using: finder)!;
-    final jfk = '40.6413,-73.7781'.toLocation(using: finder)!;
+    final charlesDeGaulle = '49.0097,2.5479'.toLocation()!;
+    final jfk = '40.6413,-73.7781'.toLocation()!;
 
     final takeOff = TZDateTime(charlesDeGaulle, 2026, 8, 23, 10, 15);
     final landing = takeOff.add(const Duration(hours: 8, minutes: 20));

@@ -27,9 +27,8 @@ finder.findId(0.0, -140.0);            // null — not inside any land zone
   `local` cannot serve. `inPlaces` returns `List<TZDateTime?>`, one entry per
   place in order, `null` where no zone covers the coordinate.
 - Every `TimeZoneFinder()` shares one index, decoded on first use, so holding
-  several costs nothing and `ensurePreloaded()` warms them all. `toLocation`,
-  `inPlace` and `inPlaces` take an optional `using:` finder for reading a
-  different index.
+  several costs nothing and `ensurePreloaded()` warms them all. The extensions
+  read that same index and take no configuration.
 - `ensurePreloaded()` optionally decodes the index up front instead of on the
   first lookup. `ianaDatabaseVersion` and `availableTimeZoneIds` report what
   is bundled.
