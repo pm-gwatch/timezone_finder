@@ -72,14 +72,14 @@ void main() {
 
       test('reports the dataset it was built from', () {
         expect(finder.ianaDatabaseVersion, defaultRelease);
-        expect(finder.availableTimeZones.length, 419);
+        expect(finder.availableTimeZoneIds.length, 419);
         expect(
-          finder.availableTimeZones,
-          orderedEquals(<String>[...finder.availableTimeZones]..sort()),
+          finder.availableTimeZoneIds,
+          orderedEquals(<String>[...finder.availableTimeZoneIds]..sort()),
           reason: 'zone names must arrive sorted, straight from the container',
         );
-        expect(finder.availableTimeZones, contains('Europe/Paris'));
-        expect(finder.availableTimeZones, contains('Etc/UTC'));
+        expect(finder.availableTimeZoneIds, contains('Europe/Paris'));
+        expect(finder.availableTimeZoneIds, contains('Etc/UTC'));
       });
 
       test('agrees with the oracle on every ground-truth fixture', () {

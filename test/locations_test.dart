@@ -53,7 +53,7 @@ void main() {
       // tzbb identifier can arrive before the other side has it, and this is
       // where that should be reported — not in a user's application.
       final missing = <String>[];
-      for (final name in finder.availableTimeZones) {
+      for (final name in finder.availableTimeZoneIds) {
         try {
           getLocation(name);
         } on LocationNotFoundException {

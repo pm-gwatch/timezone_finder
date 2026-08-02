@@ -76,7 +76,7 @@ void main() {
 
   test('the gap is large enough to be worth naming in the error', () {
     final missing = <String>[];
-    for (final name in finder.availableTimeZones) {
+    for (final name in finder.availableTimeZoneIds) {
       try {
         getLocation(name);
       } on LocationNotFoundException {

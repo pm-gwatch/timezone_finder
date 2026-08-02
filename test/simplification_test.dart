@@ -43,11 +43,11 @@ void main() {
       // tolerance and are dropped. A zone disappears only if every one of its
       // polygons went, so the count barely moves — but it can move.
       expect(
-        bundledFinder.availableTimeZones.length,
-        lessThanOrEqualTo(baselineFinder.availableTimeZones.length),
+        bundledFinder.availableTimeZoneIds.length,
+        lessThanOrEqualTo(baselineFinder.availableTimeZoneIds.length),
       );
       expect(
-        bundledFinder.availableTimeZones.length,
+        bundledFinder.availableTimeZoneIds.length,
         greaterThan(400),
         reason: 'simplification should not be losing whole zones wholesale',
       );

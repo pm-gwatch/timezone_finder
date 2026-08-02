@@ -42,10 +42,10 @@ void main() {
 
     test('reports the release it was generated from', () {
       expect(finder.ianaDatabaseVersion, defaultRelease);
-      expect(finder.availableTimeZones.length, 419);
+      expect(finder.availableTimeZoneIds.length, 419);
       expect(
-        finder.availableTimeZones,
-        orderedEquals(<String>[...finder.availableTimeZones]..sort()),
+        finder.availableTimeZoneIds,
+        orderedEquals(<String>[...finder.availableTimeZoneIds]..sort()),
       );
     });
 
@@ -260,7 +260,7 @@ void main() {
       expect(b.findId(35.6762, 139.6503), 'Asia/Tokyo');
       expect(a.findId(35.6762, 139.6503), 'Asia/Tokyo');
       expect(b.findId(48.8566, 2.3522), 'Europe/Paris');
-      expect(a.availableTimeZones, b.availableTimeZones);
+      expect(a.availableTimeZoneIds, b.availableTimeZoneIds);
       expect(a.ianaDatabaseVersion, b.ianaDatabaseVersion);
     });
 
@@ -271,7 +271,7 @@ void main() {
       // become the bundled data against itself.
       final decodes = indexDecodeCount;
       final baseline = finderOverIndex(unsimplified_data.loadContainer);
-      expect(baseline.availableTimeZones.length, 419);
+      expect(baseline.availableTimeZoneIds.length, 419);
       expect(
         indexDecodeCount,
         decodes + 1,

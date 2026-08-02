@@ -48,6 +48,6 @@ void main() {
 
   // print(
   //   'Boundaries for IANA tzdb ${finder.ianaDatabaseVersion}, '
-  //   '${finder.availableTimeZones.length} zones',
+  //   '${finder.availableTimeZoneIds.length} zones',
   // );
 }

@@ -8,9 +8,9 @@ with no network access, bridged to `package:timezone` for civil time.
 ```dart
 initializeTimeZones();
 final finder = TimeZoneFinder();
-finder.findId(48.8566, 2.3522);          // 'Europe/Paris'
+finder.findId(48.8566, 2.3522);        // 'Europe/Paris'
 finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
-finder.findId(0.0, -140.0);              // null — not inside any land zone
+finder.findId(0.0, -140.0);            // null — not inside any land zone
 ```
 
 ### API
@@ -31,7 +31,7 @@ finder.findId(0.0, -140.0);              // null — not inside any land zone
   `inPlace` and `inPlaces` take an optional `using:` finder for reading a
   different index.
 - `ensurePreloaded()` optionally decodes the index up front instead of on the
-  first lookup. `ianaDatabaseVersion` and `availableTimeZones` report what
+  first lookup. `ianaDatabaseVersion` and `availableTimeZoneIds` report what
   is bundled.
 - Out-of-range, NaN or infinite coordinates throw `ArgumentError`; text that is
   not two comma-separated numbers throws `FormatException`. `null` is reserved

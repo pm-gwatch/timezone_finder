@@ -160,6 +160,9 @@ class TimeZoneFinder {
   /// updated on its own schedule; this one governs where the borders are.
   String get ianaDatabaseVersion => _resolved.dataVersion;
 
-  /// Every identifier in the dataset, sorted. Unmodifiable.
-  List<String> get availableTimeZones => _resolved.zoneNames;
+  /// Every IANA identifier in the dataset, sorted. Unmodifiable.
+  ///
+  /// These are the strings [findId] can return, not `package:timezone`
+  /// `TimeZone` objects.
+  List<String> get availableTimeZoneIds => _resolved.zoneNames;
 }
