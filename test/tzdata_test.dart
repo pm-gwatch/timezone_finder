@@ -1,5 +1,5 @@
 // Two failures that depend on the state of the global time zone database, and
-// so cannot share a process with locations_test.dart.
+// so cannot share a process with timezone_bridge_test.dart.
 //
 // `initializeTimeZones()` has no inverse — it clears and repopulates a global —
 // so the uninitialized case has to be asserted before anything initializes,

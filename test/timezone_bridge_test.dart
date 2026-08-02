@@ -3,7 +3,7 @@
 //
 // Initialized from `latest_all` here, which is the variant the package
 // documents. The consequences of choosing `latest` instead are covered in
-// locations_tzdata_test.dart, which needs a differently initialized process.
+// tzdata_test.dart, which needs a differently initialized process.
 //
 // Needs no boundary GeoJSON — the index is bundled.
 
