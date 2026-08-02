@@ -20,7 +20,6 @@ import 'dart:math';
 import 'package:test/test.dart';
 import 'package:timezone_finder/src/index.dart';
 import 'package:timezone_finder/src/quantization.dart';
-import 'package:timezone_finder/timezone_finder.dart';
 import 'package:timezone_finder/src/finder.dart';
 
 import '../tool/release/boundaries_unsimplified.dart' as unsimplified;

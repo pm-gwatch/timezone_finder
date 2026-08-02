@@ -9,13 +9,12 @@ import 'package:timezone/data/latest_all.dart';
 import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
-initializeTimeZones();                 // required to create any Location
-final finder = TimeZoneFinder();
+initializeTimeZones();           // required to create any Location
 
-finder.findId(48.8566, 2.3522);        // 'Europe/Paris' — the identifier
-finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
-'48.8566,2.3522'.toLocation();         // the same, from text
-finder.findId(0.0, -140.0);            // null — not inside any land zone
+findId(48.8566, 2.3522);         // 'Europe/Paris' — the identifier
+findLocation(48.8566, 2.3522);   // a Location, ready for TZDateTime
+'48.8566,2.3522'.toLocation();   // the same, from text
+findId(0.0, -140.0);             // null — not inside any land zone
 ```
 
 > **Status: 0.1.0, not yet published.** The lookup works and the boundary data
@@ -33,8 +32,14 @@ address → geocoder (Nominatim, Photon, …) → (lat, lon) → Continent/City 
 The boundary data ships inside the package, so lookups work fully offline on
 Dart CLI/server and on Flutter for mobile and desktop.
 
-Lookups are synchronous. Every `TimeZoneFinder()` shares one lazily decoded
-index; `ensurePreloaded()` pays that cost up front.
+Lookups are synchronous and need no setup — there is nothing to construct.
+The index decodes lazily on first use; `ensurePreloaded()` pays that cost up
+front instead.
+
+**On a server, call `ensurePreloaded()` at startup.** The index is decoded
+**once per isolate**, so without it the first request handled by each isolate
+pays for the decode. Measured, each additional live isolate costs about **4 MB**
+— eight of them hold eight copies, roughly 29 MB over one.
 
 ## One instant, several places
 
@@ -131,9 +136,9 @@ British and French claims meet in the middle with nothing unclaimed between
 them:
 
 ```dart
-finder.findId(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
-finder.findId(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
-finder.findId(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
+findId(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
+findId(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
+findId(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
 ```
 
 That last coordinate is water, and it still resolves — the boundary between the
@@ -145,9 +150,9 @@ other across the Adriatic, 197 km apart. That is far more than two 22 km claims
 can span, so the middle belongs to nobody:
 
 ```dart
-finder.findId(42.6634651, 18.0591377); // Port of Dubrovnik -> Europe/Zagreb
-finder.findId(41.137428,  16.8600823); // Port of Bari      -> Europe/Rome
-finder.findId(41.900447,  17.459610);  // mid-Adriatic      -> null
+findId(42.6634651, 18.0591377); // Port of Dubrovnik -> Europe/Zagreb
+findId(41.137428,  16.8600823); // Port of Bari      -> Europe/Rome
+findId(41.900447,  17.459610);  // mid-Adriatic      -> null
 ```
 
 Both ports are onshore and resolve normally; only the water between them is
@@ -268,7 +273,7 @@ offering that adapted database under the ODbL too.
 
 The bundled index is built from a specific
 [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder)
-release, currently **2026c**. `finder.ianaDatabaseVersion` reports it at runtime.
+release, currently **2026c**. `ianaDatabaseVersion` reports it at runtime.
 
 Boundary releases appear two to four times a year and are decoupled from IANA
 tzdb releases: most tzdb releases change daylight-saving *rules*, which this

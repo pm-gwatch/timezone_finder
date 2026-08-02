@@ -40,6 +40,79 @@ TimeZoneIndex get _sharedIndex {
 /// real rather than merely producing equal answers.
 int get indexDecodeCount => _decodes;
 
+TimeZoneFinder? _default;
+
+/// The finder the top-level functions read through. One per isolate.
+TimeZoneFinder get _defaultFinder => _default ??= TimeZoneFinder();
+
+/// Returns the IANA identifier containing ([latitude], [longitude]),
+/// e.g. `'Europe/Paris'`, or `null` if the coordinate is not inside any land
+/// time zone polygon.
+///
+/// ```dart
+/// findId(48.8566, 2.3522);  // 'Europe/Paris'
+/// findId(0.0, -140.0);      // null — open ocean
+/// ```
+///
+/// This is the identifier to store: it stays correct when daylight-saving
+/// rules change under it, where a stored UTC offset does not.
+///
+/// Where zones overlap — disputed territories, see the README — returns one
+/// identifier by a documented deterministic rule: the smallest containing
+/// polygon by planar area, then lexicographic identifier.
+///
+/// Throws [ArgumentError] if [latitude] is outside `-90 .. 90`, [longitude]
+/// is outside `-180 .. 180`, or either is NaN or infinite.
+String? findId(double latitude, double longitude) =>
+    _defaultFinder.findId(latitude, longitude);
+
+/// Returns the `package:timezone` [Location] containing
+/// ([latitude], [longitude]), or `null` if no land time zone covers it.
+///
+/// ```dart
+/// final paris = findLocation(48.8566, 2.3522)!;
+/// TZDateTime(paris, 2026, 8, 23, 17, 30);
+/// ```
+///
+/// Throws [ArgumentError] on the same coordinates [findId] rejects, and
+/// [StateError] if your application has not called `initializeTimeZones()`,
+/// or if the database it initialized lacks the identifier — see
+/// [ianaDatabaseVersion] for why the two can disagree.
+Location? findLocation(double latitude, double longitude) =>
+    _defaultFinder.findLocation(latitude, longitude);
+
+/// Optional. Decodes the boundary index now rather than on the first lookup.
+///
+/// Worth calling at startup on a server: the index is decoded lazily and
+/// **once per isolate**, so without this the first request handled by each
+/// isolate pays for it. Calling it more than once is harmless.
+///
+/// Ring coordinates are still decoded on demand by design, so this parses the
+/// container and no more.
+Future<void> ensurePreloaded() => _defaultFinder.ensurePreloaded();
+
+/// The IANA Time Zone Database version these boundaries were built for,
+/// e.g. `'2026c'`.
+///
+/// Strictly this is the timezone-boundary-builder release tag, and tzbb names
+/// each release after the tzdb version it was built against. The sequences are
+/// not identical — tzbb skips tzdb releases that move no boundary, so there is
+/// no tzbb `2023a` or `2023c` — but every tag does name a real tzdb version.
+///
+/// This says nothing about the tzdb version backing `package:timezone` in your
+/// application. That one governs UTC offsets and DST rules and is updated on
+/// its own schedule; this one governs where the borders are.
+///
+/// Reading this decodes the index if it has not been decoded yet.
+String get ianaDatabaseVersion => _defaultFinder.ianaDatabaseVersion;
+
+/// Every IANA identifier in the dataset, sorted. Unmodifiable.
+///
+/// These are the strings [findId] can return, not `package:timezone`
+/// `TimeZone` objects. Reading this decodes the index if it has not been
+/// decoded yet.
+List<String> get availableTimeZoneIds => _defaultFinder.availableTimeZoneIds;
+
 /// Builds a finder over an arbitrary index. Not exported, so not public API.
 ///
 /// Exists for the unsimplified boundaries under `tool/release/`, which are the
@@ -51,20 +124,14 @@ TimeZoneFinder finderOverIndex(Uint8List Function() indexBytes) {
   return TimeZoneFinder._(() => own ??= _decode(indexBytes));
 }
 
-/// Maps geographic coordinates to IANA time zone identifiers.
+/// A lookup bound to one index.
 ///
-/// ```dart
-/// final finder = TimeZoneFinder();
-/// finder.findId(48.8566, 2.3522);  // 'Europe/Paris'
-/// ```
-///
-/// Boundaries are simplified to roughly 110 m, which is far finer than a time
-/// zone and keeps the compiled program to about 11 MB. The README publishes
-/// the measured cost of that simplification.
+/// Not exported: the public API is the top-level functions above, which read
+/// through a shared instance of this. It exists so [finderOverIndex] has
+/// something to return — the tests and the accuracy pipeline hold a finder
+/// over the unsimplified baseline alongside the bundled one.
 class TimeZoneFinder {
-  /// A finder over the bundled boundaries.
-  ///
-  /// Cheap: every instance reads one shared index, decoded on first use.
+  /// A finder over the bundled boundaries, sharing one decoded index.
   factory TimeZoneFinder() => TimeZoneFinder._(() => _sharedIndex);
 
   TimeZoneFinder._(this._index);
@@ -73,16 +140,7 @@ class TimeZoneFinder {
 
   TimeZoneIndex get _resolved => _index();
 
-  /// Returns the IANA identifier containing ([latitude], [longitude]),
-  /// e.g. `'Europe/Paris'`, or `null` if the coordinate is not inside any
-  /// land time zone polygon.
-  ///
-  /// Where zones overlap — disputed territories, see the README — returns one
-  /// identifier by a documented deterministic rule: the smallest containing
-  /// polygon by planar area, then lexicographic identifier.
-  ///
-  /// Throws [ArgumentError] if [latitude] is outside `-90 .. 90`, [longitude]
-  /// is outside `-180 .. 180`, or either is NaN or infinite.
+  /// Implements the top-level `findId`, which documents the contract.
   String? findId(double latitude, double longitude) {
     if (!latitude.isFinite || latitude < -90 || latitude > 90) {
       throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
@@ -100,20 +158,7 @@ class TimeZoneFinder {
     );
   }
 
-  /// Returns the `package:timezone` [Location] containing
-  /// ([latitude], [longitude]), or `null` if no land time zone covers it.
-  ///
-  /// The identifier from [findId] is looked up in the time zone database your
-  /// application initialized. Use it to build civil times:
-  ///
-  /// ```dart
-  /// final paris = finder.findLocation(48.8566, 2.3522)!;
-  /// TZDateTime(paris, 2026, 8, 23, 17, 30);
-  /// ```
-  ///
-  /// Throws [ArgumentError] on the same coordinates [findId] rejects, and
-  /// [StateError] if the database has not been initialized or does not contain
-  /// the identifier — see [ianaDatabaseVersion] for why the two can disagree.
+  /// Implements the top-level `findLocation`, which documents the contract.
   Location? findLocation(double latitude, double longitude) {
     final identifier = findId(latitude, longitude);
     if (identifier == null) return null;
@@ -139,30 +184,12 @@ class TimeZoneFinder {
     }
   }
 
-  /// Optional. Decodes the index now rather than on the first [findId].
-  ///
-  /// Warms the index *every* default finder reads, not just this one, so it
-  /// needs calling at most once per isolate. Ring coordinates are still
-  /// decoded on demand by design, so this parses the container and no more.
+  /// Warms the index *every* default finder reads, not just this one.
   Future<void> ensurePreloaded() async => _resolved;
 
-  /// The IANA Time Zone Database version these boundaries were built for,
-  /// e.g. `'2026c'`.
-  ///
-  /// Strictly this is the timezone-boundary-builder release tag, and tzbb names
-  /// each release after the tzdb version it was built against. The sequences
-  /// are not identical — tzbb skips tzdb releases that move no boundary, so
-  /// there is no tzbb `2023a` or `2023c` — but every tag does name a real tzdb
-  /// version.
-  ///
-  /// This says nothing about the tzdb version backing `package:timezone` in
-  /// your application. That one governs UTC offsets and DST rules and is
-  /// updated on its own schedule; this one governs where the borders are.
+  /// The tzbb release this index was built from.
   String get ianaDatabaseVersion => _resolved.dataVersion;
 
-  /// Every IANA identifier in the dataset, sorted. Unmodifiable.
-  ///
-  /// These are the strings [findId] can return, not `package:timezone`
-  /// `TimeZone` objects.
+  /// Every identifier in this index, sorted. Unmodifiable.
   List<String> get availableTimeZoneIds => _resolved.zoneNames;
 }

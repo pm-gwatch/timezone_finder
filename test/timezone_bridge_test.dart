@@ -13,8 +13,6 @@ import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
 void main() {
-  final finder = TimeZoneFinder();
-
   // Bound in setUpAll, not at declaration: group bodies run while tests are
   // being collected, which is before any setUpAll has initialized the
   // database.
@@ -31,20 +29,20 @@ void main() {
 
   group('findLocation', () {
     test('returns the Location for the identifier findId returns', () {
-      final paris = finder.findLocation(48.8566, 2.3522)!;
+      final paris = findLocation(48.8566, 2.3522)!;
       expect(paris.name, 'Europe/Paris');
       expect(paris, same(getLocation('Europe/Paris')));
     });
 
     test('returns null exactly where findId returns null', () {
-      expect(finder.findId(0, -140), isNull);
-      expect(finder.findLocation(0, -140), isNull);
+      expect(findId(0, -140), isNull);
+      expect(findLocation(0, -140), isNull);
     });
 
     test('rejects the same coordinates findId rejects', () {
-      expect(() => finder.findLocation(91, 0), throwsArgumentError);
-      expect(() => finder.findLocation(0, 181), throwsArgumentError);
-      expect(() => finder.findLocation(double.nan, 0), throwsArgumentError);
+      expect(() => findLocation(91, 0), throwsArgumentError);
+      expect(() => findLocation(0, 181), throwsArgumentError);
+      expect(() => findLocation(double.nan, 0), throwsArgumentError);
     });
 
     test('resolves every identifier in the dataset', () {
@@ -53,7 +51,7 @@ void main() {
       // tzbb identifier can arrive before the other side has it, and this is
       // where that should be reported — not in a user's application.
       final missing = <String>[];
-      for (final name in finder.availableTimeZoneIds) {
+      for (final name in availableTimeZoneIds) {
         try {
           getLocation(name);
         } on LocationNotFoundException {
@@ -65,7 +63,7 @@ void main() {
         isEmpty,
         reason:
             'package:timezone (tzdata) no longer carries every identifier in '
-            'boundary release ${finder.ianaDatabaseVersion}: '
+            'boundary release $ianaDatabaseVersion: '
             '${missing.join(', ')}',
       );
     });

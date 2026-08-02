@@ -3,7 +3,7 @@ library;
 
 import 'package:timezone/timezone.dart';
 
-import 'finder.dart';
+import 'finder.dart' as finder;
 
 /// Resolves a `"latitude,longitude"` string to a time zone.
 extension TimeZoneLocation on String {
@@ -19,7 +19,7 @@ extension TimeZoneLocation on String {
   ///
   /// Returns `null` only when no land time zone covers the point. Throws
   /// [FormatException] if this is not two comma-separated numbers, and
-  /// whatever [TimeZoneFinder.findLocation] throws otherwise.
+  /// whatever [findLocation] throws otherwise.
   Location? toLocation() {
     final comma = indexOf(',');
     // Exactly one comma: '1,2,3' is a mistake, not a coordinate.
@@ -38,7 +38,7 @@ extension TimeZoneLocation on String {
         latitude == null ? 0 : comma + 1,
       );
     }
-    return TimeZoneFinder().findLocation(latitude, longitude);
+    return finder.findLocation(latitude, longitude);
   }
 }
 

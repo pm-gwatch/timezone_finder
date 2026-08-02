@@ -233,6 +233,27 @@ void main() {
       );
     });
 
+    test('the top-level API reads the same shared index', () async {
+      // findId and friends are the public surface; TimeZoneFinder is not
+      // exported. They must resolve through the one shared index rather than
+      // decoding a second, or a server would pay twice per isolate.
+      await ensurePreloaded();
+      final decodes = indexDecodeCount;
+
+      expect(findId(48.8566, 2.3522), 'Europe/Paris');
+      expect(findLocation(0, -140), isNull);
+      expect(availableTimeZoneIds.length, 419);
+      expect(ianaDatabaseVersion, defaultRelease);
+      expect(TimeZoneFinder().findId(48.8566, 2.3522), 'Europe/Paris');
+      await ensurePreloaded();
+
+      expect(
+        indexDecodeCount,
+        decodes,
+        reason: 'the top-level API decoded an index of its own',
+      );
+    });
+
     test('ensurePreloaded on one default finder warms every other', () async {
       // This is why the package needs no initializeTimeZoneBoundaries():
       // preloading through any default finder decodes the index that every

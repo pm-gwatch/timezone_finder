@@ -7,16 +7,15 @@ with no network access, bridged to `package:timezone` for civil time.
 
 ```dart
 initializeTimeZones();
-final finder = TimeZoneFinder();
-finder.findId(48.8566, 2.3522);        // 'Europe/Paris'
-finder.findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
-finder.findId(0.0, -140.0);            // null — not inside any land zone
+findId(48.8566, 2.3522);        // 'Europe/Paris'
+findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
+findId(0.0, -140.0);            // null — not inside any land zone
 ```
 
 ### API
 
-- `TimeZoneFinder()` takes no configuration; `findId(latitude, longitude)`
-  returns a `Continent/City` identifier or `null`.
+- `findId(latitude, longitude)` returns a `Continent/City` identifier or
+  `null`. Nothing to construct or configure.
 - `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
   instead, and `'48.8566,2.3522'.toLocation()` does the same from text.
   Latitude comes first, matching `findId` — note that GeoJSON is the reverse.
@@ -26,12 +25,10 @@ finder.findId(0.0, -140.0);            // null — not inside any land zone
   the wall clock — the multi-place case `package:timezone`'s single ambient
   `local` cannot serve. `inPlaces` returns `List<TZDateTime?>`, one entry per
   place in order, `null` where no zone covers the coordinate.
-- Every `TimeZoneFinder()` shares one index, decoded on first use, so holding
-  several costs nothing and `ensurePreloaded()` warms them all. The extensions
-  read that same index and take no configuration.
-- `ensurePreloaded()` optionally decodes the index up front instead of on the
-  first lookup. `ianaDatabaseVersion` and `availableTimeZoneIds` report what
-  is bundled.
+- `ensurePreloaded()` decodes the index up front instead of on the first
+  lookup. The index is decoded once per isolate, so a server should call this
+  at startup; each additional live isolate costs about 4 MB.
+  `ianaDatabaseVersion` and `availableTimeZoneIds` report what is bundled.
 - Out-of-range, NaN or infinite coordinates throw `ArgumentError`; text that is
   not two comma-separated numbers throws `FormatException`. `null` is reserved
   for "no land time zone here", so neither is mistaken for a legitimate answer.
