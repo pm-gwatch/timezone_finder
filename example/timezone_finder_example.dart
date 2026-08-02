@@ -1,40 +1,35 @@
 // Cross-border and same-state timezone lookups.
 //
-// These lookups return IANA identifiers. To turn one into a civil time, use
-// finder.findLocation() or '<lat>,<lon>'.toLocation(), then pass the Location
-// to package:timezone's TZDateTime.
+// These return IANA identifiers or Locations. Pass a Location to
+// package:timezone's TZDateTime for civil times.
 
+import 'package:timezone/data/latest_all.dart';
+import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
 
 void main() {
-  tz.initializeTimeZones(); // Required to use Location and TZDateTime classes from timezone package
-
-  // final finder = TimeZoneFinder();
+  initializeTimeZones();
 
   // Across the US–Mexico border: El Paso, Texas and Ciudad Juárez, Chihuahua
   // sit almost opposite each other, yet each follows its own country's zone.
+  final elPaso = findId(31.8122375, -106.5823795);
+  final ciudadJuarez = findId(31.653962, -106.6081154);
 
-  //final elPaso = finder.findId(31.8122375, -106.5823795);
-  final ciudadJuarez = "31.653962, -106.6081154".toLocation();
-
-  //print('El Paso, TX                          -> $elPaso'); // America/Denver
+  print('El Paso, TX                          -> $elPaso'); // America/Denver
   print(
-    'Ciudad Juárez, Chihuahua             -> ${ciudadJuarez?.name}',
+    'Ciudad Juárez, Chihuahua             -> $ciudadJuarez',
   ); // America/Ciudad_Juarez
-  // print(
-  //  'Same metro area, different countries -> '
-  //  '${elPaso != ciudadJuarez?.name ? 'different zones' : 'same zone'}',
-  //);
+  print(
+    'Same metro area, different countries -> '
+    '${elPaso != ciudadJuarez ? 'different zones' : 'same zone'}',
+  );
   print('');
 
   // Inside Chihuahua state: northwest border municipalities (including
   // Ciudad Juárez) keep America/Ciudad_Juarez — aligned with the US side
   // (standard UTC−07:00, observes DST). The rest of the state, including
   // Chihuahua city, uses America/Chihuahua (standard UTC−06:00, no DST).
-
-  final chihuahuaCity = "28.6353, -106.0889".toLocation();
+  final chihuahuaCity = findId(28.6353, -106.0889);
 
   print('Ciudad Juárez, Chihuahua -> $ciudadJuarez'); // America/Ciudad_Juarez
   print('Chihuahua city           -> $chihuahuaCity'); // America/Chihuahua
@@ -44,10 +39,16 @@ void main() {
   );
   print('');
 
-  tz.TZDateTime("37.757807,-122.5200013".toLocation()!, 2026, 08, 02, 17, 0, 0);
+  final sf = '37.7749,-122.4194'.toLocation()!;
+  final local = TZDateTime(sf, 2026, 8, 2, 17);
+  print(
+    'San Francisco wall clock -> $local '
+    '(${local.location.name})',
+  );
+  print('');
 
-  // print(
-  //   'Boundaries for IANA tzdb ${finder.ianaDatabaseVersion}, '
-  //   '${finder.availableTimeZoneIds.length} zones',
-  // );
+  print(
+    'Boundaries for IANA tzdb $ianaDatabaseVersion, '
+    '${availableTimeZoneIds.length} zones',
+  );
 }

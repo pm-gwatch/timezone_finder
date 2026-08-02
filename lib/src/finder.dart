@@ -1,4 +1,4 @@
-/// The public lookup.
+/// Top-level lookup API and the unexported [TimeZoneFinder] implementation.
 library;
 
 import 'dart:typed_data';
@@ -22,12 +22,11 @@ TimeZoneIndex _decode(Uint8List Function() bytes) {
   return TimeZoneIndex.fromBytes(bytes());
 }
 
-/// The bundled index, decoded on first use and shared by every
-/// [TimeZoneFinder] built with the default constructor.
+/// The bundled index, decoded on first use.
 ///
-/// One copy per isolate. Holding several finders costs nothing beyond the
-/// objects themselves, and `ensurePreloaded` on any of them warms the index
-/// all of them read.
+/// One copy per isolate. Every default [TimeZoneFinder] (the top-level API's
+/// singleton and any constructed in tests) reads this; [ensurePreloaded]
+/// warms it for the whole isolate.
 TimeZoneIndex get _sharedIndex {
   final existing = _bundledIndex;
   if (existing != null) return existing;
