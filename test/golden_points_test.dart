@@ -88,7 +88,10 @@ void main() {
       test('the oracle agrees with every ground-truth fixture', () {
         final byCategory = <GoldenCategory, List<String>>{};
         for (final point in all) {
-          final actual = oracle.findId(point.latitude, point.longitude);
+          final actual = oracle.findTimeZoneName(
+            point.latitude,
+            point.longitude,
+          );
           if (actual != point.zone) {
             byCategory
                 .putIfAbsent(point.category, () => <String>[])
@@ -145,8 +148,8 @@ void main() {
         // zones and open ocean alike.
         for (var lat = -80.0; lat <= 80.0; lat += 5) {
           expect(
-            oracle.findId(lat, 180),
-            oracle.findId(lat, -180),
+            oracle.findTimeZoneName(lat, 180),
+            oracle.findTimeZoneName(lat, -180),
             reason: 'lon 180 and -180 disagree at latitude $lat',
           );
         }
@@ -170,7 +173,7 @@ void main() {
           179.9999995,
         ];
         for (final lat in seamLatitudes) {
-          final expected = oracle.findId(lat, -180);
+          final expected = oracle.findTimeZoneName(lat, -180);
           expect(
             expected,
             isNotNull,
@@ -180,7 +183,7 @@ void main() {
           );
           for (final lon in band) {
             expect(
-              oracle.findId(lat, lon),
+              oracle.findTimeZoneName(lat, lon),
               expected,
               reason: 'seam is discontinuous at ($lat, $lon)',
             );
@@ -203,7 +206,7 @@ void main() {
               '${zones.join(' + ')}, pinned as ${pin.contenders.join(' + ')}',
             );
           }
-          final selected = oracle.findId(pin.latitude, pin.longitude);
+          final selected = oracle.findTimeZoneName(pin.latitude, pin.longitude);
           if (selected != pin.selected) {
             drift.add(
               '${pin.description}: rule selects $selected, '

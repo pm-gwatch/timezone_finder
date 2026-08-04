@@ -87,7 +87,10 @@ void main() {
           ...bootstrapGoldens,
           ...goldenPoints,
         ]) {
-          final actual = finder.findId(point.latitude, point.longitude);
+          final actual = finder.findTimeZoneName(
+            point.latitude,
+            point.longitude,
+          );
           if (actual != point.zone) {
             failures.add(
               '${point.name}: expected ${point.zone ?? 'null'}, '
@@ -103,7 +106,7 @@ void main() {
         // first of a pre-sorted list. Same rule, different paths.
         final drift = <String>[];
         for (final pin in overlapPins) {
-          final actual = finder.findId(pin.latitude, pin.longitude);
+          final actual = finder.findTimeZoneName(pin.latitude, pin.longitude);
           if (actual != pin.selected) {
             drift.add(
               '${pin.description}: runtime $actual, '
@@ -128,9 +131,9 @@ void main() {
           final lat = (random.nextInt(180000001) - 90000000) / 1000000;
           final lon = (random.nextInt(360000001) - 180000000) / 1000000;
 
-          final expected = oracle.findId(lat, lon);
+          final expected = oracle.findTimeZoneName(lat, lon);
           if (expected != null) land++;
-          final actual = finder.findId(lat, lon);
+          final actual = finder.findTimeZoneName(lat, lon);
           if (actual != expected) {
             failures.add(
               '($lat, $lon): runtime ${actual ?? 'null'}, '
@@ -145,11 +148,11 @@ void main() {
 
       test('treats the antimeridian as one seam', () {
         for (final lat in <double>[-85, -80, 51.88, 66]) {
-          final west = finder.findId(lat, -180);
+          final west = finder.findTimeZoneName(lat, -180);
           expect(west, isNotNull, reason: 'seam has land at $lat');
           for (final lon in <double>[180, 179.9999999, 179.9999995]) {
             expect(
-              finder.findId(lat, lon),
+              finder.findTimeZoneName(lat, lon),
               west,
               reason: 'seam broken at $lat',
             );
@@ -158,18 +161,24 @@ void main() {
       });
 
       test('rejects coordinates that are not coordinates', () {
-        expect(() => finder.findId(91, 0), throwsArgumentError);
-        expect(() => finder.findId(0, 181), throwsArgumentError);
-        expect(() => finder.findId(double.nan, 0), throwsArgumentError);
-        expect(() => finder.findId(0, double.infinity), throwsArgumentError);
+        expect(() => finder.findTimeZoneName(91, 0), throwsArgumentError);
+        expect(() => finder.findTimeZoneName(0, 181), throwsArgumentError);
+        expect(
+          () => finder.findTimeZoneName(double.nan, 0),
+          throwsArgumentError,
+        );
+        expect(
+          () => finder.findTimeZoneName(0, double.infinity),
+          throwsArgumentError,
+        );
       });
 
       test('ensurePreloaded is optional and idempotent', () {
         final fresh = finderOverIndex(unsimplified.loadContainer);
-        expect(fresh.findId(48.8566, 2.3522), 'Europe/Paris');
+        expect(fresh.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
         expect(fresh.ensurePreloaded(), completes);
         expect(fresh.ensurePreloaded(), completes);
-        expect(fresh.findId(48.8566, 2.3522), 'Europe/Paris');
+        expect(fresh.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
       });
 
       test('rejects a container it cannot trust', () {
@@ -214,7 +223,7 @@ void main() {
               quantizeQueryLongitude(point.longitude),
               quantize(point.latitude),
             ),
-            finder.findId(point.latitude, point.longitude),
+            finder.findTimeZoneName(point.latitude, point.longitude),
             reason: point.name,
           );
         }

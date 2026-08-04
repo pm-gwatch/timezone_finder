@@ -52,18 +52,21 @@ void main() {
   });
 
   group('findLocation', () {
-    test('returns the Location for the identifier findId returns', () {
-      final paris = findLocation(48.8566, 2.3522)!;
-      expect(paris.name, 'Europe/Paris');
-      expect(paris, same(getLocation('Europe/Paris')));
-    });
+    test(
+      'returns the Location for the identifier findTimeZoneName returns',
+      () {
+        final paris = findLocation(48.8566, 2.3522)!;
+        expect(paris.name, 'Europe/Paris');
+        expect(paris, same(getLocation('Europe/Paris')));
+      },
+    );
 
-    test('returns null exactly where findId returns null', () {
-      expect(findId(0, -140), isNull);
+    test('returns null exactly where findTimeZoneName returns null', () {
+      expect(findTimeZoneName(0, -140), isNull);
       expect(findLocation(0, -140), isNull);
     });
 
-    test('rejects the same coordinates findId rejects', () {
+    test('rejects the same coordinates findTimeZoneName rejects', () {
       expect(() => findLocation(91, 0), throwsArgumentError);
       expect(() => findLocation(0, 181), throwsArgumentError);
       expect(() => findLocation(double.nan, 0), throwsArgumentError);

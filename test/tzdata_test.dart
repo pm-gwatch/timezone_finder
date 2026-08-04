@@ -58,7 +58,7 @@ void main() {
     // data/latest.dart drops the tzdb link identifiers: 341 locations against
     // our 419. Europe/Zagreb is one of the casualties, and it is a coordinate
     // the package's own example uses.
-    expect(findId(42.6634651, 18.0591377), 'Europe/Zagreb');
+    expect(findTimeZoneName(42.6634651, 18.0591377), 'Europe/Zagreb');
     expect(
       () => findLocation(42.6634651, 18.0591377),
       throwsA(

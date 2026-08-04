@@ -49,8 +49,8 @@ TimeZoneFinder get _defaultFinder => _default ??= TimeZoneFinder();
 /// time zone polygon.
 ///
 /// ```dart
-/// findId(48.8566, 2.3522);  // 'Europe/Paris'
-/// findId(0.0, -140.0);      // null — open ocean
+/// findTimeZoneName(48.8566, 2.3522);  // 'Europe/Paris'
+/// findTimeZoneName(0.0, -140.0);      // null — open ocean
 /// ```
 ///
 /// This is the identifier to store: it stays correct when daylight-saving
@@ -62,8 +62,8 @@ TimeZoneFinder get _defaultFinder => _default ??= TimeZoneFinder();
 ///
 /// Throws [ArgumentError] if [latitude] is outside `-90 .. 90`, [longitude]
 /// is outside `-180 .. 180`, or either is NaN or infinite.
-String? findId(double latitude, double longitude) =>
-    _defaultFinder.findId(latitude, longitude);
+String? findTimeZoneName(double latitude, double longitude) =>
+    _defaultFinder.findTimeZoneName(latitude, longitude);
 
 /// Returns the `package:timezone` [Location] containing
 /// ([latitude], [longitude]), or `null` if no land time zone covers it.
@@ -73,7 +73,7 @@ String? findId(double latitude, double longitude) =>
 /// TZDateTime(paris, 2026, 8, 23, 17, 30);
 /// ```
 ///
-/// Throws [ArgumentError] on the same coordinates [findId] rejects, and
+/// Throws [ArgumentError] on the same coordinates [findTimeZoneName] rejects, and
 /// [StateError] if your application has not called `initializeTimeZones()`,
 /// or if the database it initialized lacks the identifier — see
 /// [ianaDatabaseVersion] for why the two can disagree.
@@ -107,7 +107,7 @@ String get ianaDatabaseVersion => _defaultFinder.ianaDatabaseVersion;
 
 /// Every IANA identifier in the dataset, sorted. Unmodifiable.
 ///
-/// These are the strings [findId] can return, not `package:timezone`
+/// These are the strings [findTimeZoneName] can return, not `package:timezone`
 /// `TimeZone` objects. Reading this decodes the index if it has not been
 /// decoded yet.
 List<String> get availableTimeZoneIds => _defaultFinder.availableTimeZoneIds;
@@ -139,8 +139,8 @@ class TimeZoneFinder {
 
   TimeZoneIndex get _resolved => _index();
 
-  /// Implements the top-level `findId`, which documents the contract.
-  String? findId(double latitude, double longitude) {
+  /// Implements the top-level `findTimeZoneName`, which documents the contract.
+  String? findTimeZoneName(double latitude, double longitude) {
     if (!latitude.isFinite || latitude < -90 || latitude > 90) {
       throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
     }
@@ -159,7 +159,7 @@ class TimeZoneFinder {
 
   /// Implements the top-level `findLocation`, which documents the contract.
   Location? findLocation(double latitude, double longitude) {
-    final identifier = findId(latitude, longitude);
+    final identifier = findTimeZoneName(latitude, longitude);
     if (identifier == null) return null;
     if (!timeZoneDatabase.isInitialized) {
       throw StateError(

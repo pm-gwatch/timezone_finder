@@ -52,7 +52,10 @@ Future<void> main(List<String> args) async {
   for (final point in <GoldenPoint>[...bootstrapGoldens, ...goldenPoints]) {
     final key = point.category.name;
     final current = byCategory[key] ?? (total: 0, missed: 0);
-    final actual = bundledFinder.findId(point.latitude, point.longitude);
+    final actual = bundledFinder.findTimeZoneName(
+      point.latitude,
+      point.longitude,
+    );
     final wrong = actual != point.zone;
     if (wrong) {
       missedNames.add(
@@ -80,7 +83,8 @@ Future<void> main(List<String> args) async {
   // --- overlap pins ---------------------------------------------------------
   var pinsDiffering = 0;
   for (final pin in overlapPins) {
-    if (bundledFinder.findId(pin.latitude, pin.longitude) != pin.selected) {
+    if (bundledFinder.findTimeZoneName(pin.latitude, pin.longitude) !=
+        pin.selected) {
       pinsDiffering++;
     }
   }
@@ -93,7 +97,7 @@ Future<void> main(List<String> args) async {
   stdout.writeln('\nSampling $points points …');
   final report = runDifferential(
     oracle: oracle,
-    subject: bundledFinder.findId,
+    subject: bundledFinder.findTimeZoneName,
     points: points,
     seed: 9,
     overlapSeeds: <({double lat, double lon})>[
@@ -122,7 +126,7 @@ Future<void> main(List<String> args) async {
   stdout.writeln('\nControl — the baseline over the same samplers:');
   final control = runDifferential(
     oracle: oracle,
-    subject: baselineFinder.findId,
+    subject: baselineFinder.findTimeZoneName,
     points: points ~/ 10,
     seed: 9,
     overlapSeeds: <({double lat, double lon})>[

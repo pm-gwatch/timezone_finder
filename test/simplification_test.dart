@@ -29,9 +29,12 @@ void main() {
     final baselineFinder = finderOverIndex(unsimplified.loadContainer);
 
     test('works with no configuration', () {
-      expect(bundledFinder.findId(48.8566, 2.3522), 'Europe/Paris');
-      expect(bundledFinder.findId(-33.8688, 151.2093), 'Australia/Sydney');
-      expect(bundledFinder.findId(0, -140), isNull);
+      expect(bundledFinder.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
+      expect(
+        bundledFinder.findTimeZoneName(-33.8688, 151.2093),
+        'Australia/Sydney',
+      );
+      expect(bundledFinder.findTimeZoneName(0, -140), isNull);
       expect(
         bundledFinder.ianaDatabaseVersion,
         baselineFinder.ianaDatabaseVersion,
@@ -64,7 +67,10 @@ void main() {
           ...bootstrapGoldens,
           ...goldenPoints,
         ]) {
-          final actual = bundledFinder.findId(point.latitude, point.longitude);
+          final actual = bundledFinder.findTimeZoneName(
+            point.latitude,
+            point.longitude,
+          );
           if (actual != point.zone) {
             differing.add(
               '${point.name}: ${point.zone ?? 'null'} -> '
@@ -100,8 +106,8 @@ void main() {
       ];
       for (final (name, lat, lon) in fragile) {
         expect(
-          bundledFinder.findId(lat, lon),
-          baselineFinder.findId(lat, lon),
+          bundledFinder.findTimeZoneName(lat, lon),
+          baselineFinder.findTimeZoneName(lat, lon),
           reason: '$name did not survive simplification',
         );
       }
@@ -115,10 +121,10 @@ void main() {
       for (var i = 0; i < 40000; i++) {
         final lat = -90 + (i * 7919 % 180000000) / 1000000;
         final lon = -180 + (i * 15485863 % 360000000) / 1000000;
-        final expected = baselineFinder.findId(lat, lon);
+        final expected = baselineFinder.findTimeZoneName(lat, lon);
         if (expected == null) continue;
         checked++;
-        if (bundledFinder.findId(lat, lon) != expected) differing++;
+        if (bundledFinder.findTimeZoneName(lat, lon) != expected) differing++;
       }
       expect(checked, greaterThan(1000), reason: 'sample missed land');
       final rate = differing / checked;
@@ -149,12 +155,15 @@ void main() {
         // Bracket the crossing, then bisect. The line is oblique, so the
         // western endpoint has to be found rather than assumed.
         var east = -66.5;
-        if (baselineFinder.findId(latitude, east) != 'America/Manaus') continue;
+        if (baselineFinder.findTimeZoneName(latitude, east) !=
+            'America/Manaus') {
+          continue;
+        }
         var west = east;
         var found = false;
         while (west > -70.5) {
           west -= 0.05;
-          final zone = baselineFinder.findId(latitude, west);
+          final zone = baselineFinder.findTimeZoneName(latitude, west);
           if (zone == 'America/Eirunepe') {
             found = true;
             break;
@@ -165,7 +174,8 @@ void main() {
         if (!found) continue;
         for (var i = 0; i < 40; i++) {
           final middle = (west + east) / 2;
-          if (baselineFinder.findId(latitude, middle) == 'America/Eirunepe') {
+          if (baselineFinder.findTimeZoneName(latitude, middle) ==
+              'America/Eirunepe') {
             west = middle;
           } else {
             east = middle;
@@ -176,10 +186,13 @@ void main() {
         // ~5.5 m, ~22 m, ~110 m, ~1.1 km and ~11 km either side.
         for (final offset in <double>[0.00005, 0.0002, 0.001, 0.01, 0.1]) {
           for (final longitude in <double>[line - offset, line + offset]) {
-            final expected = baselineFinder.findId(latitude, longitude);
+            final expected = baselineFinder.findTimeZoneName(
+              latitude,
+              longitude,
+            );
             probed++;
             expect(
-              bundledFinder.findId(latitude, longitude),
+              bundledFinder.findTimeZoneName(latitude, longitude),
               expected,
               reason:
                   'the two differ ${(offset * 111320 * 0.995).round()} m '
@@ -197,7 +210,10 @@ void main() {
       // decides must at least be stable, and must still be one of the
       // contenders rather than something else entirely.
       for (final pin in overlapPins) {
-        final answer = bundledFinder.findId(pin.latitude, pin.longitude);
+        final answer = bundledFinder.findTimeZoneName(
+          pin.latitude,
+          pin.longitude,
+        );
         if (answer == null) continue;
         expect(
           pin.contenders,
@@ -206,7 +222,10 @@ void main() {
               '${pin.description}: the bundled data returned $answer, which is '
               'neither contender',
         );
-        expect(bundledFinder.findId(pin.latitude, pin.longitude), answer);
+        expect(
+          bundledFinder.findTimeZoneName(pin.latitude, pin.longitude),
+          answer,
+        );
       }
     });
   });

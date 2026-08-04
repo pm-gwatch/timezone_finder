@@ -7,14 +7,14 @@ with no network access, bridged to `package:timezone` for civil time.
 
 ```dart
 initializeTimeZones();
-findId(48.8566, 2.3522);        // 'Europe/Paris'
+findTimeZoneName(48.8566, 2.3522);        // 'Europe/Paris'
 findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
-findId(0.0, -140.0);            // null — not inside any land zone
+findTimeZoneName(0.0, -140.0);            // null — not inside any land zone
 ```
 
 ### API
 
-- `findId(latitude, longitude)` returns a `Continent/City` identifier or
+- `findTimeZoneName(latitude, longitude)` returns a `Continent/City` identifier or
   `null`. Nothing to construct or configure.
 - `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
   instead. `toLocation()` does the same from a geocoder's GeoJSON — a

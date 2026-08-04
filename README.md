@@ -1,6 +1,6 @@
 # timezone_finder
 
-> 🎯 **The Dart team's [`package:timezone`](https://pub.dev/packages/timezone) turns a IANA time zone into correct local time. `timezone_finder` turns a place on Earth into that time zone.**
+> 🎯 **The Dart team's [`package:timezone`](https://pub.dev/packages/timezone) turns an IANA time zone into correct local time. `timezone_finder` turns a place on Earth into that time zone.**
 
 Offline IANA lookup for any coordinate on land, returning a `package:timezone` `Location` — so you can build correct local dates and times for many places at once. Pure Dart, no network.
 
@@ -35,23 +35,23 @@ const tokyo = '''{
   }
 }''';
 
-final parisCoordinates = jsonDecode(paris)['geometry']['coordinates'];
-final parisLng = coordinates[0];  // 2.3483915
-final parisLat = coordinates[1];   // 48.8534951
+final parisCoordinates = jsonDecode(paris)['geometry']['coordinates'] as List;
+final parisLng = parisCoordinates[0] as double;  // 2.3483915
+final parisLat = parisCoordinates[1] as double;  // 48.8534951
 
-findId(parisLat, parisLng);        // 'Europe/Paris' — the identifier
+findTimeZoneName(parisLat, parisLng);        // 'Europe/Paris' — the identifier
 findLocation(parisLat, parisLng);  // a Location, ready for TZDateTime
 paris.toLocation();                // the same, without unpacking anything
-findId(0.0, -140.0);               // null — not inside any land zone
+findTimeZoneName(0.0, -140.0);               // null — not inside any land zone
 
 // One instant, two cities. A 9 AM call in Paris starts after lunch in Tokyo.
 final parisLocation = paris.toLocation()!;
 final tokyoLocation = tokyo.toLocation()!;
 
-final confCallStart = tz.TZDateTime(paris, 2026, 8, 3, 9);
+final confCallStart = tz.TZDateTime(parisLocation, 2026, 8, 3, 9);
 
-confCallStart;                    // 2026-08-03 09:00:00.000+0200
-confCallStart.inLocation(tokyo);  // 2026-08-03 16:00:00.000+0900 — same instant
+confCallStart;                            // 2026-08-03 09:00:00.000+0200
+confCallStart.inLocation(tokyoLocation);  // 2026-08-03 16:00:00.000+0900
 ```
 
 > **Status: 0.1.0, not yet published.** The lookup works and the boundary data is bundled, but the API may still change.
@@ -130,7 +130,7 @@ object is a Geometry, a Feature, or a collection of Features; the first two
 name one place, so both are accepted. A `FeatureCollection` is several places
 and is rejected — which match to use is your decision, not this package's.
 
-**Coordinate order differs, and that is deliberate.** `findId` and
+**Coordinate order differs, and that is deliberate.** `findTimeZoneName` and
 `findLocation` take latitude first, the convention for a pair you type.
 `toLocation` reads GeoJSON, which is longitude first — `[2.3522, 48.8566]` is
 Paris. You never choose that order: it arrives from the geocoder in the
@@ -146,7 +146,7 @@ and hands the answer to `package:timezone` in a usable form.
 - It resolves coordinates to a zone. **UTC offsets, DST and civil-time
   arithmetic are [`package:timezone`](https://pub.dev/packages/timezone)'s
   work**, and this package does not reimplement them.
-- `findId` returns the **identifier**, which is what you store: it stays correct
+- `findTimeZoneName` returns the **identifier**, which is what you store: it stays correct
   when daylight-saving rules change under it, where a stored UTC offset does
   not.
 - The dataset covers **land only**, so a coordinate well out to sea returns
@@ -175,9 +175,9 @@ British and French claims meet in the middle with nothing unclaimed between
 them:
 
 ```dart
-findId(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
-findId(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
-findId(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
+findTimeZoneName(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
+findTimeZoneName(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
+findTimeZoneName(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
 ```
 
 That last coordinate is water, and it still resolves — the boundary between the
@@ -189,9 +189,9 @@ other across the Adriatic, 197 km apart. That is far more than two 22 km claims
 can span, so the middle belongs to nobody:
 
 ```dart
-findId(42.6634651, 18.0591377); // Port of Dubrovnik -> Europe/Zagreb
-findId(41.137428,  16.8600823); // Port of Bari      -> Europe/Rome
-findId(41.900447,  17.459610);  // mid-Adriatic      -> null
+findTimeZoneName(42.6634651, 18.0591377); // Port of Dubrovnik -> Europe/Zagreb
+findTimeZoneName(41.137428,  16.8600823); // Port of Bari      -> Europe/Rome
+findTimeZoneName(41.900447,  17.459610);  // mid-Adriatic      -> null
 ```
 
 Both ports are onshore and resolve normally; only the water between them is
