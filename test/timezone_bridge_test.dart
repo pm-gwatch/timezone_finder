@@ -128,6 +128,29 @@ void main() {
       expect(withProperties.toLocation()!.name, 'Australia/Sydney');
     });
 
+    test('accepts a bare Point geometry as well as a Feature', () {
+      // RFC 7946 3: a GeoJSON object is a Geometry, a Feature, or a
+      // collection. Two of those name one place. A Feature is a Point plus
+      // metadata this package ignores, so refusing the Point itself would be
+      // arbitrary.
+      const point = '{"type": "Point", "coordinates": [2.3522, 48.8566]}';
+      expect(point.toLocation()!.name, 'Europe/Paris');
+      expect(point.toLocation(), same(feature(2.3522, 48.8566).toLocation()));
+    });
+
+    test('a bare Point takes the same contract as a Feature', () {
+      const ocean = '{"type": "Point", "coordinates": [-140.0, 0.0]}';
+      const withAltitude =
+          '{"type": "Point", "coordinates": [2.3522, 48.8566, 35.0]}';
+      const offEarth = '{"type": "Point", "coordinates": [0.0, 91.0]}';
+      const shortPosition = '{"type": "Point", "coordinates": [2.3522]}';
+
+      expect(ocean.toLocation(), isNull);
+      expect(withAltitude.toLocation()!.name, 'Europe/Paris');
+      expect(() => offEarth.toLocation(), throwsArgumentError);
+      expect(() => shortPosition.toLocation(), throwsFormatException);
+    });
+
     test('returns null for a point no zone covers', () {
       expect(feature(-140, 0).toLocation(), isNull);
     });
@@ -154,9 +177,12 @@ void main() {
         'empty': '',
         'not JSON': 'Europe/Paris',
         'not an object': '[1, 2]',
-        'a bare geometry': '{"type": "Point", "coordinates": [2.35, 48.85]}',
         'null geometry': '{"type": "Feature", "geometry": null}',
         'geometry not an object': '{"type": "Feature", "geometry": "Point"}',
+        'a MultiPoint, which is several places':
+            '{"type": "MultiPoint", "coordinates": [[2.35, 48.85]]}',
+        'a GeometryCollection':
+            '{"type": "GeometryCollection", "geometries": []}',
         'wrong geometry type':
             '{"type": "Feature", "geometry": {"type": "Polygon", '
             '"coordinates": [[[0, 0], [1, 0], [1, 1], [0, 0]]]}}',

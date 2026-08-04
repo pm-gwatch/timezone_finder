@@ -1,49 +1,74 @@
 # timezone_finder
 
-Offline IANA time zone lookup for any coordinate on land, returning a
-`package:timezone` `Location` — so you can build correct local dates and times
-for many places at once. Pure Dart, no network.
+> 🎯 **The Dart team's [`package:timezone`](https://pub.dev/packages/timezone) turns a IANA time zone into correct local time. `timezone_finder` turns a place on Earth into that time zone.**
+
+Offline IANA lookup for any coordinate on land, returning a `package:timezone` `Location` — so you can build correct local dates and times for many places at once. Pure Dart, no network.
 
 ```dart
-import 'package:timezone/data/latest_all.dart';
-import 'package:timezone/timezone.dart';
+import 'dart:convert';
+
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone_finder/timezone_finder.dart';
 
-/// A geocoder's answer for Paris, as Nominatim or Photon returns it.
-const parisFeature = '{"type": "Feature", "geometry": '
-    '{"type": "Point", "coordinates": [2.3522, 48.8566]}}';
+tz.initializeTimeZones();    // required to create any Location
 
-initializeTimeZones();           // required to create any Location
+// A geocoder's answer for Paris
+const paris = '''{
+  "type": "Feature",
+  "properties": null,
+  "geometry": {
+    "type": "Point",
+    "coordinates": [2.3483915, 48.8534951]
+  }
+}''';
 
-findId(48.8566, 2.3522);         // 'Europe/Paris' — the identifier
-findLocation(48.8566, 2.3522);   // a Location, ready for TZDateTime
-parisFeature.toLocation();       // the same, straight from a geocoder
-findId(0.0, -140.0);             // null — not inside any land zone
+// …and for Tokyo.
+// The coordinates correspond to a Point 
+// [longitude, latitude]
+const tokyo = '''{
+  "type": "Feature",
+  "properties": null,
+  "geometry": {
+    "type": "Point",
+    "coordinates": [139.7638947, 35.6768601]
+  }
+}''';
+
+final parisCoordinates = jsonDecode(paris)['geometry']['coordinates'];
+final parisLng = coordinates[0];  // 2.3483915
+final parisLat = coordinates[1];   // 48.8534951
+
+findId(parisLat, parisLng);        // 'Europe/Paris' — the identifier
+findLocation(parisLat, parisLng);  // a Location, ready for TZDateTime
+paris.toLocation();                // the same, without unpacking anything
+findId(0.0, -140.0);               // null — not inside any land zone
+
+// One instant, two cities. A 9 AM call in Paris starts after lunch in Tokyo.
+final parisLocation = paris.toLocation()!;
+final tokyoLocation = tokyo.toLocation()!;
+
+final confCallStart = tz.TZDateTime(paris, 2026, 8, 3, 9);
+
+confCallStart;                    // 2026-08-03 09:00:00.000+0200
+confCallStart.inLocation(tokyo);  // 2026-08-03 16:00:00.000+0900 — same instant
 ```
 
-> **Status: 0.1.0, not yet published.** The lookup works and the boundary data
-> is bundled, but the API may still change.
+> **Status: 0.1.0, not yet published.** The lookup works and the boundary data is bundled, but the API may still change.
 
 ## What it is for
 
-Resolving the time zone of a geocoded postal or street address, and then
-showing times there:
+Resolving the time zone of a geocoded postal or street address, and then showing times there:
 
 ```text
 address → geocoder (Nominatim, Photon, …) → GeoJSON Feature → Continent/City → Location
 ```
 
-The boundary data ships inside the package, so lookups work fully offline on
-Dart CLI/server and on Flutter for mobile and desktop.
+The boundary data ships inside the package, so lookups work fully offline on Dart CLI/server and on Flutter for mobile and desktop.
 
-Lookups are synchronous and need no setup — there is nothing to construct.
-The index decodes lazily on first use; `ensurePreloaded()` pays that cost up
-front instead.
+Lookups are synchronous and need no setup — there is nothing to construct. The index decodes lazily on first use; `ensurePreloaded()` pays that cost up front instead.
 
-**On a server, call `ensurePreloaded()` at startup.** The index is decoded
-**once per isolate**, so without it the first request handled by each isolate
-pays for the decode. Measured, each additional live isolate costs about **4 MB**
-— eight of them hold eight copies, roughly 29 MB over one.
+**On a server, call `ensurePreloaded()` at startup.** The index is decoded **once per isolate**, so without it the first request handled by each isolate pays for the decode. Measured, each additional live isolate costs about **4 MB** — eight of them hold eight copies, roughly 29 MB over one.
 
 ## One instant, several places
 
@@ -58,10 +83,10 @@ This package supplies the missing half. Coordinates in, `Location` out, and one
 instant rendered wherever it needs to be read:
 
 ```dart
-const charlesDeGaulle = '{"type": "Feature", "geometry": '
-    '{"type": "Point", "coordinates": [2.5479, 49.0097]}}';
-const jfk = '{"type": "Feature", "geometry": '
-    '{"type": "Point", "coordinates": [-73.7781, 40.6413]}}';
+// A bare Point is the other form RFC 7946 gives for one place — the same
+// thing a Feature wraps, without the metadata.
+const charlesDeGaulle = '{"type": "Point", "coordinates": [2.5479, 49.0097]}';
+const jfk = '{"type": "Point", "coordinates": [-73.7781, 40.6413]}';
 
 final takeOff = TZDateTime(charlesDeGaulle.toLocation()!, 2026, 8, 23, 10, 15);
 final landing = takeOff.add(const Duration(hours: 8, minutes: 20));
@@ -91,7 +116,7 @@ change that — it resolves *where* a coordinate is, not which of two instants a
 local time means. If your application schedules by wall clock across DST
 transitions, handle those cases yourself.
 
-### Two things to know
+### Three things to know
 
 **Initialize from `latest_all`.** This package depends on `package:timezone`'s
 engine, never on a tzdata variant. Use
@@ -99,6 +124,11 @@ engine, never on a tzdata variant. Use
 identifiers and carries 341 locations against this dataset's 419, so
 `Europe/Zagreb`, `Africa/Accra` and 104 others would fail to resolve.
 `findLocation` raises a `StateError` naming the fix if either problem occurs.
+
+**`toLocation` takes a Feature or a bare Point.** RFC 7946 says a GeoJSON
+object is a Geometry, a Feature, or a collection of Features; the first two
+name one place, so both are accepted. A `FeatureCollection` is several places
+and is rejected — which match to use is your decision, not this package's.
 
 **Coordinate order differs, and that is deliberate.** `findId` and
 `findLocation` take latitude first, the convention for a pair you type.

@@ -17,7 +17,9 @@ findId(0.0, -140.0);            // null — not inside any land zone
 - `findId(latitude, longitude)` returns a `Continent/City` identifier or
   `null`. Nothing to construct or configure.
 - `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
-  instead. `toLocation()` does the same from a geocoder's GeoJSON `Feature`,
+  instead. `toLocation()` does the same from a geocoder's GeoJSON — a
+  `Feature` carrying a Point, or a bare `Point` geometry, the two forms
+  RFC 7946 gives for one place —
   reading `[longitude, latitude]` per RFC 7946 so callers never unpack that
   order themselves — a swapped pair does not throw, it answers about somewhere
   else.

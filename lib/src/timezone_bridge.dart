@@ -9,19 +9,24 @@ import 'finder.dart' as finder;
 
 /// Resolves a geocoded place to a time zone.
 extension TimeZoneLocation on String {
-  /// Parses this as a GeoJSON `Feature` and resolves its Point to a
-  /// [Location].
+  /// Parses this as a GeoJSON object naming one place, and resolves its Point
+  /// to a [Location].
+  ///
+  /// Accepts either form RFC 7946 gives for a single place — a `Feature`
+  /// carrying a Point, or a bare `Point` geometry:
   ///
   /// ```dart
   /// const paris = '{"type": "Feature", "geometry": '
   ///     '{"type": "Point", "coordinates": [2.3522, 48.8566]}}';
+  /// const alsoParis = '{"type": "Point", "coordinates": [2.3522, 48.8566]}';
   ///
-  /// paris.toLocation(); // Europe/Paris
+  /// paris.toLocation();     // Europe/Paris
+  /// alsoParis.toLocation(); // the same
   /// ```
   ///
   /// The object must follow [RFC 7946](https://www.rfc-editor.org/rfc/rfc7946):
-  /// `type` is `"Feature"` — exactly, the values are case-sensitive — and
-  /// `geometry` is a `Point` whose `coordinates` are
+  /// `type` is `"Feature"` or `"Point"` — exactly, the values are
+  /// case-sensitive — and the Point's `coordinates` are
   /// **`[longitude, latitude]`**, the reverse of the top-level `findLocation`.
   /// An optional third element is altitude and is ignored.
   ///
@@ -35,7 +40,8 @@ extension TimeZoneLocation on String {
   /// will not parse here. Photon answers in GeoJSON already.
   ///
   /// Both return a `FeatureCollection`, which is several places and is
-  /// rejected. Pass one feature out of it:
+  /// rejected — choosing among matches is your decision, not this package's.
+  /// Pass one feature, or just its geometry:
   ///
   /// ```dart
   /// final body = jsonDecode(responseBody) as Map<String, dynamic>;
@@ -45,7 +51,8 @@ extension TimeZoneLocation on String {
   ///
   /// Returns `null` only when no land time zone covers the point — every
   /// malformed input throws instead, so `null` is never ambiguous. Throws
-  /// [FormatException] if this is not a GeoJSON Feature carrying a Point, and
+  /// [FormatException] if this is not a Feature or Point carrying one
+  /// position, and
   /// [ArgumentError] if the position is off the Earth. A non-finite
   /// coordinate raises [FormatException] rather than [ArgumentError]: JSON has
   /// no `NaN` literal, so it fails while being decoded.
@@ -65,20 +72,32 @@ extension TimeZoneLocation on String {
     if (decoded is! Map<String, dynamic>) {
       throw FormatException('Expected a GeoJSON Feature object', this);
     }
-    if (decoded['type'] != 'Feature') {
-      // Exact match: RFC 7946 type values are case-sensitive. This is also
-      // what rejects a FeatureCollection, which is several places.
-      throw FormatException(
-        'Expected "type": "Feature", found ${decoded['type']}',
-        this,
-      );
-    }
-
-    final geometry = decoded['geometry'];
-    if (geometry is! Map<String, dynamic>) {
-      // A Feature may carry a null geometry per RFC 7946 §3.2 — valid GeoJSON,
-      // but there is no point to resolve.
-      throw FormatException('Feature has no geometry object', this);
+    // RFC 7946 §3: a GeoJSON object is a Geometry, a Feature, or a collection
+    // of Features. Two of those name one place, so both are accepted; the
+    // type member says which. Comparisons are exact — RFC 7946 type values
+    // are case-sensitive.
+    final Map<String, dynamic> geometry;
+    switch (decoded['type']) {
+      case 'Feature':
+        final wrapped = decoded['geometry'];
+        if (wrapped is! Map<String, dynamic>) {
+          // A Feature may carry a null geometry per RFC 7946 §3.2 — valid
+          // GeoJSON, but there is no point to resolve.
+          throw FormatException('Feature has no geometry object', this);
+        }
+        geometry = wrapped;
+      case 'Point':
+        // A bare Point is the Feature's geometry without the metadata this
+        // package ignores anyway.
+        geometry = decoded;
+      default:
+        // A FeatureCollection is several places, and choosing among them is
+        // the caller's decision, not ours.
+        throw FormatException(
+          'Expected a GeoJSON Feature or Point, '
+          'found ${decoded['type']}',
+          this,
+        );
     }
     if (geometry['type'] != 'Point') {
       // Nominatim returns Polygon geometries when asked with

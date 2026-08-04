@@ -2,7 +2,7 @@
 //
 // Shows the whole pipeline this package is built for:
 //
-//   place name → geocoder → (lat, lon) → IANA zone → civil time
+//   place name → geocoder → GeoJSON Feature → IANA zone → civil time
 //
 // Only the first step needs the network. Geocoding is the geocoder's job —
 // Nominatim for one airport, Photon for the other, to show that either will
@@ -139,7 +139,7 @@ Future<void> main() async {
   print('BOM -> ${mumbai.name}   (via Photon)');
   print('');
 
-  // Same flight from both ends. `inPlace` does not move the instant — it
+  // Same flight from both ends. `inLocation` does not move the instant — it
   // reports the one arrival moment as the clocks in Mumbai read it.
   print('BA 139 departs LHR -> $takeOff');
   print('BA 139 arrives BOM -> $arrival');
