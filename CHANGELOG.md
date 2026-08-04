@@ -17,21 +17,22 @@ findId(0.0, -140.0);            // null — not inside any land zone
 - `findId(latitude, longitude)` returns a `Continent/City` identifier or
   `null`. Nothing to construct or configure.
 - `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
-  instead, and `'48.8566,2.3522'.toLocation()` does the same from text.
-  Latitude comes first, matching `findId` — note that GeoJSON is the reverse.
-- `TZDateTime.inPlace(coordinates)` and `.inPlaces([...])` re-express one
-  instant at places given as coordinates; `.inLocation` and `.inLocations` do
-  the same from `Location` objects. All preserve the moment and change only
-  the wall clock — the multi-place case `package:timezone`'s single ambient
-  `local` cannot serve. `inPlaces` returns `List<TZDateTime?>`, one entry per
-  place in order, `null` where no zone covers the coordinate.
+  instead. `toLocation()` does the same from a geocoder's GeoJSON `Feature`,
+  reading `[longitude, latitude]` per RFC 7946 so callers never unpack that
+  order themselves — a swapped pair does not throw, it answers about somewhere
+  else.
+- `TZDateTime.inLocation(location)` and `.inLocations([...])` re-express one
+  instant in other places' zones, preserving the moment and changing only the
+  wall clock — the multi-place case `package:timezone`'s single ambient
+  `local` cannot serve.
 - `ensurePreloaded()` decodes the index up front instead of on the first
   lookup. The index is decoded once per isolate, so a server should call this
   at startup; each additional live isolate costs about 4 MB.
   `ianaDatabaseVersion` and `availableTimeZoneIds` report what is bundled.
-- Out-of-range, NaN or infinite coordinates throw `ArgumentError`; text that is
-  not two comma-separated numbers throws `FormatException`. `null` is reserved
-  for "no land time zone here", so neither is mistaken for a legitimate answer.
+- Out-of-range coordinates throw `ArgumentError`; a string that is not a
+  GeoJSON `Feature` carrying a `Point` throws `FormatException`. `null` is
+  reserved for "no land time zone here", so neither is mistaken for a
+  legitimate answer.
 
 ### Initializing the time zone database
 

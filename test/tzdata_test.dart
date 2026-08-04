@@ -38,15 +38,18 @@ void main() {
     // A point with no zone needs no database, so it still answers.
     expect(findLocation(0, -140), isNull);
 
-    // The extensions report the same cause rather than a parse or lookup
-    // failure, since the coordinate itself is fine in every case.
-    final utc = TZDateTime.utc(2026, 8, 23, 10, 15);
-    expect(() => '48.8566,2.3522'.toLocation(), throwsStateError);
-    expect(() => utc.inPlace('48.8566,2.3522'), throwsStateError);
-    expect(() => utc.inPlaces(<String>['48.8566,2.3522']), throwsStateError);
+    // toLocation reports the same cause rather than a parse failure: the
+    // Feature is well-formed, the database simply is not there yet.
+    const paris =
+        '{"type": "Feature", "geometry": '
+        '{"type": "Point", "coordinates": [2.3522, 48.8566]}}';
+    const midPacific =
+        '{"type": "Feature", "geometry": '
+        '{"type": "Point", "coordinates": [-140.0, 0.0]}}';
+    expect(paris.toLocation, throwsStateError);
 
     // Except where no zone covers the point: no database is consulted.
-    expect(utc.inPlace('0,-140'), isNull);
+    expect(midPacific.toLocation(), isNull);
   });
 
   test('names the cause when the tzdata variant omits the identifier', () {

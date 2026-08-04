@@ -9,11 +9,15 @@ import 'package:timezone/data/latest_all.dart';
 import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
+/// A geocoder's answer for Paris, as Nominatim or Photon returns it.
+const parisFeature = '{"type": "Feature", "geometry": '
+    '{"type": "Point", "coordinates": [2.3522, 48.8566]}}';
+
 initializeTimeZones();           // required to create any Location
 
 findId(48.8566, 2.3522);         // 'Europe/Paris' — the identifier
 findLocation(48.8566, 2.3522);   // a Location, ready for TZDateTime
-'48.8566,2.3522'.toLocation();   // the same, from text
+parisFeature.toLocation();       // the same, straight from a geocoder
 findId(0.0, -140.0);             // null — not inside any land zone
 ```
 
@@ -26,7 +30,7 @@ Resolving the time zone of a geocoded postal or street address, and then
 showing times there:
 
 ```text
-address → geocoder (Nominatim, Photon, …) → (lat, lon) → Continent/City → Location
+address → geocoder (Nominatim, Photon, …) → GeoJSON Feature → Continent/City → Location
 ```
 
 The boundary data ships inside the package, so lookups work fully offline on
@@ -54,26 +58,27 @@ This package supplies the missing half. Coordinates in, `Location` out, and one
 instant rendered wherever it needs to be read:
 
 ```dart
-final charlesDeGaulle = '49.0097,2.5479'.toLocation()!;
+const charlesDeGaulle = '{"type": "Feature", "geometry": '
+    '{"type": "Point", "coordinates": [2.5479, 49.0097]}}';
+const jfk = '{"type": "Feature", "geometry": '
+    '{"type": "Point", "coordinates": [-73.7781, 40.6413]}}';
 
-final takeOff = TZDateTime(charlesDeGaulle, 2026, 8, 23, 10, 15);
+final takeOff = TZDateTime(charlesDeGaulle.toLocation()!, 2026, 8, 23, 10, 15);
 final landing = takeOff.add(const Duration(hours: 8, minutes: 20));
 
 takeOff;                                // 10:15, Paris
-landing.inPlace('40.6413,-73.7781');    // 12:35 at JFK — the same instant
+landing.inLocation(jfk.toLocation()!);  // 12:35 at JFK — the same instant
 ```
 
-`inPlace` takes a coordinate; `inLocation` takes a `Location` you already
-hold. Each has a plural form returning one entry per place, in order:
+`inLocations` takes several places at once and returns one entry per place, in
+order:
 
 ```dart
-start.inPlaces(['40.64,-73.77', '35.67,139.65']);  // List<TZDateTime?>
-start.inLocations([newYork, tokyo]);               // List<TZDateTime>
+start.inLocations([newYork, tokyo, sydney]);  // List<TZDateTime>
 ```
 
-`inPlaces` is nullable per entry because a coordinate may fall where no zone
-covers it. Entry *i* always corresponds to place *i*, so an unresolvable
-coordinate becomes a `null` in position rather than a missing element.
+Every entry resolves: a place with no time zone never becomes a `Location` in
+the first place, so the list has no gaps.
 
 Both preserve the moment and change only the wall clock. To keep the wall clock
 and change the moment — *move* a meeting to New York's 17:30 rather than
@@ -95,9 +100,13 @@ identifiers and carries 341 locations against this dataset's 419, so
 `Europe/Zagreb`, `Africa/Accra` and 104 others would fail to resolve.
 `findLocation` raises a `StateError` naming the fix if either problem occurs.
 
-**Latitude first.** `toLocation` parses `"latitude,longitude"`, matching
-`findId`. GeoJSON is the reverse — `'2.3522,48.8566'` is not Paris and will not
-tell you so.
+**Coordinate order differs, and that is deliberate.** `findId` and
+`findLocation` take latitude first, the convention for a pair you type.
+`toLocation` reads GeoJSON, which is longitude first — `[2.3522, 48.8566]` is
+Paris. You never choose that order: it arrives from the geocoder in the
+standard's layout, and reading it is exactly the job this package took over,
+because a swapped pair does not throw. It resolves somewhere else and answers
+confidently.
 
 ## Scope
 

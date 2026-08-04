@@ -1,44 +1,117 @@
-/// Convenience extensions bridging coordinates and `package:timezone`.
+/// Convenience extensions bridging geocoded places and `package:timezone`.
 library;
+
+import 'dart:convert';
 
 import 'package:timezone/timezone.dart';
 
 import 'finder.dart' as finder;
 
-/// Resolves a `"latitude,longitude"` string to a time zone.
+/// Resolves a geocoded place to a time zone.
 extension TimeZoneLocation on String {
-  /// Parses this as `"latitude,longitude"` and resolves it.
+  /// Parses this as a GeoJSON `Feature` and resolves its Point to a
+  /// [Location].
   ///
   /// ```dart
-  /// '48.8566,2.3522'.toLocation();   // Europe/Paris
-  /// '48.8566, 2.3522'.toLocation();  // same, spaces allowed
+  /// const paris = '{"type": "Feature", "geometry": '
+  ///     '{"type": "Point", "coordinates": [2.3522, 48.8566]}}';
+  ///
+  /// paris.toLocation(); // Europe/Paris
   /// ```
   ///
-  /// **Latitude first.** GeoJSON orders coordinates the other way, and a
-  /// swapped pair usually parses fine and returns a confidently wrong answer.
+  /// The object must follow [RFC 7946](https://www.rfc-editor.org/rfc/rfc7946):
+  /// `type` is `"Feature"` — exactly, the values are case-sensitive — and
+  /// `geometry` is a `Point` whose `coordinates` are
+  /// **`[longitude, latitude]`**, the reverse of the top-level `findLocation`.
+  /// An optional third element is altitude and is ignored.
   ///
-  /// Returns `null` only when no land time zone covers the point. Throws
-  /// [FormatException] if this is not two comma-separated numbers, and
-  /// whatever [findLocation] throws otherwise.
+  /// You do not choose that order and cannot get it wrong: it arrives from the
+  /// geocoder in the standard's layout. Unpacking it by hand is what this
+  /// exists to avoid — a swapped pair does not throw, it resolves somewhere
+  /// else entirely and answers confidently.
+  ///
+  /// **Ask the geocoder for GeoJSON.** Nominatim needs `&format=geojson`; its
+  /// default `jsonv2` answers with `lat` and `lon` as top-level strings and
+  /// will not parse here. Photon answers in GeoJSON already.
+  ///
+  /// Both return a `FeatureCollection`, which is several places and is
+  /// rejected. Pass one feature out of it:
+  ///
+  /// ```dart
+  /// final body = jsonDecode(responseBody) as Map<String, dynamic>;
+  /// final feature = (body['features'] as List).first;
+  /// final location = jsonEncode(feature).toLocation();
+  /// ```
+  ///
+  /// Returns `null` only when no land time zone covers the point — every
+  /// malformed input throws instead, so `null` is never ambiguous. Throws
+  /// [FormatException] if this is not a GeoJSON Feature carrying a Point, and
+  /// [ArgumentError] if the position is off the Earth. A non-finite
+  /// coordinate raises [FormatException] rather than [ArgumentError]: JSON has
+  /// no `NaN` literal, so it fails while being decoded.
   Location? toLocation() {
-    final comma = indexOf(',');
-    // Exactly one comma: '1,2,3' is a mistake, not a coordinate.
-    if (comma < 0 || indexOf(',', comma + 1) >= 0) {
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(this);
+    } on FormatException catch (error) {
+      // Re-thrown with our own message: jsonDecode's names the syntax error
+      // but not what the caller was trying to do.
       throw FormatException(
-        'Expected "latitude,longitude" with a single comma',
+        'Expected a GeoJSON Feature: ${error.message}',
+        this,
+        error.offset,
+      );
+    }
+    if (decoded is! Map<String, dynamic>) {
+      throw FormatException('Expected a GeoJSON Feature object', this);
+    }
+    if (decoded['type'] != 'Feature') {
+      // Exact match: RFC 7946 type values are case-sensitive. This is also
+      // what rejects a FeatureCollection, which is several places.
+      throw FormatException(
+        'Expected "type": "Feature", found ${decoded['type']}',
         this,
       );
     }
-    final latitude = double.tryParse(substring(0, comma).trim());
-    final longitude = double.tryParse(substring(comma + 1).trim());
-    if (latitude == null || longitude == null) {
+
+    final geometry = decoded['geometry'];
+    if (geometry is! Map<String, dynamic>) {
+      // A Feature may carry a null geometry per RFC 7946 §3.2 — valid GeoJSON,
+      // but there is no point to resolve.
+      throw FormatException('Feature has no geometry object', this);
+    }
+    if (geometry['type'] != 'Point') {
+      // Nominatim returns Polygon geometries when asked with
+      // polygon_geojson=1; there is no single coordinate to answer for.
       throw FormatException(
-        'Expected "latitude,longitude" as two numbers',
+        'Expected a Point geometry, found ${geometry['type']}',
         this,
-        latitude == null ? 0 : comma + 1,
       );
     }
-    return finder.findLocation(latitude, longitude);
+
+    final coordinates = geometry['coordinates'];
+    // RFC 7946 §3.1.1: a position is [longitude, latitude] with an optional
+    // third altitude element, and SHOULD NOT be longer.
+    if (coordinates is! List ||
+        coordinates.length < 2 ||
+        coordinates.length > 3) {
+      throw FormatException(
+        'Expected coordinates as [longitude, latitude] or '
+        '[longitude, latitude, altitude]',
+        this,
+      );
+    }
+    final longitude = coordinates[0];
+    final latitude = coordinates[1];
+    if (longitude is! num || latitude is! num) {
+      throw FormatException('Coordinates must be numbers', this);
+    }
+
+    // Longitude first, latitude second — the reverse of findLocation, and the
+    // whole reason this parsing lives in the package rather than in every
+    // caller. Range checking stays findLocation's, so a position off the Earth
+    // raises ArgumentError exactly as a bad coordinate pair does.
+    return finder.findLocation(latitude.toDouble(), longitude.toDouble());
   }
 }
 
@@ -62,48 +135,11 @@ extension TZDateTimeInLocation on TZDateTime {
   /// meetingStart.inLocations([newYork, tokyo, sydney]);
   /// ```
   ///
-  /// The receiver's own location is not included unless [locations] names it.
-  /// An empty list yields an empty list.
+  /// Every entry resolves — a place with no time zone cannot become a
+  /// [Location] in the first place, so there are no gaps to account for. The
+  /// receiver's own location is not included unless [locations] names it. An
+  /// empty list yields an empty list.
   List<TZDateTime> inLocations(List<Location> locations) => <TZDateTime>[
     for (final location in locations) TZDateTime.from(this, location),
-  ];
-}
-
-/// The same, for places given as `"latitude,longitude"` rather than resolved.
-extension TZDateTimeInPlace on TZDateTime {
-  /// This same instant, as the wall clock reads it where [coordinates] is.
-  ///
-  /// ```dart
-  /// takeOff.inPlace('40.6413,-73.7781');  // 04:15, if takeOff is 10:15 Paris
-  /// ```
-  ///
-  /// Shorthand for resolving the coordinate and calling
-  /// [TZDateTimeInLocation.inLocation]. Returns `null` when no land time zone
-  /// covers the point — which is why it is nullable and `inLocation` is not.
-  ///
-  /// Throws whatever [TimeZoneLocation.toLocation] throws: [FormatException]
-  /// for text that is not two comma-separated numbers, [ArgumentError] for
-  /// numbers that are not coordinates.
-  TZDateTime? inPlace(String coordinates) {
-    final location = coordinates.toLocation();
-    return location == null ? null : TZDateTime.from(this, location);
-  }
-
-  /// This same instant at each of [coordinates], in the order given.
-  ///
-  /// ```dart
-  /// meetingStart.inPlaces(['40.64,-73.77', '35.67,139.65']);
-  /// ```
-  ///
-  /// **Entry `i` always corresponds to place `i`.** A coordinate no zone
-  /// covers becomes a `null` in position rather than a missing element, so a
-  /// gap cannot shift the entries after it.
-  ///
-  /// A coordinate that is not two numbers still throws, as [inPlace] does:
-  /// unclaimed water is a result, a malformed string is a mistake.
-  ///
-  /// An empty list yields an empty list.
-  List<TZDateTime?> inPlaces(List<String> coordinates) => <TZDateTime?>[
-    for (final each in coordinates) inPlace(each),
   ];
 }

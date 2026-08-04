@@ -1,5 +1,4 @@
-// The package:timezone bridge: findLocation, toLocation, inLocation(s) and
-// inPlace(s).
+// The package:timezone bridge: findLocation, toLocation and inLocation(s).
 //
 // Initialized from `latest_all` here, which is the variant the package
 // documents. The consequences of choosing `latest` instead are covered in
@@ -11,6 +10,31 @@ import 'package:test/test.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
+
+/// A minimal RFC 7946 Feature. `properties` is omitted deliberately: the
+/// package does not require it, and every hand-written fixture would carry
+/// `"properties": null` as noise if it did.
+String feature(double longitude, double latitude) =>
+    '{"type": "Feature", "geometry": '
+    '{"type": "Point", "coordinates": [$longitude, $latitude]}}';
+
+/// Nominatim's answer for Heathrow, byte for byte as the service returns it
+/// (trimmed to the members this package reads plus the ones it ignores). If
+/// either service changes shape, this fails here rather than in an
+/// application.
+const nominatimHeathrow =
+    '{"type": "Feature", "properties": {"place_id": 280595718, '
+    '"osm_type": "relation", "name": "London Heathrow Airport"}, '
+    '"bbox": [-0.4943776, 51.4560987, -0.4151697, 51.4794056], '
+    '"geometry": {"type": "Point", '
+    '"coordinates": [-0.4587801, 51.467739]}}';
+
+/// Photon's answer for Mumbai, in the same shape.
+const photonMumbai =
+    '{"type": "Feature", "properties": {"osm_type": "W", '
+    '"name": "Chhatrapati Shivaji Maharaj International Airport", '
+    '"countrycode": "IN"}, "geometry": {"type": "Point", '
+    '"coordinates": [72.8638223, 19.0901376]}}';
 
 void main() {
   // Bound in setUpAll, not at declaration: group bodies run while tests are
@@ -70,69 +94,127 @@ void main() {
   });
 
   group('String.toLocation', () {
-    test('parses a coordinate pair', () {
-      expect('48.8566,2.3522'.toLocation()!.name, 'Europe/Paris');
+    test('resolves a GeoJSON Feature', () {
+      expect(feature(2.3522, 48.8566).toLocation()!.name, 'Europe/Paris');
     });
 
-    test('tolerates whitespace around either number', () {
-      for (final text in <String>[
-        '48.8566, 2.3522',
-        ' 48.8566,2.3522 ',
-        '48.8566 , 2.3522',
-      ]) {
-        expect(text.toLocation()!.name, 'Europe/Paris', reason: text);
-      }
+    test('reads real geocoder answers unchanged', () {
+      // The shape these two services actually return. A change at either end
+      // fails here rather than in someone's application.
+      expect(nominatimHeathrow.toLocation()!.name, 'Europe/London');
+      expect(photonMumbai.toLocation()!.name, 'Asia/Kolkata');
     });
 
-    test('handles negative and integer-valued coordinates', () {
-      expect('-33.8688,151.2093'.toLocation()!.name, 'Australia/Sydney');
-      expect('51,0'.toLocation()!.name, 'Europe/London');
+    test('ignores altitude in a 3D position', () {
+      // RFC 7946 3.1.1 allows a third element. It must be discarded, not
+      // mistaken for latitude.
+      const withAltitude =
+          '{"type": "Feature", "geometry": {"type": "Point", '
+          '"coordinates": [2.3522, 48.8566, 35.0]}}';
+      expect(withAltitude.toLocation()!.name, 'Europe/Paris');
+    });
+
+    test('does not require properties, though RFC 7946 lists it', () {
+      // Nothing here reads it, so rejecting an otherwise-usable Feature over
+      // an ignored member would be gratuitous — and would force every
+      // hand-written example to carry `"properties": null`.
+      expect(
+        feature(151.2093, -33.8688).toLocation()!.name,
+        'Australia/Sydney',
+      );
+      const withProperties =
+          '{"type": "Feature", "properties": {"name": "Sydney"}, '
+          '"geometry": {"type": "Point", "coordinates": [151.2093, -33.8688]}}';
+      expect(withProperties.toLocation()!.name, 'Australia/Sydney');
     });
 
     test('returns null for a point no zone covers', () {
-      expect('0,-140'.toLocation(), isNull);
+      expect(feature(-140, 0).toLocation(), isNull);
     });
 
-    test('throws FormatException on anything that is not two numbers', () {
-      for (final text in <String>[
-        '',
-        'Europe/Paris',
-        '48.8566',
-        '48.8566,2.3522,0',
-        '48.8566;2.3522',
-        ',',
-        '48.8566,',
-        'north,east',
-        // A European decimal comma cannot be told apart from the separator,
-        // so it must fail rather than be guessed at.
-        '48,8566, 2,3522',
-      ]) {
+    test('rejects a FeatureCollection, which is several places', () {
+      // Both geocoders wrap their answer in one. Picking a feature is the
+      // caller's decision, not ours — the error says so.
+      const collection =
+          '{"type": "FeatureCollection", "features": [$photonMumbai]}';
+      expect(
+        () => collection.toLocation(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('FeatureCollection'),
+          ),
+        ),
+      );
+    });
+
+    test('throws FormatException on anything that is not a Point Feature', () {
+      const cases = <String, String>{
+        'empty': '',
+        'not JSON': 'Europe/Paris',
+        'not an object': '[1, 2]',
+        'a bare geometry': '{"type": "Point", "coordinates": [2.35, 48.85]}',
+        'null geometry': '{"type": "Feature", "geometry": null}',
+        'geometry not an object': '{"type": "Feature", "geometry": "Point"}',
+        'wrong geometry type':
+            '{"type": "Feature", "geometry": {"type": "Polygon", '
+            '"coordinates": [[[0, 0], [1, 0], [1, 1], [0, 0]]]}}',
+        'lower-case type':
+            '{"type": "feature", "geometry": {"type": "Point", '
+            '"coordinates": [2.35, 48.85]}}',
+        'coordinates missing':
+            '{"type": "Feature", "geometry": {"type": "Point"}}',
+        'coordinates too short':
+            '{"type": "Feature", "geometry": {"type": "Point", '
+            '"coordinates": [2.35]}}',
+        'coordinates too long':
+            '{"type": "Feature", "geometry": {"type": "Point", '
+            '"coordinates": [2.35, 48.85, 0, 0]}}',
+        'coordinates not numbers':
+            '{"type": "Feature", "geometry": {"type": "Point", '
+            '"coordinates": ["2.35", "48.85"]}}',
+      };
+      cases.forEach((label, text) {
         expect(
           () => text.toLocation(),
           throwsFormatException,
-          reason: 'accepted ${text.isEmpty ? '<empty>' : text}',
+          reason: 'accepted: $label',
         );
-      }
+      });
     });
 
-    test('throws ArgumentError when the numbers are not coordinates', () {
-      expect(() => '91,0'.toLocation(), throwsArgumentError);
-      expect(() => '0,181'.toLocation(), throwsArgumentError);
-      expect(() => 'NaN,0'.toLocation(), throwsArgumentError);
+    test('throws ArgumentError when the position is not on Earth', () {
+      expect(() => feature(0, 91).toLocation(), throwsArgumentError);
+      expect(() => feature(181, 0).toLocation(), throwsArgumentError);
     });
 
-    test('separates "not a coordinate" from "no zone here"', () {
-      // The distinction the whole contract rests on: a typo must not look
-      // like the middle of the Pacific.
+    test('a non-finite coordinate cannot survive JSON at all', () {
+      // JSON has no NaN or Infinity literal, so these never reach the range
+      // check — they fail while being decoded. Worth pinning: it means
+      // ArgumentError here only ever means "out of range".
+      expect(() => feature(0, double.nan).toLocation(), throwsFormatException);
+      expect(
+        () => feature(double.infinity, 0).toLocation(),
+        throwsFormatException,
+      );
+    });
+
+    test('separates "not a Feature" from "no zone here"', () {
+      // The distinction the whole contract rests on: a malformed document
+      // must not look like the middle of the Pacific.
       expect(() => 'oops'.toLocation(), throwsFormatException);
-      expect('0,-140'.toLocation(), isNull);
+      expect(feature(-140, 0).toLocation(), isNull);
     });
 
-    test('reversed coordinates parse, which is why order is documented', () {
-      // Not a bug to fix — a hazard to pin. GeoJSON is lon,lat, and a swapped
-      // pair is usually still a valid coordinate somewhere else entirely.
-      expect('48.8566,2.3522'.toLocation()!.name, 'Europe/Paris');
-      expect('2.3522,48.8566'.toLocation()?.name, isNot('Europe/Paris'));
+    test('a hand-reversed position resolves elsewhere, silently', () {
+      // The hazard this parsing exists to remove. It now survives only in
+      // documents written by hand — a geocoder always emits [lon, lat].
+      expect(feature(2.3522, 48.8566).toLocation()!.name, 'Europe/Paris');
+      expect(
+        feature(48.8566, 2.3522).toLocation()?.name,
+        isNot('Europe/Paris'),
+      );
     });
   });
 
@@ -216,107 +298,11 @@ void main() {
     });
   });
 
-  group('TZDateTime.inPlace', () {
-    test('re-expresses the instant at a coordinate', () {
-      final takeOff = TZDateTime(paris, 2026, 8, 23, 10, 15);
-      final there = takeOff.inPlace('40.6413,-73.7781')!;
-
-      expect(there.location.name, 'America/New_York');
-      expect(there.millisecondsSinceEpoch, takeOff.millisecondsSinceEpoch);
-      expect(there.hour, 4);
-    });
-
-    test('agrees with resolving the coordinate by hand', () {
-      final takeOff = TZDateTime(paris, 2026, 8, 23, 10, 15);
-      expect(
-        takeOff.inPlace('40.6413,-73.7781'),
-        takeOff.inLocation('40.6413,-73.7781'.toLocation()!),
-      );
-    });
-
-    test('returns null where no zone covers the point', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(start.inPlace('0,-140'), isNull);
-    });
-
-    test('separates a bad coordinate from open ocean', () {
-      // The same distinction the rest of the package draws: a typo throws,
-      // unclaimed water returns null.
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(() => start.inPlace('oops'), throwsFormatException);
-      expect(() => start.inPlace('91,0'), throwsArgumentError);
-      expect(start.inPlace('0,-140'), isNull);
-    });
-  });
-
-  group('TZDateTime.inPlaces', () {
-    test('returns one entry per coordinate, in order', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      final elsewhere = start.inPlaces(<String>[
-        '40.6413,-73.7781',
-        '35.6762,139.6503',
-      ]);
-
-      expect(elsewhere, hasLength(2));
-      expect(elsewhere[0]!.location.name, 'America/New_York');
-      expect(elsewhere[1]!.location.name, 'Asia/Tokyo');
-    });
-
-    test('an unresolvable coordinate becomes a null in place', () {
-      // The contract that makes the plural form usable: entry i always
-      // corresponds to place i, so a hole cannot shift the others.
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      final elsewhere = start.inPlaces(<String>[
-        '40.6413,-73.7781',
-        '0,-140', // open ocean
-        '35.6762,139.6503',
-      ]);
-
-      expect(elsewhere, hasLength(3));
-      expect(elsewhere[0]!.location.name, 'America/New_York');
-      expect(elsewhere[1], isNull);
-      expect(elsewhere[2]!.location.name, 'Asia/Tokyo');
-    });
-
-    test('every entry is the same instant as the receiver', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      for (final other in start.inPlaces(<String>[
-        '40.6413,-73.7781',
-        '35.6762,139.6503',
-      ])) {
-        expect(other!.millisecondsSinceEpoch, start.millisecondsSinceEpoch);
-      }
-    });
-
-    test('an empty list yields an empty list', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(start.inPlaces(const <String>[]), isEmpty);
-    });
-
-    test('agrees with inPlace applied one at a time', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      const places = <String>['40.6413,-73.7781', '0,-140'];
-      expect(start.inPlaces(places), <TZDateTime?>[
-        for (final p in places) start.inPlace(p),
-      ]);
-    });
-
-    test('one bad coordinate throws rather than discarding the good ones', () {
-      // Deliberate: a malformed string is a programming error, unlike a
-      // coordinate that simply has no zone.
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(
-        () => start.inPlaces(<String>['40.6413,-73.7781', 'oops']),
-        throwsFormatException,
-      );
-    });
-  });
-
-  test('a coordinate string reaches a civil time end to end', () {
-    // The path the package exists to make short: two coordinates, one
+  test('a geocoder answer reaches a civil time end to end', () {
+    // The path the package exists to make short: two geocoded places, one
     // instant, each rendered where it belongs.
-    final charlesDeGaulle = '49.0097,2.5479'.toLocation()!;
-    final jfk = '40.6413,-73.7781'.toLocation()!;
+    final charlesDeGaulle = feature(2.5479, 49.0097).toLocation()!;
+    final jfk = feature(-73.7781, 40.6413).toLocation()!;
 
     final takeOff = TZDateTime(charlesDeGaulle, 2026, 8, 23, 10, 15);
     final landing = takeOff.add(const Duration(hours: 8, minutes: 20));

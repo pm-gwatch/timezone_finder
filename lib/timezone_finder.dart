@@ -16,8 +16,10 @@
 /// is what you render with. Both need your application to have called
 /// `initializeTimeZones()`.
 ///
-/// To show one instant in several places, [TZDateTimeInPlace.inPlaces] takes
-/// coordinates and [TZDateTimeInLocation.inLocations] takes `Location`s.
+/// To show one instant in several places, resolve each place to a `Location`
+/// — with [findLocation] from coordinates, or [TimeZoneLocation.toLocation]
+/// from a geocoder's GeoJSON — then pass them to
+/// [TZDateTimeInLocation.inLocations].
 ///
 /// The index is decoded lazily and **once per isolate**. On a server, call
 /// [ensurePreloaded] at startup so no request pays for it.
@@ -31,5 +33,4 @@ export 'src/finder.dart'
         findLocation,
         ianaDatabaseVersion;
 export 'src/index.dart' show IndexFormatException;
-export 'src/timezone_bridge.dart'
-    show TZDateTimeInLocation, TZDateTimeInPlace, TimeZoneLocation;
+export 'src/timezone_bridge.dart' show TZDateTimeInLocation, TimeZoneLocation;
