@@ -1,17 +1,17 @@
 /// Offline lookup of the IANA time zone for a coordinate on land.
 ///
 /// ```dart
-/// findTimeZoneName(48.8566, 2.3522);        // 'Europe/Paris'
-/// findLocation(48.8566, 2.3522);  // a package:timezone Location
-/// findTimeZoneName(0.0, -140.0);            // null — not inside any land zone
+/// findTimeZoneName(48.8566, 2.3522);  // 'Europe/Paris'
+/// findLocation(48.8566, 2.3522);      // a package:timezone Location
+/// findTimeZoneName(0.0, -140.0);      // null — not inside any land zone
 /// ```
 ///
 /// Boundaries are bundled, so lookups work offline with no network and no
 /// setup. They are simplified to roughly 110 m — far finer than a time zone,
 /// and small enough that the whole package is a few megabytes.
 ///
-/// [findTimeZoneName] returns the identifier, which is what you store: it stays correct
-/// when daylight-saving rules change under it. [findLocation] and
+/// [findTimeZoneName] returns the identifier, which is what you store: it
+/// stays correct when daylight-saving rules change under it. [findLocation] and
 /// [TimeZoneLocation.toLocation] return a `package:timezone` `Location`, which
 /// is what you render with. Both need your application to have called
 /// `initializeTimeZones()`.
