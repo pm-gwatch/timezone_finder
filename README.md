@@ -1,42 +1,154 @@
 # timezone_finder
 
-Offline lookup of the IANA time zone identifier (`Continent/City`) for any
-latitude/longitude on land. Pure Dart, no network, no dependencies.
+> 🎯 **The Dart team's [`package:timezone`](https://pub.dev/packages/timezone) turns an IANA time zone into correct local time. `timezone_finder` turns a place on Earth into that time zone.**
+
+Offline IANA lookup for any coordinate on land, returning a `package:timezone` `Location` — so you can build correct local dates and times for many places at once. Pure Dart, no network.
 
 ```dart
+import 'dart:convert';
+
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone_finder/timezone_finder.dart';
 
-final finder = TimeZoneFinder.exact();
+tz.initializeTimeZones();    // required to create any Location
 
-finder.find(48.8566, 2.3522);    // 'Europe/Paris'
-finder.find(-33.8688, 151.2093); // 'Australia/Sydney'
-finder.find(0.0, -140.0);        // null — not inside any land zone
+// A geocoder's answer for Paris
+const paris = '''{
+  "type": "Feature",
+  "properties": null,
+  "geometry": {
+    "type": "Point",
+    "coordinates": [2.3483915, 48.8534951]
+  }
+}''';
+
+// …and for Tokyo.
+// The coordinates correspond to a Point 
+// [longitude, latitude]
+const tokyo = '''{
+  "type": "Feature",
+  "properties": null,
+  "geometry": {
+    "type": "Point",
+    "coordinates": [139.7638947, 35.6768601]
+  }
+}''';
+
+final parisCoordinates = jsonDecode(paris)['geometry']['coordinates'] as List;
+final parisLng = parisCoordinates[0] as double;  // 2.3483915
+final parisLat = parisCoordinates[1] as double;  // 48.8534951
+
+findTimeZoneName(parisLat, parisLng);        // 'Europe/Paris' — the identifier
+findLocation(parisLat, parisLng);  // a Location, ready for TZDateTime
+paris.toLocation();                // the same, without unpacking anything
+findTimeZoneName(0.0, -140.0);               // null — not inside any land zone
+
+// One instant, two cities. A 9 AM call in Paris starts after lunch in Tokyo.
+final parisLocation = paris.toLocation()!;
+final tokyoLocation = tokyo.toLocation()!;
+
+final confCallStart = tz.TZDateTime(parisLocation, 2026, 8, 3, 9);
+
+confCallStart;                            // 2026-08-03 09:00:00.000+0200
+confCallStart.inLocation(tokyoLocation);  // 2026-08-03 16:00:00.000+0900
 ```
 
-> **Status: 0.1.0, not yet published.** The lookup works and the boundary data
-> is bundled, but the API may still change.
+> **Status: 0.1.0, not yet published.** The lookup works and the boundary data is bundled, but the API may still change.
 
 ## What it is for
 
-Resolving the time zone of a geocoded postal or street address:
+Resolving the time zone of a geocoded postal or street address, and then showing times there:
 
 ```text
-address → geocoder (Nominatim, Photon, …) → (lat, lon) → find → Continent/City
+address → geocoder (Nominatim, Photon, …) → GeoJSON Feature → Continent/City → Location
 ```
 
-The boundary data ships inside the package, so lookups work fully offline on
-Dart CLI/server and on Flutter for mobile and desktop.
+The boundary data ships inside the package, so lookups work fully offline on Dart CLI/server and on Flutter for mobile and desktop.
 
-`find` is synchronous. The index decodes lazily on first use; the optional
-`ensurePreloaded()` pays that cost up front instead.
+Lookups are synchronous and need no setup — there is nothing to construct. The index decodes lazily on first use; `ensurePreloaded()` pays that cost up front instead.
+
+**On a server, call `ensurePreloaded()` at startup.** The index is decoded **once per isolate**, so without it the first request handled by each isolate pays for the decode. Measured, each additional live isolate costs about **4 MB** — eight of them hold eight copies, roughly 29 MB over one.
+
+## One instant, several places
+
+`package:timezone` models zones correctly — transition tables, DST rules,
+historical changes — but it starts from an identifier you already know, and it
+assumes a single ambient local zone per process. That second assumption is the
+one that breaks whenever a program handles more than one place at a time: a
+flight with a departure and an arrival, a meeting with participants in nine
+countries, a fleet, a photo library.
+
+This package supplies the missing half. Coordinates in, `Location` out, and one
+instant rendered wherever it needs to be read:
+
+```dart
+// A bare Point is the other form RFC 7946 gives for one place — the same
+// thing a Feature wraps, without the metadata.
+const charlesDeGaulle = '{"type": "Point", "coordinates": [2.5479, 49.0097]}';
+const jfk = '{"type": "Point", "coordinates": [-73.7781, 40.6413]}';
+
+final takeOff = TZDateTime(charlesDeGaulle.toLocation()!, 2026, 8, 23, 10, 15);
+final landing = takeOff.add(const Duration(hours: 8, minutes: 20));
+
+takeOff;                                // 10:15, Paris
+landing.inLocation(jfk.toLocation()!);  // 12:35 at JFK — the same instant
+```
+
+`inLocations` takes several places at once and returns one entry per place, in
+order:
+
+```dart
+start.inLocations([newYork, tokyo, sydney]);  // List<TZDateTime>
+```
+
+Every entry resolves: a place with no time zone never becomes a `Location` in
+the first place, so the list has no gaps.
+
+Both preserve the moment and change only the wall clock. To keep the wall clock
+and change the moment — *move* a meeting to New York's 17:30 rather than
+*translate* it — construct a new `TZDateTime` with the other location.
+
+**Not in scope: ambiguous and nonexistent wall-clock times.** On the night a
+zone springs forward, 02:30 does not exist; on the night it falls back, it
+happens twice. `TZDateTime` picks one silently, and this package does not
+change that — it resolves *where* a coordinate is, not which of two instants a
+local time means. If your application schedules by wall clock across DST
+transitions, handle those cases yourself.
+
+### Three things to know
+
+**Initialize from `latest_all`.** This package depends on `package:timezone`'s
+engine, never on a tzdata variant. Use
+`package:timezone/data/latest_all.dart`: `data/latest.dart` drops the tzdb link
+identifiers and carries 341 locations against this dataset's 419, so
+`Europe/Zagreb`, `Africa/Accra` and 104 others would fail to resolve.
+`findLocation` raises a `StateError` naming the fix if either problem occurs.
+
+**`toLocation` takes a Feature or a bare Point.** RFC 7946 says a GeoJSON
+object is a Geometry, a Feature, or a collection of Features; the first two
+name one place, so both are accepted. A `FeatureCollection` is several places
+and is rejected — which match to use is your decision, not this package's.
+
+**Coordinate order differs, and that is deliberate.** `findTimeZoneName` and
+`findLocation` take latitude first, the convention for a pair you type.
+`toLocation` reads GeoJSON, which is longitude first — `[2.3522, 48.8566]` is
+Paris. You never choose that order: it arrives from the geocoder in the
+standard's layout, and reading it is exactly the job this package took over,
+because a swapped pair does not throw. It resolves somewhere else and answers
+confidently.
 
 ## Scope
 
-This package answers one question: *which time zone is this coordinate in?*
+This package answers one question: *which time zone is this coordinate in?* —
+and hands the answer to `package:timezone` in a usable form.
 
-- It returns an **identifier only**. For UTC offsets, DST and civil-time
-  arithmetic, pass the identifier to
-  [`package:timezone`](https://pub.dev/packages/timezone).
+- It resolves coordinates to a zone. **UTC offsets, DST and civil-time
+  arithmetic are [`package:timezone`](https://pub.dev/packages/timezone)'s
+  work**, and this package does not reimplement them.
+- `findTimeZoneName` returns the **identifier**, which is what you store: it stays correct
+  when daylight-saving rules change under it, where a stored UTC offset does
+  not.
 - The dataset covers **land only**, so a coordinate well out to sea returns
   `null`. Coordinates on beaches, piers, ferries and large lakes may also fall
   outside every polygon — expected for the address use case, worth knowing if
@@ -56,64 +168,92 @@ shoreline. Country polygons follow OpenStreetMap administrative boundaries, and
 for a coastal state those extend over territorial waters — roughly 12 nautical
 miles, about 22 km, from the coast.
 
-The consequence is visible in any narrow strait. The Dover Strait is about
-42 km across, so the British and French claims meet in the middle with nothing
-unclaimed between them:
+The consequence is easiest to see by comparing two stretches of open water.
+
+**A narrow strait resolves.** The Dover Strait is about 42 km across, so the
+British and French claims meet in the middle with nothing unclaimed between
+them:
 
 ```dart
-finder.find(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
-finder.find(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
-finder.find(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
+findTimeZoneName(51.1269705, 1.3230653); // Port of Dover   -> Europe/London
+findTimeZoneName(50.9744815, 1.8765687); // Port of Calais  -> Europe/Paris
+findTimeZoneName(51.050726,  1.599817);  // mid-Channel     -> Europe/Paris
 ```
 
-That last one is water, and it still resolves — the boundary between the two
-zones runs down the middle of the strait, and the midpoint falls just on the
-French side of it. Sail west along the Channel and it opens out; past roughly
-100 km of width there is international water in the middle and lookups start
-returning `null`.
+That last coordinate is water, and it still resolves — the boundary between the
+two zones runs down the middle of the strait, and the midpoint falls just on the
+French side of it.
+
+**A wide sea does not.** The Port of Dubrovnik and the Port of Bari face each
+other across the Adriatic, 197 km apart. That is far more than two 22 km claims
+can span, so the middle belongs to nobody:
+
+```dart
+findTimeZoneName(42.6634651, 18.0591377); // Port of Dubrovnik -> Europe/Zagreb
+findTimeZoneName(41.137428,  16.8600823); // Port of Bari      -> Europe/Rome
+findTimeZoneName(41.900447,  17.459610);  // mid-Adriatic      -> null
+```
+
+Both ports are onshore and resolve normally; only the water between them is
+unclaimed. The crossover sits somewhere near 100 km of width — sail west along
+the Channel as it widens and lookups start returning `null` there too.
 
 So: a `null` tells you no country claims that point. A non-null answer does not
 promise you are standing on dry land.
 
-## Two sizes
+## Resolution, and what it costs
 
-The boundary data ships inside the package, so the download is not small.
-Import whichever tier suits you — **never both**, since each carries its own
-copy of the data.
+A time zone is a country or a state wide, so deciding which one an address
+falls in does not need street-level geometry. The bundled boundaries are
+simplified with Douglas-Peucker to **roughly 110 m**, which keeps the whole
+package to a few megabytes and a compiled program to about 11 MB.
 
-| | constructor | boundary resolution | binary | peak memory |
-| --- | --- | --- | --- | --- |
-| **Exact** | `TimeZoneFinder.exact()` | unsimplified, stored to ~11 cm | 43.7 MB | 88 MB |
-| **Compact** | `TimeZoneFinder.compact()` | simplified to ~110 m | 11.4 MB | 29 MB |
+That simplification is the package's one deliberate loss, and it is measured
+rather than estimated. Ten million coordinates, checked against a reference
+implementation that reads the unsimplified source geometry directly:
 
-One import, one class; the constructor picks the tier. Only the tier you
-construct is compiled in — both are in the published archive either way (29 MiB
-compressed, 16 % of pub.dev's limit), so the constructor decides what you
-*ship*, not what you download.
-
-**On "~11 cm".** That is the exact tier's storage resolution — coordinates are
-quantized to 1e-6°, and no vertices are dropped. It is not an accuracy claim:
-the boundaries come from OpenStreetMap, whose own positional error is metres to
-tens of metres. The quantization is deliberately finer than the source so it
-contributes nothing of its own. The compact tier's ~110 m, by contrast, *is* a
-deliberate loss.
-
-The compact tier's loss is measured, not estimated:
-
-| where the coordinate is | answers differing from the exact tier |
+| where the coordinate falls | answers that differ |
 | --- | --- |
-| anywhere on land, drawn at random | **0.008 %** |
-| within ~2 km of a boundary | 1.0 % |
-| within ~500 m of a boundary | 30 % |
+| anywhere on land, drawn at random | **0.006 %** |
+| on a grid-cell edge | 0.1 % |
+| inside a disputed-territory overlap | 0.3 % |
+| within ~20 km of a zone boundary | 1.4 % |
+| beside an enclave boundary | **19 %** |
+| on a zone boundary itself | 41 % |
+| on the antimeridian seam | **0 %** |
 
-So for a geocoded street address the two tiers almost always agree, and within
-a few hundred metres of a border they often will not. All 265 test fixtures —
-including every enclave and small-island case, Lesotho and Vatican City among
-them — resolve identically in both.
+The first row is the address case: 12 differing points in 191,477 drawn
+uniformly over land. An independent uniform sampling gave 0.008 %, so treat it
+as *about one in fifteen thousand* rather than a precise figure. The sampling
+deliberately over-weights borders, so the figure across all ten million points
+(17 %) describes the test harness, not the package.
 
-Simplification drops 33 polygons and 27 holes that collapse to nothing at this
-tolerance, so a handful of very small islands resolve to a neighbouring zone or
-to `null` in the compact tier.
+Sampled around 26 real border towns — the realistic worst case for an address
+— the answers differ on **0.21 %** of coordinates within 1 km of the town
+centre and 0.11 % within 5 km, roughly one address in 500.
+
+All **419 identifiers** are present, and all 273 test fixtures resolve exactly
+as the unsimplified geometry does.
+
+**Enclaves are the exception worth knowing about.** Lesotho, Vatican City,
+Büsingen and Gibraltar all resolve correctly, because their centres are
+unambiguous. But an enclave boundary is short and intricate — precisely what
+Douglas-Peucker smooths hardest — and 27 holes collapse entirely at this
+tolerance. Beside one of those lines, close to one answer in five differs. If
+your coordinates cluster around an enclave border, measure before relying on
+this.
+
+Simplification also drops 33 polygons that vanish at this tolerance. For a few
+very small islands the result is not a wrong neighbour but **`null`** — Chagos,
+Midway and Kiritimati among them.
+
+**If a wrong answer within a few hundred metres of a border would be
+expensive** — cargo and customs at a frontier, billing by local time in a split
+jurisdiction like Chihuahua — this package is not the right tool, and there is
+no higher-resolution option inside it. The unsimplified boundaries exist in the
+repository as the baseline these numbers are measured against, but they are
+25 MiB compressed and are not published; shipping them would make every
+consumer download thirty megabytes for a precision almost none of them need.
 
 ## Disputed territories
 
@@ -172,7 +312,7 @@ offering that adapted database under the ODbL too.
 
 The bundled index is built from a specific
 [timezone-boundary-builder](https://github.com/evansiroky/timezone-boundary-builder)
-release, currently **2026c**. `finder.ianaDatabaseVersion` reports it at runtime.
+release, currently **2026c**. `ianaDatabaseVersion` reports it at runtime.
 
 Boundary releases appear two to four times a year and are decoupled from IANA
 tzdb releases: most tzdb releases change daylight-saving *rules*, which this
@@ -185,11 +325,15 @@ boundary release, not a tzdb one.
 
 ## Accuracy
 
-Answers are validated against a deliberately naive reference implementation
-that reads the source boundaries directly. The two are compared over **ten
-million sampled coordinates**, weighted toward zone borders, enclaves, grid
-boundaries and the antimeridian rather than spread uniformly — **zero
-disagreements** for the exact tier.
+Against the unsimplified source geometry (same quantization, grid and encoder,
+no Douglas-Peucker), the pipeline shows **zero disagreements** over ten million
+sampled coordinates. Everything the bundled data differs by is the
+simplification cost under [Resolution](#resolution-and-what-it-costs).
+
+```sh
+dart run tool/differential.dart --index unsimplified   # expects zero
+dart run tool/differential.dart --index bundled        # measures the cost
+```
 
 ## Credits
 

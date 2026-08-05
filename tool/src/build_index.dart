@@ -1,7 +1,7 @@
 /// Assembles the shipped index container.
 ///
 /// Build-time counterpart to the reader in `lib/src/index.dart`; the layout is
-/// documented there. Milestone 8 base64-encodes whatever this produces.
+/// documented there.
 library;
 
 import 'dart:convert';

@@ -1,15 +1,14 @@
-// Milestone 4: the packed coordinate format, against the real dataset.
+// The packed coordinate format, against the real dataset.
 //
 // Round-tripping all 7,649,092 vertices is three tests at once: it exercises
 // the encoder, it proves the encoder and decoder are inverses, and it is the
 // strongest available check on quantization — which nothing else can provide,
 // because the reference oracle quantizes with the same functions the index
-// will, so a quantization bug corrupts both sides identically (plan §10.2).
+// will, so a quantization bug corrupts both sides identically.
 //
-// It also re-derives the encoded size independently. The 27.84 MB figure in
-// plan §5.2 came from a Python prototype, and the whole size budget rests on
-// it. If the Dart encoder disagrees, one of them is wrong and it is worth
-// knowing now rather than at milestone 8.
+// It also re-derives the encoded size independently. The 27.84 MB the whole
+// size budget rests on was measured with a separate prototype; if the Dart
+// encoder disagrees, one of them is wrong.
 
 @Timeout(Duration(minutes: 10))
 library;
@@ -112,7 +111,7 @@ void main() {
       });
 
       test('encodedRingLength predicts the packed size exactly', () {
-        // Milestone 5 needs to size the buffer and build the offset table
+        // The index builder sizes the buffer and builds the offset table
         // without encoding twice.
         var predicted = 0;
         for (final value in rings) {
@@ -125,7 +124,7 @@ void main() {
         expect(predicted, out.length);
       });
 
-      test('the coordinate blob matches the budget in plan §5.2', () {
+      test('the coordinate blob matches the budget in the size budget', () {
         var total = 0;
         for (final value in rings) {
           total += encodedRingLength(value);

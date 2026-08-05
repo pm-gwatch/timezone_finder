@@ -1,4 +1,4 @@
-// Milestone 5: the shortcut grid must never drop a polygon.
+// The shortcut grid must never drop a polygon.
 //
 // The grid is a filter, not an answer: it narrows 1,184 polygons to a handful
 // and point-in-polygon decides among those. That is only sound if the handful
@@ -24,7 +24,7 @@ import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/golden_points.dart';
 import 'reference/reference_finder.dart';
 
-/// The resolution milestone 5 selected. See plan §6.1.
+/// The selected resolution.
 const _chosenCellSize = 1000000;
 
 void main() {
@@ -87,7 +87,10 @@ void main() {
           ...goldenPoints,
         ]) {
           final viaGrid = gridFind(point.latitude, point.longitude);
-          final direct = oracle.find(point.latitude, point.longitude);
+          final direct = oracle.findTimeZoneName(
+            point.latitude,
+            point.longitude,
+          );
           if (viaGrid != direct) {
             failures.add(
               '${point.name}: grid ${viaGrid ?? 'null'}, '
@@ -118,7 +121,7 @@ void main() {
           final lon = (random.nextInt(360000001) - 180000000) / 1000000;
           checked++;
 
-          final direct = oracle.find(lat, lon);
+          final direct = oracle.findTimeZoneName(lat, lon);
           if (direct != null) land++;
           final viaGrid = gridFind(lat, lon);
           if (viaGrid != direct) {
@@ -177,7 +180,7 @@ void main() {
           for (final lat in <double>[-90, -89, 89, 90]) {
             expect(
               gridFind(lat, lon),
-              oracle.find(lat, lon),
+              oracle.findTimeZoneName(lat, lon),
               reason: 'grid and oracle disagree at ($lat, $lon)',
             );
           }
@@ -197,7 +200,7 @@ void main() {
       });
 
       test('the serialized grid is far smaller than the coordinate blob', () {
-        // Plan §5.3 estimated 1–3 MB for the grid. Measured, the raw cell
+        // The original estimate was 1–3 MB for the grid. Measured, the raw cell
         // array at this resolution is ~275 KB, so the index total is
         // essentially the 27.8 MB of coordinates.
         expect(grid.serializedBytes, lessThan(1000000));

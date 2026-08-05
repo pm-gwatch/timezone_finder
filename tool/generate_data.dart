@@ -1,11 +1,11 @@
-/// Generates the bundled index under `lib/data/`.
+/// Generates the indexes as base64 Dart source.
 ///
 ///     dart run tool/generate_data.dart [--chunk-kb 1024]
+///         [--emit bundled|unsimplified|both]
 ///
-/// Fetches the boundary data if it is not cached, packs the container, and
-/// writes it out as base64 Dart source. Maintainers run this; consumers never
-/// do. Milestone 10 folds it into `tool/refresh.dart` along with the release
-/// triage.
+/// The bundled index goes to `lib/src/data/` and ships; the unsimplified
+/// baseline goes to `tool/release/` and does not. Maintainers run this; consumers never
+/// do — `tool/refresh.dart` wraps it with the release triage.
 library;
 
 import 'dart:io';
@@ -20,15 +20,15 @@ import 'src/fetch.dart';
 
 Future<void> main(List<String> args) async {
   var chunkKb = 1024;
-  var tier = 'both';
-  // 1e-3 degrees, about 110 m. Plan §5.2 measured this as the point where the
+  var emit = 'both';
+  // 1e-3 degrees, about 110 m. Measured as this as the point where the
   // coordinate blob falls to 3.89 MB.
   var tolerance = 1000;
   for (var i = 0; i < args.length; i++) {
     if (args[i] == '--chunk-kb' && i + 1 < args.length) {
       chunkKb = int.parse(args[i + 1]);
-    } else if (args[i] == '--tier' && i + 1 < args.length) {
-      tier = args[i + 1];
+    } else if (args[i] == '--emit' && i + 1 < args.length) {
+      emit = args[i + 1];
     } else if (args[i] == '--tolerance' && i + 1 < args.length) {
       tolerance = int.parse(args[i + 1]);
     }
@@ -39,9 +39,9 @@ Future<void> main(List<String> args) async {
   stdout.writeln('Loading boundaries …');
   final oracle = await ReferenceTimeZoneFinder.load(cached);
 
-  if (tier == 'exact' || tier == 'both') {
+  if (emit == 'unsimplified' || emit == 'both') {
     await _emitTier(
-      name: 'exact',
+      name: 'boundaries_unsimplified',
       polygons: <SourcePolygon>[
         for (final p in oracle.polygons)
           (
@@ -59,7 +59,7 @@ Future<void> main(List<String> args) async {
     );
   }
 
-  if (tier == 'compact' || tier == 'both') {
+  if (emit == 'bundled' || emit == 'both') {
     stdout.writeln(
       '\nSimplifying at $tolerance units '
       '(~${(tolerance / 1000000 * 111000).round()} m) …',
@@ -72,8 +72,8 @@ Future<void> main(List<String> args) async {
       simplified.add((
         zone: p.zone,
         // Recomputed: simplification changes the shape, and the precedence
-        // rule orders by area. Reusing the exact tier's areas would order the
-        // compact tier's polygons by geometry it no longer has.
+        // rule orders by area. Reusing the unsimplified areas would order
+        // these polygons by geometry they no longer have.
         area: polygonDoubledArea(result.outer, result.holes),
         minX: _min(result.outer, 0),
         maxX: _max(result.outer, 0),
@@ -84,10 +84,10 @@ Future<void> main(List<String> args) async {
       ));
     }
     stdout.writeln('  $stats');
-    await _emitTier(name: 'compact', polygons: simplified, chunkKb: chunkKb);
+    await _emitTier(name: 'boundaries', polygons: simplified, chunkKb: chunkKb);
   }
 
-  stdout.writeln('\nNow run: dart format lib/data && dart analyze');
+  stdout.writeln('\nNow run: dart format lib/src/data && dart analyze');
 }
 
 Future<void> _emitTier({
@@ -95,14 +95,19 @@ Future<void> _emitTier({
   required List<SourcePolygon> polygons,
   required int chunkKb,
 }) async {
+  // Only the simplified set ships. The unsimplified one is the baseline the
+  // tests measure against, so it is committed but excluded from the archive.
+  final directory = Directory(
+    name == 'boundaries' ? 'lib/src/data' : 'tool/release',
+  );
   final container = buildIndex(
     dataVersion: defaultRelease,
     cellSize: 1000000,
     polygons: polygons,
   );
   final result = emitDartData(
-    directory: Directory('lib/data'),
-    tier: name,
+    directory: directory,
+    name: name,
     container: container,
     dataVersion: defaultRelease,
     chunkBase64Chars: chunkKb * 1024,

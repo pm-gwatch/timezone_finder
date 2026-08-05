@@ -1,16 +1,16 @@
-/// Probes the documented zone overlaps using the Phase A reference oracle.
+/// Probes the documented zone overlaps using the reference oracle.
 ///
 ///     dart run tool/probe_overlaps.dart
 ///
 /// timezone-boundary-builder ships `expectedZoneOverlaps.json`, listing pairs
 /// of zones permitted to overlap and the bounds within which they may. Most
 /// correspond to disputed territories. Because a point inside two polygons is
-/// resolved by the precedence rule of plan §6.5, those regions are where the
+/// resolved by the overlap tiebreak, those regions are where the
 /// rule actually decides an answer — and so they need golden fixtures.
 ///
 /// This searches each documented region for a coordinate genuinely covered by
 /// two or more zones, and reports what the precedence rule returns there. The
-/// output is the raw material for the milestone 3 overlap fixtures; it is a
+/// output is the raw material for the overlap fixtures; it is a
 /// maintainer diagnostic, not a test.
 ///
 /// It also reports dataset totals, as a cheap check that the oracle parsed
@@ -57,7 +57,7 @@ Future<void> main(List<String> args) async {
 
 /// Reports any ground-truth fixture that sits inside more than one zone.
 ///
-/// Such a fixture is mis-filed: its answer comes from the §6.5 tiebreak, not
+/// Such a fixture is mis-filed: its answer comes from the overlap tiebreak, not
 /// from any external fact, so it belongs in `overlap_pins.dart`.
 Future<void> _checkFixtures() async {
   final cached = cachedGeoJsonFile(defaultRelease);

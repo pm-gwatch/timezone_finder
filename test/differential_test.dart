@@ -1,4 +1,4 @@
-// Milestone 7: differential testing, CI-sized.
+// Differential testing, CI-sized.
 //
 // The full gate is 10 million points and takes about half an hour, because the
 // oracle scans every polygon linearly. That lives in `tool/differential.dart`
@@ -15,7 +15,9 @@
 library;
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/timezone_finder.dart';
+import 'package:timezone_finder/src/finder.dart';
+
+import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
 import '../tool/src/differential.dart';
 import '../tool/src/fetch.dart';
@@ -23,7 +25,7 @@ import 'fixtures/overlap_pins.dart';
 import 'reference/reference_finder.dart';
 
 /// Enough to give every sampler thousands of points without slowing the suite
-/// to a crawl. The exit criterion of plan §10.3 is the 10M run in `tool/`.
+/// to a crawl. The release gate is the 10M run in `tool/`.
 const _points = 200000;
 
 void main() {
@@ -42,10 +44,10 @@ void main() {
 
       setUpAll(() async {
         final oracle = await ReferenceTimeZoneFinder.load(cached);
-        final runtime = TimeZoneFinder.exact();
+        final runtime = finderOverIndex(unsimplified.loadContainer);
         report = runDifferential(
           oracle: oracle,
-          subject: runtime.find,
+          subject: runtime.findTimeZoneName,
           points: _points,
           seed: 7,
           overlapSeeds: <({double lat, double lon})>[
@@ -60,7 +62,7 @@ void main() {
           report.disagreements,
           0,
           reason:
-              'plan §10.3 admits no disagreement for the exact tier.\n'
+              'the unsimplified baseline must not disagree with the oracle at all.\n'
               '$report\n\n${report.examples.join('\n')}',
         );
       });

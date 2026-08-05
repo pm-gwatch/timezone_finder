@@ -1,4 +1,4 @@
-// Extended golden fixtures — milestone 3.
+// Extended golden fixtures.
 //
 // External ground truth, extending `bootstrapGoldens` into the cases the
 // bootstrap set deliberately excluded: zone borders, enclaves and holes,
@@ -564,7 +564,7 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
   ),
 
   // ===================================================== antimeridian ====
-  // The five zones split by the 180th meridian (plan §9.3). A fixture on one
+  // The five zones split by the 180th meridian. A fixture on one
   // side exercises only one polygon, so where a place in the far half can be
   // named from an external source, both halves are sampled: Adak/Attu,
   // Anadyr/Cape Dezhnev, Suva/Taveuni, McMurdo/Ross Ice Shelf.
@@ -857,7 +857,7 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
   GoldenPoint('Ulaanbaatar, Mongolia', 47.8864, 106.9057, 'Asia/Ulaanbaatar'),
   GoldenPoint('Pyongyang, North Korea', 39.0392, 125.7625, 'Asia/Pyongyang'),
   // Ürümqi is deliberately absent: it sits inside the documented
-  // Asia/Shanghai–Asia/Urumqi overlap, so its answer comes from the §6.5
+  // Asia/Shanghai–Asia/Urumqi overlap, so its answer comes from the overlap
   // tiebreak rather than from any external fact. It is pinned in
   // overlap_pins.dart instead. This was caught by cross-verification —
   // timezonefinder and tzf disagreed there because each applies its own

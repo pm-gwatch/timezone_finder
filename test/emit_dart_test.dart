@@ -37,7 +37,7 @@ void main() {
         expect(
           () => emitDartData(
             directory: directory,
-            tier: 'probe',
+            name: 'probe',
             container: _container(600),
             dataVersion: '2026c',
             chunkBase64Chars: bad,
@@ -56,7 +56,7 @@ void main() {
       final container = _container(5000);
       final result = emitDartData(
         directory: directory,
-        tier: 'probe',
+        name: 'probe',
         container: container,
         dataVersion: '2026c',
         chunkBase64Chars: 64,
@@ -83,7 +83,7 @@ void main() {
       addTearDown(() => directory.deleteSync(recursive: true));
       emitDartData(
         directory: directory,
-        tier: 'probe',
+        name: 'probe',
         container: _container(600),
         dataVersion: '2026c',
         chunkBase64Chars: 64,
@@ -101,6 +101,41 @@ void main() {
       }
     });
 
+    test('does not delete another emit whose name it prefixes', () {
+      // `boundaries` is a prefix of `boundaries_unsimplified`. A substring
+      // test for stale files had the shorter emit delete every chunk of the
+      // longer one, which is how 36 generated files disappeared silently.
+      final directory = _scratch();
+      addTearDown(() => directory.deleteSync(recursive: true));
+      emitDartData(
+        directory: directory,
+        name: 'boundaries_unsimplified',
+        container: _container(4000),
+        dataVersion: '2026c',
+        chunkBase64Chars: 64,
+      );
+      final before = directory
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.contains('boundaries_unsimplified'))
+          .length;
+      expect(before, greaterThan(1));
+
+      emitDartData(
+        directory: directory,
+        name: 'boundaries',
+        container: _container(400),
+        dataVersion: '2026c',
+        chunkBase64Chars: 64,
+      );
+      final after = directory
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.contains('boundaries_unsimplified'))
+          .length;
+      expect(after, before, reason: 'the shorter emit deleted the longer one');
+    });
+
     test('replaces stale chunks rather than leaving them behind', () {
       // A release with fewer chunks than the last must not leave the extra
       // files on disk, or the loader would read a container spliced from two
@@ -109,14 +144,14 @@ void main() {
       addTearDown(() => directory.deleteSync(recursive: true));
       final many = emitDartData(
         directory: directory,
-        tier: 'probe',
+        name: 'probe',
         container: _container(4000),
         dataVersion: '2026c',
         chunkBase64Chars: 64,
       );
       final few = emitDartData(
         directory: directory,
-        tier: 'probe',
+        name: 'probe',
         container: _container(400),
         dataVersion: '2026c',
         chunkBase64Chars: 64,

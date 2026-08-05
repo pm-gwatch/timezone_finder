@@ -1,6 +1,6 @@
-// Milestone 6: the runtime, against a container built from the real dataset.
+// The runtime, against a container built from the real dataset.
 //
-// The bundled data arrives at milestone 8, so the index here is packed in
+// The bundled data is generated separately, so the index here is packed in
 // memory from the oracle. That is the point of making the byte source
 // injectable: the format and the lookup get exercised against all 7.6M real
 // vertices before any generated source exists.
@@ -20,7 +20,9 @@ import 'dart:math';
 import 'package:test/test.dart';
 import 'package:timezone_finder/src/index.dart';
 import 'package:timezone_finder/src/quantization.dart';
-import 'package:timezone_finder/timezone_finder.dart';
+import 'package:timezone_finder/src/finder.dart';
+
+import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
 import '../tool/src/build_index.dart';
 import '../tool/src/fetch.dart';
@@ -64,19 +66,19 @@ void main() {
               ),
           ],
         );
-        finder = TimeZoneFinder.exact();
+        finder = finderOverIndex(unsimplified.loadContainer);
       });
 
       test('reports the dataset it was built from', () {
         expect(finder.ianaDatabaseVersion, defaultRelease);
-        expect(finder.availableTimeZones.length, 419);
+        expect(finder.availableTimeZoneIds.length, 419);
         expect(
-          finder.availableTimeZones,
-          orderedEquals(<String>[...finder.availableTimeZones]..sort()),
+          finder.availableTimeZoneIds,
+          orderedEquals(<String>[...finder.availableTimeZoneIds]..sort()),
           reason: 'zone names must arrive sorted, straight from the container',
         );
-        expect(finder.availableTimeZones, contains('Europe/Paris'));
-        expect(finder.availableTimeZones, contains('Etc/UTC'));
+        expect(finder.availableTimeZoneIds, contains('Europe/Paris'));
+        expect(finder.availableTimeZoneIds, contains('Etc/UTC'));
       });
 
       test('agrees with the oracle on every ground-truth fixture', () {
@@ -85,7 +87,10 @@ void main() {
           ...bootstrapGoldens,
           ...goldenPoints,
         ]) {
-          final actual = finder.find(point.latitude, point.longitude);
+          final actual = finder.findTimeZoneName(
+            point.latitude,
+            point.longitude,
+          );
           if (actual != point.zone) {
             failures.add(
               '${point.name}: expected ${point.zone ?? 'null'}, '
@@ -101,7 +106,7 @@ void main() {
         // first of a pre-sorted list. Same rule, different paths.
         final drift = <String>[];
         for (final pin in overlapPins) {
-          final actual = finder.find(pin.latitude, pin.longitude);
+          final actual = finder.findTimeZoneName(pin.latitude, pin.longitude);
           if (actual != pin.selected) {
             drift.add(
               '${pin.description}: runtime $actual, '
@@ -126,9 +131,9 @@ void main() {
           final lat = (random.nextInt(180000001) - 90000000) / 1000000;
           final lon = (random.nextInt(360000001) - 180000000) / 1000000;
 
-          final expected = oracle.find(lat, lon);
+          final expected = oracle.findTimeZoneName(lat, lon);
           if (expected != null) land++;
-          final actual = finder.find(lat, lon);
+          final actual = finder.findTimeZoneName(lat, lon);
           if (actual != expected) {
             failures.add(
               '($lat, $lon): runtime ${actual ?? 'null'}, '
@@ -143,27 +148,37 @@ void main() {
 
       test('treats the antimeridian as one seam', () {
         for (final lat in <double>[-85, -80, 51.88, 66]) {
-          final west = finder.find(lat, -180);
+          final west = finder.findTimeZoneName(lat, -180);
           expect(west, isNotNull, reason: 'seam has land at $lat');
           for (final lon in <double>[180, 179.9999999, 179.9999995]) {
-            expect(finder.find(lat, lon), west, reason: 'seam broken at $lat');
+            expect(
+              finder.findTimeZoneName(lat, lon),
+              west,
+              reason: 'seam broken at $lat',
+            );
           }
         }
       });
 
       test('rejects coordinates that are not coordinates', () {
-        expect(() => finder.find(91, 0), throwsArgumentError);
-        expect(() => finder.find(0, 181), throwsArgumentError);
-        expect(() => finder.find(double.nan, 0), throwsArgumentError);
-        expect(() => finder.find(0, double.infinity), throwsArgumentError);
+        expect(() => finder.findTimeZoneName(91, 0), throwsArgumentError);
+        expect(() => finder.findTimeZoneName(0, 181), throwsArgumentError);
+        expect(
+          () => finder.findTimeZoneName(double.nan, 0),
+          throwsArgumentError,
+        );
+        expect(
+          () => finder.findTimeZoneName(0, double.infinity),
+          throwsArgumentError,
+        );
       });
 
       test('ensurePreloaded is optional and idempotent', () {
-        final fresh = TimeZoneFinder.exact();
-        expect(fresh.find(48.8566, 2.3522), 'Europe/Paris');
+        final fresh = finderOverIndex(unsimplified.loadContainer);
+        expect(fresh.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
         expect(fresh.ensurePreloaded(), completes);
         expect(fresh.ensurePreloaded(), completes);
-        expect(fresh.find(48.8566, 2.3522), 'Europe/Paris');
+        expect(fresh.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
       });
 
       test('rejects a container it cannot trust', () {
@@ -208,7 +223,7 @@ void main() {
               quantizeQueryLongitude(point.longitude),
               quantize(point.latitude),
             ),
-            finder.find(point.latitude, point.longitude),
+            finder.findTimeZoneName(point.latitude, point.longitude),
             reason: point.name,
           );
         }
@@ -220,7 +235,7 @@ void main() {
           megabytes,
           inInclusiveRange(27.5, 29.0),
           reason:
-              'container is ${megabytes.toStringAsFixed(2)} MB; plan §5.3 '
+              'container is ${megabytes.toStringAsFixed(2)} MB; '
               'budgets ~28.16 MB',
         );
       });

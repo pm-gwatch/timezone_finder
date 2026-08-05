@@ -1,4 +1,4 @@
-// Overlap regression pins — milestone 3.
+// Overlap regression pins.
 //
 // ============================ THESE ARE NOT GROUND TRUTH ====================
 //
@@ -6,7 +6,7 @@
 // really cover the point; timezone-boundary-builder documents and permits the
 // overlap. No external source can say which identifier is "correct", because
 // there is no fact of the matter — the answer is produced by the arbitrary
-// tiebreak in plan §6.5 (smallest polygon by planar area, then lexicographic
+// tiebreak in the overlap tiebreak (smallest polygon by planar area, then lexicographic
 // identifier).
 //
 // These entries therefore pin DETERMINISM, not correctness. They exist so that
@@ -34,7 +34,7 @@
 // (Asia/Ho_Chi_Minh–Asia/Manila, Asia/Ho_Chi_Minh–Asia/Shanghai,
 // Asia/Kolkata–Asia/Shanghai, Asia/Manila–Asia/Shanghai) do not overlap
 // anywhere in the 2026c land-only geometry at sampling densities up to
-// 200x200 — see plan §9.4. They cannot be pinned because the situation they
+// 200x200. They cannot be pinned because the situation they
 // describe does not arise in this dataset.
 library;
 
@@ -60,7 +60,7 @@ class OverlapPin {
   /// Every identifier whose polygons contain the point, in precedence order.
   final List<String> contenders;
 
-  /// What the §6.5 rule returns — always `contenders.first`.
+  /// What the overlap tiebreak returns — always `contenders.first`.
   final String selected;
 
   @override

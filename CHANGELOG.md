@@ -2,40 +2,66 @@
 
 Initial release. Pre-1.0: the API may still change.
 
-Offline lookup of the IANA time zone identifier for a coordinate on land, in
-pure Dart with no runtime dependencies and no network access.
+Offline lookup of the IANA time zone for a coordinate on land, in pure Dart
+with no network access, bridged to `package:timezone` for civil time.
 
 ```dart
-final finder = TimeZoneFinder.exact();
-finder.find(48.8566, 2.3522); // 'Europe/Paris'
-finder.find(0.0, -140.0);     // null — not inside any land zone
+initializeTimeZones();
+findTimeZoneName(48.8566, 2.3522);        // 'Europe/Paris'
+findLocation(48.8566, 2.3522);  // a Location, ready for TZDateTime
+findTimeZoneName(0.0, -140.0);            // null — not inside any land zone
 ```
 
 ### API
 
-- `TimeZoneFinder.exact()` and `TimeZoneFinder.compact()` pick a data tier;
-  `find(latitude, longitude)` returns a `Continent/City` identifier or `null`.
-- `ensurePreloaded()` optionally decodes the index up front instead of on the
-  first lookup. `ianaDatabaseVersion` and `availableTimeZones` report what
-  is bundled.
-- Out-of-range, NaN or infinite coordinates throw `ArgumentError`. `null` is
-  reserved for "no land time zone here", so a bad argument is never mistaken
-  for a legitimate answer.
+- `findTimeZoneName(latitude, longitude)` returns a `Continent/City` identifier or
+  `null`. Nothing to construct or configure.
+- `findLocation(latitude, longitude)` returns a `package:timezone` `Location`
+  instead. `toLocation()` does the same from a geocoder's GeoJSON — a
+  `Feature` carrying a Point, or a bare `Point` geometry, the two forms
+  RFC 7946 gives for one place —
+  reading `[longitude, latitude]` per RFC 7946 so callers never unpack that
+  order themselves — a swapped pair does not throw, it answers about somewhere
+  else.
+- `TZDateTime.inLocation(location)` and `.inLocations([...])` re-express one
+  instant in other places' zones, preserving the moment and changing only the
+  wall clock — the multi-place case `package:timezone`'s single ambient
+  `local` cannot serve.
+- `ensurePreloaded()` decodes the index up front instead of on the first
+  lookup. The index is decoded once per isolate, so a server should call this
+  at startup; each additional live isolate costs about 4 MB.
+  `ianaDatabaseVersion` and `availableTimeZoneIds` report what is bundled.
+- Out-of-range coordinates throw `ArgumentError`; a string that is not a
+  GeoJSON `Feature` carrying a `Point` throws `FormatException`. `null` is
+  reserved for "no land time zone here", so neither is mistaken for a
+  legitimate answer.
 
-### Two tiers
+### Initializing the time zone database
 
-Boundary data is bundled, so the package is large. Both tiers are in the
-archive; only the one you construct is compiled into your program.
+`package:timezone` is a dependency, but **no tzdata variant is** — your
+application chooses and initializes one, so the payload stays your decision and
+nothing is initialized behind your back. Initializing twice would clear the
+database and reset the local location to UTC, so this package never does it for
+you.
 
-| | boundary resolution | binary | peak memory |
-| --- | --- | --- | --- |
-| `TimeZoneFinder.exact()` | unsimplified, stored to ~11 cm | 43.7 MB | 88 MB |
-| `TimeZoneFinder.compact()` | simplified to ~110 m | 11.4 MB | 29 MB |
+Use `package:timezone/data/latest_all.dart`. The default `data/latest.dart`
+drops the tzdb link identifiers and carries 341 locations against this dataset's
+419 — `Europe/Zagreb` and `Africa/Accra` among the 106 missing. `findLocation`
+raises a `StateError` naming the fix rather than letting the underlying
+`LocationNotFoundException` point at the boundary data.
 
-Away from borders the tiers agree on all but 0.008% of random land coordinates.
-Within a few hundred metres of a border they often differ; the measured rates
-are in the README. The compact tier also omits a few very small islands and
-enclaves that cannot survive simplification.
+### Resolution
+
+Boundaries are bundled, so lookups need no network and no setup. They are
+simplified to roughly 110 m — far finer than a time zone — which keeps the
+published archive at about 3 MB and a compiled program at about 11 MB.
+
+All 419 identifiers are present. Measured against the unsimplified source
+geometry over 10,000,000 coordinates: 0.006% of random land points differ, and
+0.21% within 1 km of a border town centre. Two cases are worse and worth
+knowing — beside an enclave boundary about 19% differ, and 33 polygons collapse
+entirely, so a few very small islands return `null` rather than a neighbouring
+zone. Nothing differs on the antimeridian seam. The README has the full table.
 
 ### Data
 
@@ -55,7 +81,9 @@ and is not a statement about sovereignty.
 Answers were validated against a separate reference implementation that reads
 the source boundaries directly, over 10,000,000 sampled coordinates weighted
 toward borders, enclaves, grid boundaries, the antimeridian and the overlap
-regions, with no disagreements for the exact tier. 265 hand-authored fixtures
+regions. Run against the unsimplified geometry the pipeline shows no
+disagreements at all, so the bundled data's only deviation is the
+simplification measured above. 273 hand-authored fixtures
 cover cities, borders, enclaves, small islands, Antarctic stations, the
 antimeridian, working ports and open ocean.
 
@@ -64,11 +92,12 @@ and confirms it matches byte for byte.
 
 ### Scope
 
-- Identifiers only. For UTC offsets, DST and civil-time arithmetic, pass the
-  result to [`package:timezone`](https://pub.dev/packages/timezone).
+- Boundaries only. UTC offsets, DST and civil-time arithmetic remain
+  [`package:timezone`](https://pub.dev/packages/timezone)'s work; this package
+  resolves the coordinate and hands over a `Location`.
 - Land only: coordinates at sea return `null`, as can a point on a beach, pier
   or large lake.
 - Dart CLI/server and Flutter on mobile and desktop. Web is not supported — the
   bundled data is too large for a browser payload.
-- Requires Dart 3.8 or later, verified on CI against that floor as well as
+- Requires Dart 3.10 or later, verified on CI against that floor as well as
   stable.

@@ -49,7 +49,7 @@ int polygonDoubledArea(Int32List outer, List<Int32List> holes) {
   return area < 0 ? 0 : area;
 }
 
-/// Orders two overlapping polygons by the precedence rule of plan §6.5:
+/// Orders two overlapping polygons by the overlap tiebreak:
 /// smallest area first, ties broken on identifier. Negative when `a` wins.
 ///
 /// Areas are the doubled values from [polygonDoubledArea]. The comparison is

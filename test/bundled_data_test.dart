@@ -1,8 +1,8 @@
-// Milestone 8: the data actually shipped.
+// The data actually shipped.
 //
 // Everything until now tested a container packed in memory. These tests use
-// what a consumer gets — the base64 chunks under `lib/data/`, decoded through
-// the default constructor.
+// what a consumer gets — the base64 chunks under `lib/src/data/`, decoded
+// through the default constructor.
 //
 // Most of this needs no boundary data at all, which is the point: once the
 // index is bundled, the fixtures can be checked on a fresh clone with no 51 MB
@@ -16,9 +16,10 @@ library;
 import 'dart:math';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/data/compact.dart' as compact_data;
-import 'package:timezone_finder/data/exact.dart' as bundled;
-import 'package:timezone_finder/timezone_finder.dart';
+import 'package:timezone_finder/src/data/boundaries.dart' as bundled_data;
+import 'package:timezone_finder/src/finder.dart';
+
+import '../tool/release/boundaries_unsimplified.dart' as unsimplified_data;
 
 import '../tool/src/build_index.dart';
 import '../tool/src/geometry.dart';
@@ -31,27 +32,27 @@ import 'reference/reference_finder.dart';
 
 void main() {
   group('bundled data', () {
-    final finder = TimeZoneFinder.exact();
+    final finder = TimeZoneFinder();
 
     test('the default constructor needs no configuration', () {
-      expect(finder.find(48.8566, 2.3522), 'Europe/Paris');
-      expect(finder.find(-33.8688, 151.2093), 'Australia/Sydney');
-      expect(finder.find(0, -140), isNull);
+      expect(finder.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
+      expect(finder.findTimeZoneName(-33.8688, 151.2093), 'Australia/Sydney');
+      expect(finder.findTimeZoneName(0, -140), isNull);
     });
 
     test('reports the release it was generated from', () {
       expect(finder.ianaDatabaseVersion, defaultRelease);
-      expect(finder.availableTimeZones.length, 419);
+      expect(finder.availableTimeZoneIds.length, 419);
       expect(
-        finder.availableTimeZones,
-        orderedEquals(<String>[...finder.availableTimeZones]..sort()),
+        finder.availableTimeZoneIds,
+        orderedEquals(<String>[...finder.availableTimeZoneIds]..sort()),
       );
     });
 
     test('resolves every ground-truth fixture', () {
       final failures = <String>[];
       for (final point in <GoldenPoint>[...bootstrapGoldens, ...goldenPoints]) {
-        final actual = finder.find(point.latitude, point.longitude);
+        final actual = finder.findTimeZoneName(point.latitude, point.longitude);
         if (actual != point.zone) {
           failures.add(
             '${point.name}: expected ${point.zone ?? 'null'}, '
@@ -62,30 +63,56 @@ void main() {
       expect(failures, isEmpty, reason: failures.join('\n'));
     });
 
-    test('reproduces the overlap tiebreak', () {
+    test('resolves every overlap to one of its contenders, stably', () {
+      // `selected` records what the tiebreak returns on the unsimplified
+      // geometry. The rule orders by polygon area, and simplification changes
+      // areas, so the shipped data can pick the other contender — 1 of 22
+      // pins does, at the Bolivia–Brazil border. What must hold is that the
+      // answer is always one of the two zones that genuinely cover the point,
+      // and that it does not vary between calls.
       for (final pin in overlapPins) {
-        expect(
-          finder.find(pin.latitude, pin.longitude),
-          pin.selected,
-          reason: pin.description,
-        );
+        final answer = finder.findTimeZoneName(pin.latitude, pin.longitude);
+        expect(answer, isNotNull, reason: pin.description);
+        expect(pin.contenders, contains(answer), reason: pin.description);
+        expect(finder.findTimeZoneName(pin.latitude, pin.longitude), answer);
       }
     });
 
+    test(
+      'the unsimplified baseline still reproduces the recorded tiebreak',
+      () {
+        // The pins were derived from this geometry, so here the selection is
+        // exact. A failure means the precedence rule or the pipeline moved, not
+        // that simplification did.
+        final baseline = finderOverIndex(unsimplified_data.loadContainer);
+        for (final pin in overlapPins) {
+          expect(
+            baseline.findTimeZoneName(pin.latitude, pin.longitude),
+            pin.selected,
+            reason: pin.description,
+          );
+        }
+      },
+    );
+
     test('treats the antimeridian as one seam', () {
       for (final lat in <double>[-85, -80, 51.88, 66]) {
-        final west = finder.find(lat, -180);
+        final west = finder.findTimeZoneName(lat, -180);
         expect(west, isNotNull);
         for (final lon in <double>[180, 179.9999999, 179.9999995]) {
-          expect(finder.find(lat, lon), west, reason: 'seam broken at $lat');
+          expect(
+            finder.findTimeZoneName(lat, lon),
+            west,
+            reason: 'seam broken at $lat',
+          );
         }
       }
     });
 
     test('rejects coordinates that are not coordinates', () {
-      expect(() => finder.find(91, 0), throwsArgumentError);
-      expect(() => finder.find(0, 181), throwsArgumentError);
-      expect(() => finder.find(double.nan, 0), throwsArgumentError);
+      expect(() => finder.findTimeZoneName(91, 0), throwsArgumentError);
+      expect(() => finder.findTimeZoneName(0, 181), throwsArgumentError);
+      expect(() => finder.findTimeZoneName(double.nan, 0), throwsArgumentError);
     });
 
     test('a straight boundary is still straight in the shipped data', () {
@@ -107,19 +134,23 @@ void main() {
       double? crossing(double latitude) {
         const step = 0.05;
         var east = -66.5;
-        if (finder.find(latitude, east) != 'America/Manaus') return null;
+        if (finder.findTimeZoneName(latitude, east) != 'America/Manaus') {
+          return null;
+        }
         var west = east;
         while (west > -70.5) {
           west -= step;
-          final zone = finder.find(latitude, west);
+          final zone = finder.findTimeZoneName(latitude, west);
           if (zone == 'America/Eirunepe') break;
           if (zone != 'America/Manaus') return null; // left Amazonas entirely
           east = west;
         }
-        if (finder.find(latitude, west) != 'America/Eirunepe') return null;
+        if (finder.findTimeZoneName(latitude, west) != 'America/Eirunepe') {
+          return null;
+        }
         for (var i = 0; i < 40; i++) {
           final middle = (west + east) / 2;
-          if (finder.find(latitude, middle) == 'America/Eirunepe') {
+          if (finder.findTimeZoneName(latitude, middle) == 'America/Eirunepe') {
             west = middle;
           } else {
             east = middle;
@@ -192,13 +223,104 @@ void main() {
       }
     });
 
-    test('two finders share nothing that would corrupt the other', () {
-      final a = TimeZoneFinder.exact();
-      final b = TimeZoneFinder.exact();
-      expect(a.find(48.8566, 2.3522), 'Europe/Paris');
-      expect(b.find(35.6762, 139.6503), 'Asia/Tokyo');
-      expect(a.find(35.6762, 139.6503), 'Asia/Tokyo');
-      expect(b.find(48.8566, 2.3522), 'Europe/Paris');
+    test('default finders share one decoded index', () {
+      // Deliberate, not incidental. Each finder used to decode its own copy;
+      // they now read one. Asserting equal answers would pass either way, so
+      // this counts decodes.
+      TimeZoneFinder().findTimeZoneName(
+        48.8566,
+        2.3522,
+      ); // ensure it is decoded at all
+      final decodes = indexDecodeCount;
+      expect(decodes, greaterThan(0));
+
+      for (var i = 0; i < 5; i++) {
+        expect(
+          TimeZoneFinder().findTimeZoneName(48.8566, 2.3522),
+          'Europe/Paris',
+        );
+      }
+      expect(
+        indexDecodeCount,
+        decodes,
+        reason: 'a default finder decoded its own copy of the index',
+      );
+    });
+
+    test('the top-level API reads the same shared index', () async {
+      // findTimeZoneName and friends are the public surface; TimeZoneFinder is not
+      // exported. They must resolve through the one shared index rather than
+      // decoding a second, or a server would pay twice per isolate.
+      await ensurePreloaded();
+      final decodes = indexDecodeCount;
+
+      expect(findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
+      expect(findLocation(0, -140), isNull);
+      expect(availableTimeZoneIds.length, 419);
+      expect(ianaDatabaseVersion, defaultRelease);
+      expect(
+        TimeZoneFinder().findTimeZoneName(48.8566, 2.3522),
+        'Europe/Paris',
+      );
+      await ensurePreloaded();
+
+      expect(
+        indexDecodeCount,
+        decodes,
+        reason: 'the top-level API decoded an index of its own',
+      );
+    });
+
+    test('ensurePreloaded on one default finder warms every other', () async {
+      // This is why the package needs no initializeTimeZoneBoundaries():
+      // preloading through any default finder decodes the index that every
+      // default finder reads, so there is nothing left for a separate
+      // initializer to do.
+      await TimeZoneFinder().ensurePreloaded();
+      final decodes = indexDecodeCount;
+
+      final other = TimeZoneFinder();
+      expect(other.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
+      expect(
+        indexDecodeCount,
+        decodes,
+        reason: 'a later finder decoded despite an earlier one preloading',
+      );
+    });
+
+    test('sharing an index cannot let one finder corrupt another', () {
+      // The property the previous test used to establish by keeping the
+      // finders apart. It has to hold now that they are not: a TimeZoneIndex
+      // is read-only after construction, and lookups must not disturb it.
+      final a = TimeZoneFinder();
+      final b = TimeZoneFinder();
+      expect(a.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
+      expect(b.findTimeZoneName(35.6762, 139.6503), 'Asia/Tokyo');
+      expect(a.findTimeZoneName(35.6762, 139.6503), 'Asia/Tokyo');
+      expect(b.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
+      expect(a.availableTimeZoneIds, b.availableTimeZoneIds);
+      expect(a.ianaDatabaseVersion, b.ianaDatabaseVersion);
+    });
+
+    test('finderOverIndex stays isolated from the bundled index', () {
+      // What every accuracy number depends on: the unsimplified baseline and
+      // the bundled data must be usable in one process. If finderOverIndex
+      // ever resolved through the shared index, the comparison would silently
+      // become the bundled data against itself.
+      final decodes = indexDecodeCount;
+      final baseline = finderOverIndex(unsimplified_data.loadContainer);
+      expect(baseline.availableTimeZoneIds.length, 419);
+      expect(
+        indexDecodeCount,
+        decodes + 1,
+        reason: 'finderOverIndex must decode its own index, exactly once',
+      );
+      // Same coordinate, two different indexes, both answering.
+      expect(baseline.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
+      expect(
+        TimeZoneFinder().findTimeZoneName(48.8566, 2.3522),
+        'Europe/Paris',
+      );
     });
   });
 
@@ -209,7 +331,7 @@ void main() {
         : 'tzbb $defaultRelease data not cached. Run:\n'
               '  dart run tool/fetch_data.dart',
     () {
-      test('the exact tier, byte for byte', () async {
+      test('the unsimplified baseline, byte for byte', () async {
         // The only check that the emit → base64 → decode round trip is
         // lossless. If it were not, every other test here would still pass
         // while the shipped answers quietly drifted from the source data.
@@ -234,13 +356,13 @@ void main() {
           ],
         );
 
-        final bundledBytes = bundled.loadContainer();
+        final bundledBytes = unsimplified_data.loadContainer();
         expect(
           bundledBytes.length,
           fresh.length,
           reason:
               'bundled container is a different size from a fresh pack — '
-              'lib/data is stale, regenerate with tool/generate_data.dart',
+              'lib/src/data is stale, regenerate with tool/generate_data.dart',
         );
         var firstDifference = -1;
         for (var i = 0; i < fresh.length; i++) {
@@ -258,9 +380,9 @@ void main() {
         );
       });
 
-      test('the compact tier, byte for byte', () async {
-        // Without this a stale compact tier would ship silently: every other
-        // compact test compares it against the exact tier's answers, which
+      test('the bundled data, byte for byte', () async {
+        // Without this stale bundled data would ship silently: every other
+        // simplification test compares it against the baseline's answers, which
         // says nothing about whether it was regenerated from current source.
         final oracle = await ReferenceTimeZoneFinder.load(
           cachedGeoJsonFile(defaultRelease),
@@ -286,15 +408,15 @@ void main() {
           cellSize: 1000000,
           polygons: simplified,
         );
-        final shipped = compact_data.loadContainer();
+        final shipped = bundled_data.loadContainer();
         expect(
           shipped.length,
           fresh.length,
-          reason: 'compact tier is stale; regenerate with tool/refresh.dart',
+          reason: 'bundled data is stale; regenerate with tool/refresh.dart',
         );
         for (var i = 0; i < fresh.length; i++) {
           if (shipped[i] != fresh[i]) {
-            fail('compact bundled bytes differ at offset $i');
+            fail('bundled bytes differ at offset $i');
           }
         }
       });

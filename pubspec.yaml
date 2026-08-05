@@ -1,7 +1,8 @@
 name: timezone_finder
 description: >-
-  Offline lookup of the IANA time zone identifier (Continent/City) for any
-  latitude/longitude on land. Pure Dart, no network, no dependencies.
+  Offline IANA time zone lookup for any coordinate on land, returning a
+  package:timezone Location — so you can build correct local dates and times
+  for many places at once.
 version: 0.1.0
 repository: https://github.com/pm-gwatch/timezone_finder
 issue_tracker: https://github.com/pm-gwatch/timezone_finder/issues
@@ -11,35 +12,28 @@ topics:
   - geospatial
   - iana
 
-# `lib/data/` is ~42 MB of base64. Over that much random-looking text, byte
-# sequences matching credential patterns turn up by chance — pub's scanner
-# flagged three as AWS access keys, all of them fragments of packed polygon
-# coordinates.
-#
-# Narrow to the generated data only, never the whole package. Nothing
-# hand-written lands here: every file is produced by tool/refresh.dart from a
-# public boundary release, and the suite checks the bundled bytes against a
-# rebuild, so a real secret has no route in.
+# Across megabytes of base64, byte sequences that look like credentials occur
+# by chance; pub's scanner flagged three. Scoped to the generated data only —
+# every file there is built by tool/refresh.dart from a public release.
 false_secrets:
-  - /lib/data/**
+  - /lib/src/data/**
 
 environment:
-  # Floor is set by lints ^6.1.0, which requires ^3.8.0 (Dart 3.8, 2025-05-20).
-  # The package itself needs nothing beyond Dart 3.0.
-  sdk: ^3.8.0
+  # Required by package:timezone; the lookup itself needs only Dart 3.0.
+  sdk: ^3.10.0
 
-# Intentionally empty. Zero runtime dependencies is a hard constraint:
-# the runtime uses only dart:convert, dart:typed_data and dart:math.
-# See docs/implementation-plan_claude_v3.md §4.4.
+# Only the offset engine. No tzdata variant is depended on, so your
+# application picks one and initializes it — see the README.
 dependencies:
+  # Ranged, not `^0.11.1`: below 1.0.0 the caret means `<0.12.0`, which would
+  # block any app already on a newer 0.x. The surface used here has been
+  # stable since 0.9.4.
+  timezone: ">=0.11.1 <1.0.0"
 
 dev_dependencies:
   lints: ^6.1.0
-  # 1.31.0 is the newest release satisfiable across the whole supported SDK
-  # range: it needs ^3.7.0, while 1.31.1 and 1.31.2 need ^3.10.0 and ^3.11.0.
-  # A current toolchain still resolves to 1.31.2, since pub picks dev
-  # dependencies against the installed SDK rather than the floor above.
-  test: ^1.31.0
+  # Newest release that still resolves on the SDK floor above.
+  test: ^1.31.1
   # tool/ only — never imported from lib/.
   archive: ^4.0.0
   http: ^1.6.0

@@ -2,9 +2,8 @@
 ///
 ///     dart run tool/measure_grid.dart
 ///
-/// Milestone 5 has to replace plan §5.3's "shortcut grid: 1–3 MB, unmeasured"
-/// with a real number, and choose a resolution from evidence rather than
-/// taste. Grid size trades against filter strength: coarse grids are small but
+/// Chooses the grid resolution from evidence rather than taste. Grid size
+/// trades against filter strength: coarse grids are small but
 /// hand long candidate lists to point-in-polygon, fine grids are the reverse.
 /// The table below is where that curve turns.
 library;
@@ -140,7 +139,7 @@ void _checkNoBoxWrapsTheAntimeridian(List<PolygonBox> boxes) {
   while (count < 4000) {
     final lat = random.nextInt(180000001) - 90000000;
     final lon = random.nextInt(360000001) - 180000000;
-    if (oracle.find(lat / 1000000, lon / 1000000) == null) continue;
+    if (oracle.findTimeZoneName(lat / 1000000, lon / 1000000) == null) continue;
     final candidates = grid.candidatesAt(lon, lat).length;
     total += candidates;
     if (candidates > worst) worst = candidates;

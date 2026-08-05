@@ -1,10 +1,8 @@
-// Milestone 2: validate the Phase A reference oracle against the bootstrap
-// goldens.
+// Validate the reference oracle against the bootstrap goldens.
 //
 // This is the gate the whole test strategy rests on. The oracle is the
-// authority for the wider golden set (milestone 3) and for differential
-// testing (milestone 7), but it cannot be validated against fixtures derived
-// from itself. These 66 pairs are external ground truth; the oracle earns its
+// authority for the wider golden set and for differential testing, but it
+// cannot be validated against fixtures derived from itself. These 66 pairs are external ground truth; the oracle earns its
 // authority by passing them, and not before.
 //
 // The oracle needs ~170 MB of tzbb GeoJSON, which is far too large to commit.
@@ -43,10 +41,10 @@ void main() {
       });
 
       test('parses the expected shape of the dataset', () {
-        // Measured independently from tzbb 2026c before the oracle existed;
-        // see plan §5.1. Asserting all five totals — not just the two cheap
-        // ones — means a parse that silently drops rings or vertices fails CI
-        // rather than quietly weakening every downstream guarantee.
+        // Measured independently from tzbb 2026c before the oracle existed.
+        // Asserting all five totals — not just the two cheap ones — means a
+        // parse that silently drops rings or vertices fails CI rather than
+        // quietly weakening every downstream guarantee.
         //
         // If these change, the release changed, and every golden needs
         // re-checking.
@@ -72,7 +70,10 @@ void main() {
       test('agrees with every bootstrap golden', () {
         final failures = <String>[];
         for (final point in bootstrapGoldens) {
-          final actual = oracle.find(point.latitude, point.longitude);
+          final actual = oracle.findTimeZoneName(
+            point.latitude,
+            point.longitude,
+          );
           if (actual != point.zone) {
             failures.add('${point.name}: expected ${point.zone}, got $actual');
           }
@@ -98,28 +99,34 @@ void main() {
       });
 
       test('returns null at sea', () {
-        // Land-only dataset (plan §2.2): open ocean is not in any polygon.
-        expect(oracle.find(0, -140), isNull); // mid-Pacific
-        expect(oracle.find(-40, -30), isNull); // South Atlantic
-        expect(oracle.find(0, -25), isNull); // equatorial Atlantic
+        // Land-only dataset : open ocean is not in any polygon.
+        expect(oracle.findTimeZoneName(0, -140), isNull); // mid-Pacific
+        expect(oracle.findTimeZoneName(-40, -30), isNull); // South Atlantic
+        expect(oracle.findTimeZoneName(0, -25), isNull); // equatorial Atlantic
       });
 
       test('rejects coordinates that are not coordinates', () {
-        expect(() => oracle.find(91, 0), throwsArgumentError);
-        expect(() => oracle.find(-91, 0), throwsArgumentError);
-        expect(() => oracle.find(0, 181), throwsArgumentError);
-        expect(() => oracle.find(0, -181), throwsArgumentError);
-        expect(() => oracle.find(double.nan, 0), throwsArgumentError);
-        expect(() => oracle.find(0, double.infinity), throwsArgumentError);
+        expect(() => oracle.findTimeZoneName(91, 0), throwsArgumentError);
+        expect(() => oracle.findTimeZoneName(-91, 0), throwsArgumentError);
+        expect(() => oracle.findTimeZoneName(0, 181), throwsArgumentError);
+        expect(() => oracle.findTimeZoneName(0, -181), throwsArgumentError);
+        expect(
+          () => oracle.findTimeZoneName(double.nan, 0),
+          throwsArgumentError,
+        );
+        expect(
+          () => oracle.findTimeZoneName(0, double.infinity),
+          throwsArgumentError,
+        );
       });
 
       test('accepts the boundary values, which are valid coordinates', () {
-        // Must not throw. The poles and the antimeridian are in range; what
-        // they return is a milestone 3 concern (plan §9.2, §9.3).
-        expect(() => oracle.find(90, 0), returnsNormally);
-        expect(() => oracle.find(-90, 0), returnsNormally);
-        expect(() => oracle.find(0, 180), returnsNormally);
-        expect(() => oracle.find(0, -180), returnsNormally);
+        // Must not throw. The poles and the antimeridian are in range; the
+        // golden fixtures cover what they return.
+        expect(() => oracle.findTimeZoneName(90, 0), returnsNormally);
+        expect(() => oracle.findTimeZoneName(-90, 0), returnsNormally);
+        expect(() => oracle.findTimeZoneName(0, 180), returnsNormally);
+        expect(() => oracle.findTimeZoneName(0, -180), returnsNormally);
       });
 
       test('the shoelace sum is exact for every ring in the dataset', () {

@@ -1,10 +1,12 @@
-/// Regenerates the bundled index from a timezone-boundary-builder release.
+/// Regenerates both indexes from a timezone-boundary-builder release.
 ///
 ///     dart run tool/refresh.dart --release 2026c            # regenerate
 ///     dart run tool/refresh.dart --release 2026c --verify   # check only
 ///
-/// The release is a parameter rather than "latest" so any past release can be
-/// reproduced. Generated files are committed; consumers never run this.
+/// Writes the bundled index to `lib/src/data/` and the unsimplified baseline
+/// to `tool/release/`. The release is a parameter rather than "latest" so any
+/// past one can be reproduced. Generated files are committed; consumers never
+/// run this.
 ///
 /// **Byte-identity is claimed only for the same release.** `--verify` asserts
 /// that 2026c regenerates 2026c's committed bytes exactly. A different release
@@ -15,8 +17,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:timezone_finder/data/compact.dart' as compact_container;
-import 'package:timezone_finder/data/exact.dart' as exact_container;
+import 'package:timezone_finder/src/data/boundaries.dart' as bundled_container;
+import 'release/boundaries_unsimplified.dart' as unsimplified_container;
 
 import '../test/reference/reference_finder.dart';
 import 'src/build_index.dart';
@@ -70,16 +72,20 @@ Future<void> main(List<String> args) async {
     '${oracle.polygons.length} polygons',
   );
 
-  final exact = _pack(release: release, polygons: _sourceOf(oracle));
-  final compact = _pack(
+  final unsimplified = _pack(release: release, polygons: _sourceOf(oracle));
+  final bundled = _pack(
     release: release,
     polygons: _simplified(oracle, tolerance),
   );
 
   if (verifyOnly) {
     final ok =
-        _verify('exact', exact, exact_container.loadContainer()) &&
-        _verify('compact', compact, compact_container.loadContainer());
+        _verify(
+          'boundaries_unsimplified',
+          unsimplified,
+          unsimplified_container.loadContainer(),
+        ) &&
+        _verify('boundaries', bundled, bundled_container.loadContainer());
     if (!ok) {
       stdout.writeln(
         '\nFAIL — committed data does not match a rebuild of '
@@ -94,12 +100,14 @@ Future<void> main(List<String> args) async {
 
   stdout.writeln('\nEmitting Dart source …');
   for (final (name, container) in <(String, Uint8List)>[
-    ('exact', exact),
-    ('compact', compact),
+    ('boundaries_unsimplified', unsimplified),
+    ('boundaries', bundled),
   ]) {
     final result = emitDartData(
-      directory: Directory('lib/data'),
-      tier: name,
+      directory: Directory(
+        name == 'boundaries' ? 'lib/src/data' : 'tool/release',
+      ),
+      name: name,
       container: container,
       dataVersion: release,
       chunkBase64Chars: chunkKb * 1024,
@@ -111,7 +119,7 @@ Future<void> main(List<String> args) async {
   }
   await _writeCommittedNames(release, oracle.zones);
 
-  await _run('dart', <String>['format', 'lib/data']);
+  await _run('dart', <String>['format', 'lib/src/data']);
   if (!skipTests) {
     stdout.writeln(
       '\nRunning the suite — regenerated data must not land '
@@ -128,7 +136,9 @@ Future<void> main(List<String> args) async {
   }
 
   stdout
-    ..writeln('\nDone. Review `git diff --stat lib/data` before committing,')
+    ..writeln(
+      '\nDone. Review `git diff --stat lib/src/data` before committing,',
+    )
     ..writeln('and record the release in CHANGELOG.md.');
 }
 
@@ -236,21 +246,21 @@ Future<void> _writeCommittedNames(String release, List<String> names) async {
   stdout.writeln('  baseline updated: ${_committedNames.path}');
 }
 
-bool _verify(String tier, List<int> rebuilt, List<int> committed) {
+bool _verify(String name, List<int> rebuilt, List<int> committed) {
   if (rebuilt.length != committed.length) {
     stdout.writeln(
-      '  $tier: MISMATCH — rebuilt ${rebuilt.length} bytes, '
+      '  $name: MISMATCH — rebuilt ${rebuilt.length} bytes, '
       'committed ${committed.length}',
     );
     return false;
   }
   for (var i = 0; i < rebuilt.length; i++) {
     if (rebuilt[i] != committed[i]) {
-      stdout.writeln('  $tier: MISMATCH — first difference at byte $i');
+      stdout.writeln('  $name: MISMATCH — first difference at byte $i');
       return false;
     }
   }
-  stdout.writeln('  $tier: identical (${_mb(rebuilt.length)})');
+  stdout.writeln('  $name: identical (${_mb(rebuilt.length)})');
   return true;
 }
 
@@ -278,7 +288,7 @@ List<SourcePolygon> _simplified(ReferenceTimeZoneFinder oracle, int tolerance) {
     out.add((
       zone: p.zone,
       // Recomputed: the precedence rule orders by area, and these polygons no
-      // longer have the geometry the exact tier's areas describe.
+      // longer have the geometry the unsimplified areas describe.
       area: polygonDoubledArea(simplified.outer, simplified.holes),
       minX: _extent(simplified.outer, 0, min: true),
       maxX: _extent(simplified.outer, 0, min: false),

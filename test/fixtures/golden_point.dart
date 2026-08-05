@@ -40,10 +40,10 @@ class GoldenPoint {
   /// Human-readable label, e.g. `'Paris, France'`.
   final String name;
 
-  /// Degrees north, in [-90, 90].
+  /// Degrees north, in `-90 .. 90`.
   final double latitude;
 
-  /// Degrees east, in [-180, 180].
+  /// Degrees east, in `-180 .. 180`.
   final double longitude;
 
   /// The expected IANA identifier, or `null` when the point is expected to

@@ -1,10 +1,10 @@
-// Milestone 3: the full golden set, run against the Phase A oracle.
+// The full golden set, run against the reference oracle.
 //
 // Two fixture sets with two different contracts:
 //
 //   * `bootstrapGoldens` + `goldenPoints` are external ground truth. A failure
 //     means the oracle or the fixture is wrong.
-//   * `overlapPins` pin the §6.5 tiebreak in regions where two zones genuinely
+//   * `overlapPins` pin the overlap tiebreak in regions where two zones genuinely
 //     contain the point. A failure means the rule changed.
 //
 // Failures are reported grouped by category, because a cluster in one category
@@ -88,7 +88,10 @@ void main() {
       test('the oracle agrees with every ground-truth fixture', () {
         final byCategory = <GoldenCategory, List<String>>{};
         for (final point in all) {
-          final actual = oracle.find(point.latitude, point.longitude);
+          final actual = oracle.findTimeZoneName(
+            point.latitude,
+            point.longitude,
+          );
           if (actual != point.zone) {
             byCategory
                 .putIfAbsent(point.category, () => <String>[])
@@ -140,13 +143,13 @@ void main() {
       });
 
       test('the antimeridian is a seam, not a wall', () {
-        // Plan §9.3: lon 180 and lon -180 are the same meridian and must give
+        // Lon 180 and lon -180 are the same meridian and must give
         // the same answer. Sampled across latitudes that cross the five split
         // zones and open ocean alike.
         for (var lat = -80.0; lat <= 80.0; lat += 5) {
           expect(
-            oracle.find(lat, 180),
-            oracle.find(lat, -180),
+            oracle.findTimeZoneName(lat, 180),
+            oracle.findTimeZoneName(lat, -180),
             reason: 'lon 180 and -180 disagree at latitude $lat',
           );
         }
@@ -170,7 +173,7 @@ void main() {
           179.9999995,
         ];
         for (final lat in seamLatitudes) {
-          final expected = oracle.find(lat, -180);
+          final expected = oracle.findTimeZoneName(lat, -180);
           expect(
             expected,
             isNotNull,
@@ -180,7 +183,7 @@ void main() {
           );
           for (final lon in band) {
             expect(
-              oracle.find(lat, lon),
+              oracle.findTimeZoneName(lat, lon),
               expected,
               reason: 'seam is discontinuous at ($lat, $lon)',
             );
@@ -203,7 +206,7 @@ void main() {
               '${zones.join(' + ')}, pinned as ${pin.contenders.join(' + ')}',
             );
           }
-          final selected = oracle.find(pin.latitude, pin.longitude);
+          final selected = oracle.findTimeZoneName(pin.latitude, pin.longitude);
           if (selected != pin.selected) {
             drift.add(
               '${pin.description}: rule selects $selected, '

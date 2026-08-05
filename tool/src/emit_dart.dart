@@ -2,7 +2,7 @@
 ///
 /// A pure Dart package cannot ship binary assets: `dart:io` is unavailable on
 /// some targets, AOT binaries cannot read their own package directory, and
-/// Flutter's asset system does not exist for CLI consumers (plan §4.3). So the
+/// Flutter's asset system does not exist for CLI consumers. So the
 /// index travels as base64 inside `const` strings.
 ///
 /// The chunking is a **compiler** concern, not a memory one. A single ~37 MB
@@ -16,7 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-/// ODbL notice required on every generated data file by plan §4.5.
+/// ODbL notice required on every generated data file.
 const String _dataLicenceHeader = '''
 // GENERATED FILE — DO NOT EDIT.
 //
@@ -35,14 +35,14 @@ const String _dataLicenceHeader = '''
 /// What an emit produced.
 typedef EmitResult = ({int chunks, int sourceBytes, int base64Bytes});
 
-/// Writes [container] to [directory] as `<tier>_000.dart` … plus `<tier>.dart`
+/// Writes [container] to [directory] as `<name>_000.dart` … plus `<name>.dart`
 /// holding the provider that reassembles them.
 ///
 /// [chunkBase64Chars] is the base64 length of each chunk, so the emitted
 /// literals are all about that size regardless of how the binary divides.
 EmitResult emitDartData({
   required Directory directory,
-  required String tier,
+  required String name,
   required Uint8List container,
   required String dataVersion,
   required int chunkBase64Chars,
@@ -57,19 +57,13 @@ EmitResult emitDartData({
       'must be a multiple of 4 so each chunk decodes independently',
     );
   }
-  if (chunkBase64Chars % 4 != 0) {
-    // base64 packs three bytes into four characters. A boundary off a
-    // four-character group cannot be decoded alone, which would force the
-    // loader to join every chunk into one enormous string first.
-    throw ArgumentError.value(
-      chunkBase64Chars,
-      'chunkBase64Chars',
-      'must be a multiple of 4 so each chunk decodes independently',
-    );
-  }
   directory.createSync(recursive: true);
+  // Matched exactly, not by prefix: one emit name can be a prefix of another
+  // ("boundaries" of "boundaries_unsimplified"), and a substring test would
+  // have the shorter emit delete the longer one's chunks.
+  final staleChunk = RegExp('^${RegExp.escape(name)}_\\d{3}\\.dart\$');
   for (final stale in directory.listSync()) {
-    if (stale is File && stale.path.contains('/${tier}_')) {
+    if (stale is File && staleChunk.hasMatch(stale.uri.pathSegments.last)) {
       stale.deleteSync();
     }
   }
@@ -83,12 +77,12 @@ EmitResult emitDartData({
     final end = start + chunkBase64Chars < encoded.length
         ? start + chunkBase64Chars
         : encoded.length;
-    final name = '${tier}_${i.toString().padLeft(3, '0')}';
-    final file = File('${directory.path}/$name.dart');
+    final chunkName = '${name}_${i.toString().padLeft(3, '0')}';
+    final file = File('${directory.path}/$chunkName.dart');
     final source = StringBuffer()
       ..writeln(_dataLicenceHeader)
       ..writeln(
-        '/// Chunk ${i + 1} of $chunkCount of the $tier index, '
+        '/// Chunk ${i + 1} of $chunkCount of the packed index, '
         'tzbb $dataVersion.',
       )
       ..writeln('library;')
@@ -102,16 +96,16 @@ EmitResult emitDartData({
     sourceBytes += source.length;
   }
 
-  final indexFile = File('${directory.path}/$tier.dart');
+  final indexFile = File('${directory.path}/$name.dart');
   final imports = <String>[
     for (var i = 0; i < chunkCount; i++)
-      "import '${tier}_${i.toString().padLeft(3, '0')}.dart' as c$i;",
+      "import '${name}_${i.toString().padLeft(3, '0')}.dart' as c$i;",
   ];
   final parts = <String>[for (var i = 0; i < chunkCount; i++) '  c$i.chunk,'];
   final source = StringBuffer()
     ..writeln(_dataLicenceHeader)
     ..writeln(
-      '/// The $tier index for tzbb $dataVersion, reassembled from '
+      '/// The packed index for tzbb $dataVersion, reassembled from '
       '$chunkCount chunks.',
     )
     ..writeln('library;')

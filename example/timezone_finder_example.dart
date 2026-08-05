@@ -1,124 +1,152 @@
-// Interesting border, same-state, coastal, and compact-tier timezone lookups.
+// One flight, across four and a half hours of offset.
 //
-// This package returns IANA identifiers only. For UTC offsets and DST, pass
-// those identifiers to package:timezone.
+// Shows the whole pipeline this package is built for:
+//
+//   place name → geocoder → GeoJSON Feature → IANA zone → civil time
+//
+// Only the first step needs the network. Geocoding is the geocoder's job —
+// Nominatim for one airport, Photon for the other, to show that either will
+// do — and from the coordinates onward everything runs offline against the
+// bundled boundaries.
+//
+// Uses dart:io rather than package:http so the example carries no dependency
+// the package itself does not have.
 
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:timezone/data/latest_all.dart';
+import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
-void main() {
-  final finder = TimeZoneFinder.exact();
+/// A geocoded place: its display name, and its GeoJSON Feature verbatim.
+///
+/// The Feature is kept as text rather than unpacked, because unpacking
+/// `[longitude, latitude]` by hand is exactly the mistake `toLocation` exists
+/// to prevent.
+typedef Place = ({String name, String feature});
 
-  // Across the US–Mexico border: El Paso, Texas and Ciudad Juárez, Chihuahua
-  // sit almost opposite each other, yet each follows its own country's zone.
-  final elPaso = finder.find(31.8122375, -106.5823795);
-  final ciudadJuarez = finder.find(31.653962, -106.6081154);
+/// Collapses an error body to one readable line. These services report
+/// failures as an HTML page, unreadable verbatim and short once flattened.
+String _oneLine(String body) {
+  final flat = body.replaceAll(RegExp(r'\s+'), ' ').trim();
+  return flat.length <= 160 ? flat : '${flat.substring(0, 160)}…';
+}
 
-  print('El Paso, TX                          -> $elPaso'); // America/Denver
-  print(
-    'Ciudad Juárez, Chihuahua             -> $ciudadJuarez',
-  ); // America/Ciudad_Juarez
-  print(
-    'Same metro area, different countries -> '
-    '${elPaso != ciudadJuarez ? 'different zones' : 'same zone'}',
-  );
-  print('');
+/// Looks [query] up in Nominatim, OpenStreetMap's own geocoder.
+Future<Place> geocodeWithNominatim(String query) => _geocode(
+  Uri.parse(
+    'https://nominatim.openstreetmap.org/search'
+    '?q=${Uri.encodeQueryComponent(query)}&format=geojson',
+  ),
+);
 
-  // Inside Chihuahua state: northwest border municipalities (including
-  // Ciudad Juárez) keep America/Ciudad_Juarez — aligned with the US side
-  // (standard UTC−07:00, observes DST). The rest of the state, including
-  // Chihuahua city, uses America/Chihuahua (standard UTC−06:00, no DST).
-  final chihuahuaCity = finder.find(28.6353, -106.0889);
+/// Looks [query] up in Photon, a second geocoder over the same OSM data.
+Future<Place> geocodeWithPhoton(String query) => _geocode(
+  Uri.parse(
+    'https://photon.komoot.io/api/'
+    '?q=${Uri.encodeQueryComponent(query)}&limit=1',
+  ),
+);
 
-  print('Ciudad Juárez, Chihuahua -> $ciudadJuarez'); // America/Ciudad_Juarez
-  print('Chihuahua city           -> $chihuahuaCity'); // America/Chihuahua
-  print(
-    'Same Mexican state       -> '
-    '${ciudadJuarez != chihuahuaCity ? 'different zones' : 'same zone'}',
-  );
-  print('');
+/// Fetches [uri] and returns the first GeoJSON feature.
+///
+/// One parser serves both services: they answer with the same shape, a
+/// `FeatureCollection` of Features. `toLocation` takes one Feature, not the
+/// collection — a collection is several places — so this hands back a single
+/// feature re-encoded as text.
+Future<Place> _geocode(Uri uri) async {
+  final client = HttpClient();
+  try {
+    final request = await client.getUrl(uri);
+    // Photon answers 403 to Dart's default agent, and Nominatim's usage
+    // policy requires identification outright. Send something that names you,
+    // and keep to their rate limits — Nominatim allows one request a second.
+    request.headers.set(
+      HttpHeaders.userAgentHeader,
+      'timezone_finder-example/0.1.0 (https://github.com/pm-gwatch/timezone_finder)',
+    );
+    final response = await request.close();
+    final text = await response.transform(utf8.decoder).join();
+    if (response.statusCode != HttpStatus.ok) {
+      // Report what the server said, not just that something went wrong: a
+      // 403 from a missing user agent and a 429 from rate limiting need
+      // different fixes, and the body usually says which.
+      throw HttpException(
+        '${uri.host} returned ${response.statusCode} '
+        '${response.reasonPhrase}\n'
+        '  request: $uri\n'
+        '  body:    ${_oneLine(text)}',
+      );
+    }
+    final body = jsonDecode(text) as Map<String, dynamic>;
+    final features = body['features'] as List<dynamic>;
+    if (features.isEmpty) {
+      throw HttpException('No match from ${uri.host}', uri: uri);
+    }
 
-  // Across the Adriatic: the Port of Dubrovnik and the Port of Bari sit on
-  // opposite coasts. Onshore port coordinates still resolve; open water
-  // between them does not — the dataset is land-only, so sea returns null.
-  const portOfDubrovnikLat = 42.6634651;
-  const portOfDubrovnikLon = 18.0591377;
-  const portOfBariLat = 41.137428;
-  const portOfBariLon = 16.8600823;
+    final feature = features.first as Map<String, dynamic>;
+    final properties = feature['properties'] as Map<String, dynamic>;
 
-  final portOfDubrovnik = finder.find(portOfDubrovnikLat, portOfDubrovnikLon);
-  final portOfBari = finder.find(portOfBariLat, portOfBariLon);
+    return (name: properties['name'] as String, feature: jsonEncode(feature));
+  } finally {
+    client.close();
+  }
+}
 
-  final midpointLat = (portOfDubrovnikLat + portOfBariLat) / 2;
-  final midpointLon = (portOfDubrovnikLon + portOfBariLon) / 2;
-  final midpoint = finder.find(midpointLat, midpointLon);
+Future<void> main() async {
+  initializeTimeZones();
 
-  print(
-    'Port of Dubrovnik, Croatia       -> $portOfDubrovnik',
-  ); // Europe/Zagreb
-  print('Port of Bari, Italy              -> $portOfBari'); // Europe/Rome
-  print(
-    'Midpoint (Adriatic Sea)          -> ${midpoint ?? 'null (not on land)'}',
-  );
-  print(
-    'Coastal ports on opposite shores -> '
-    '${portOfDubrovnik != portOfBari ? 'different zones' : 'same zone'}',
-  );
-  print('');
-
-  // Compact tier: enough for most apps (city / address lookups), far smaller
-  // AOT binary (~11.4 MB vs ~43.7 MB for exact). Mainland China uses a single
-  // zone named for Shanghai — there is no Asia/Beijing, even in Beijing.
-  final compactFinder = TimeZoneFinder.compact();
-  final palaceMuseum = compactFinder.find(39.9163488, 116.3945797);
-
-  print('Palace Museum, Beijing -> $palaceMuseum'); // Asia/Shanghai
-  print(
-    'Note: IANA has no Asia/Beijing time zone — Beijing and Shanghai share '
-    'Asia/Shanghai.',
-  );
-  print('');
-
-  // The Dover Strait shows what "land-only" does *not* mean. The dataset
-  // excludes the synthetic Etc/GMT ocean zones, but country polygons follow
-  // OpenStreetMap administrative boundaries, which for a coastal state extend
-  // about 12 nautical miles (~22 km) out over territorial waters.
+  final Place lhr;
+  final Place bom;
+  try {
+    lhr = await geocodeWithNominatim('london heathrow airport');
+    bom = await geocodeWithPhoton('mumbai international airport');
+  } on IOException catch (error) {
+    // Only this first step needs the network. Everything after it — the
+    // boundary lookup, the zone, the civil time — runs offline.
+    stderr
+      ..writeln('Geocoding failed, so there are no coordinates to look up.')
+      ..writeln(error);
+    exitCode = 1;
+    return;
+  }
+  // BA 139, London Heathrow to Mumbai, Monday 3 August 2026. It leaves at
+  // 09:40 and lands at 23:40 — but that is 14 hours only because the two
+  // times are read off different clocks. 9h30 of it is the flight; the other
+  // 4h30 is India's offset from British Summer Time.
   //
-  // The strait is only ~42 km across, so the British and French claims meet in
-  // the middle with nothing unclaimed between them. The midpoint is open water
-  // and still resolves — it falls just on the French side of the boundary that
-  // runs down the strait. Compare the Adriatic above, ~197 km across, where the
-  // middle is international water and does return null.
-  final portOfDover = finder.find(51.1269705, 1.3230653);
-  final portOfCalais = finder.find(50.9744815, 1.8765687);
-  final midpointOfDoverAndCalais = finder.find(51.050726, 1.599817);
+  // Each geocoded Feature becomes a Location, then inLocation re-expresses
+  // the arrival instant as Mumbai reads it, without moving the moment itself.
+  final heathrow = lhr.feature.toLocation()!;
+  final mumbai = bom.feature.toLocation()!;
 
-  print('Port of Dover, United Kingdom -> $portOfDover'); // Europe/London
-  print('Port of Calais, France        -> $portOfCalais'); // Europe/Paris
+  final takeOff = TZDateTime(heathrow, 2026, 8, 3, 9, 40);
+  final arrival = takeOff
+      .add(const Duration(hours: 9, minutes: 30))
+      .inLocation(mumbai);
+
+  print('-- Example 1 ------------------------------');
   print(
-    'Midpoint (English Channel)    -> $midpointOfDoverAndCalais',
-  ); // Europe/Paris — water, but inside France's claim; see README
-  print('A null means no country claims the point, not that it is dry land.');
+    'Flight BA139 from ${lhr.name} (LHR)\n'
+    'to ${bom.name} (BOM)\n'
+    'on 3 August 2026 at 09:40 AM (local time) \n'
+    'with a duration of 9 hours and 30 minutes:',
+  );
   print('');
 
-  // Under Brazilian legal definitions (re-established by Federal Law No.
-  // 12,876/2013 following earlier historical legislation), the time zone
-  // boundary in the state of Amazonas is defined by an imaginary line drawn
-  // between two specific municipalities: Tabatinga (in western Amazonas) and
-  // Porto Acre (in the state of Acre). Due to the size of the municipalities
-  // in the Amazonas state, two time zones may be defined in some of them.
-  final easternPartOfPauini = compactFinder.find(-7.7120204, -67.0130633);
-  final westernPartOfPauini = compactFinder.find(-7.7857015, -68.5215298);
-  print(
-    'Eastern part of Pauini Municipality, Amazonas, Brazil -> $easternPartOfPauini',
-  ); // America/Manaus
-  print(
-    'Western part of Pauini Municipality, Amazonas, Brazil -> $westernPartOfPauini',
-  ); // America/Eirunepe
-  print('Some municipalities may be split into two time zones.');
+  print('LHR -> ${heathrow.name}   (via Nominatim)');
+  print('BOM -> ${mumbai.name}   (via Photon)');
   print('');
 
+  // Same flight from both ends. `inLocation` does not move the instant — it
+  // reports the one arrival moment as the clocks in Mumbai read it.
+  print('BA 139 departs LHR -> $takeOff');
+  print('BA 139 arrives BOM -> $arrival');
+  print('-------------------------------------------');
+  print('');
   print(
-    'Boundaries for IANA tzdb ${finder.ianaDatabaseVersion}, '
-    '${finder.availableTimeZones.length} zones (exact tier)',
+    'Boundaries for IANA tzdb $ianaDatabaseVersion, '
+    '${availableTimeZoneIds.length} zones',
   );
 }
