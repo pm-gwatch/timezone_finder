@@ -262,7 +262,5 @@ Future<void> main() async {
 
   _printTable(confCall);
   print('');
-  print(
-    'Boundaries for IANA tzdb $ianaDatabaseVersion, CLDR $cldrVersion',
-  );
+  print('Boundaries for IANA tzdb $ianaDatabaseVersion, CLDR $cldrVersion');
 }

@@ -221,10 +221,7 @@ String _esc(String s) => s
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
 
-String _renderBoard(
-  List<_FlightRow> rows, {
-  required String originUtcOffset,
-}) {
+String _renderBoard(List<_FlightRow> rows, {required String originUtcOffset}) {
   final bodyRows = rows
       .map(
         (r) =>
