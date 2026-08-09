@@ -75,8 +75,11 @@ void main() {
 
     test('stays inside the exactly-representable integer range', () {
       // 1.8e8 is far below 2^53, so the fixed-point representation is exact on
-      // every Dart platform including the web.
-      expect(quantize(180).abs(), lessThan(1 << 53));
+      // every Dart platform including the web. Avoid large `1 << n` in
+      // assertions under dart2js: counts ≥ 32 do not behave like native shifts
+      // (e.g. `1 << 53` is not 2⁵³ there).
+      const twoTo53 = 9007199254740992;
+      expect(quantize(180).abs(), lessThan(twoTo53));
     });
   });
 

@@ -10,6 +10,8 @@
 import 'package:test/test.dart';
 import 'package:timezone/data/latest.dart' as incomplete_tzdata;
 import 'package:timezone/timezone.dart';
+import 'package:timezone_finder/src/finder.dart'
+    show availableLocationNames, findLocationName;
 import 'package:timezone_finder/timezone_finder.dart';
 
 void main() {
@@ -21,7 +23,7 @@ void main() {
     // lookup failure. package:timezone's own error here is a
     // LocationNotFoundException, which points at the wrong thing.
     expect(
-      () => findLocation(48.8566, 2.3522),
+      () => findLocation(2.3522, 48.8566),
       throwsA(
         isA<StateError>().having(
           (e) => e.message,
@@ -36,7 +38,7 @@ void main() {
     );
 
     // A point with no zone needs no database, so it still answers.
-    expect(findLocation(0, -140), isNull);
+    expect(findLocation(-140, 0), isNull);
 
     // toLocation reports the same cause rather than a parse failure: the
     // Feature is well-formed, the database simply is not there yet.
@@ -58,9 +60,9 @@ void main() {
     // data/latest.dart drops the tzdb link identifiers: 341 locations against
     // our 419. Europe/Zagreb is one of the casualties, and it is a coordinate
     // the package's own example uses.
-    expect(findTimeZoneName(42.6634651, 18.0591377), 'Europe/Zagreb');
+    expect(findLocationName(18.0591377, 42.6634651), 'Europe/Zagreb');
     expect(
-      () => findLocation(42.6634651, 18.0591377),
+      () => findLocation(18.0591377, 42.6634651),
       throwsA(
         isA<StateError>().having(
           (e) => e.message,
@@ -72,12 +74,12 @@ void main() {
 
     // Identifiers that are present still resolve, so this is a gap in the
     // chosen variant rather than a broken bridge.
-    expect(findLocation(51.1269705, 1.3230653)!.name, 'Europe/London');
+    expect(findLocation(1.3230653, 51.1269705)!.name, 'Europe/London');
   });
 
   test('the gap is large enough to be worth naming in the error', () {
     final missing = <String>[];
-    for (final name in availableTimeZoneIds) {
+    for (final name in availableLocationNames) {
       try {
         getLocation(name);
       } on LocationNotFoundException {

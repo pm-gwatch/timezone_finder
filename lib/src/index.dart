@@ -9,8 +9,11 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'index_format_exception.dart';
 import 'point_in_polygon.dart';
 import 'varint.dart';
+
+export 'index_format_exception.dart';
 
 /// Identifies the container. Checked before anything else is trusted.
 const int indexMagic = 0x58465a54; // 'TZFX', little-endian
@@ -36,20 +39,17 @@ abstract final class IndexHeader {
   static const int length = 36;
 }
 
-/// Thrown when a container cannot be trusted.
-class IndexFormatException implements Exception {
-  const IndexFormatException(this.message);
-  final String message;
-  @override
-  String toString() => 'IndexFormatException: $message';
-}
-
 /// Reads a packed index and resolves quantized coordinates against it.
 ///
-/// The polygon table is parsed eagerly — 1,184 records is nothing. Ring
-/// coordinates are decoded only when a lookup actually tests that ring, and
-/// memoised afterwards; that laziness is the entire purpose of the ring offset
-/// table, and eagerly decoding 7.6M vertices would undo it.
+/// The polygon table is parsed eagerly — on the order of a thousand records,
+/// which is nothing. Ring coordinates are decoded only when a lookup actually
+/// tests that ring, and memoised afterwards; that laziness is the entire
+/// purpose of the ring offset table, and eagerly decoding the dataset's
+/// millions of vertices would undo it.
+///
+/// Counts are left approximate on purpose: a reader may hold either the
+/// shipped index or the unsimplified baseline, and both move at every boundary
+/// release. `polygonCount` reports the real figure.
 class TimeZoneIndex {
   TimeZoneIndex._({
     required Uint8List bytes,
@@ -205,6 +205,13 @@ class TimeZoneIndex {
       cursor = dy.next;
       id += zigzagDecode(dx.value);
 
+      if (id < 0 || id >= _polygonZoneIds.length) {
+        throw IndexFormatException(
+          'grid pool yielded polygon id $id, but the index has '
+          '${_polygonZoneIds.length} polygons',
+        );
+      }
+
       if (_boxContains(id, x, y) && _polygonContains(id, x, y)) {
         return zoneNames[_polygonZoneIds[id]];
       }
@@ -244,14 +251,38 @@ class TimeZoneIndex {
     offset,
     () => readRing(_bytes, _coordinatesOffset + offset).ring,
   );
+
+  /// Max sound `|side|` bound across every edge in every ring.
+  ///
+  /// Bound used by the dart2js safety gate: for a straddling ray,
+  /// `|side| ≤ 360e6·|dy| + |dy|·|dx|`. Must stay strictly below 2⁵³.
+  int maxPipSideBound() {
+    var maxBound = 0;
+    for (final offsets in _polygonRingOffsets) {
+      for (final offset in offsets) {
+        final ring = _ring(offset);
+        final n = ring.length ~/ 2;
+        for (var i = 0; i < n; i++) {
+          final j = (i + 1) % n;
+          final dx = (ring[j * 2] - ring[i * 2]).abs();
+          final dy = (ring[j * 2 + 1] - ring[i * 2 + 1]).abs();
+          final bound = 360000000 * dy + dy * dx;
+          if (bound > maxBound) maxBound = bound;
+        }
+      }
+    }
+    return maxBound;
+  }
 }
 
-/// The cell array, as an `Int32List` over the container where possible.
+/// The cell array as an [Int32List], copied with explicit little-endian reads.
 ///
-/// The writer pads so the section starts four-byte aligned, which lets this be
-/// a zero-copy view. A caller can still hand us a buffer that is itself a view
-/// at an odd offset, so alignment is checked and a copy taken when it does not
-/// hold — 259 KB is cheap next to returning wrong answers or throwing.
+/// The writer pads so the section starts four-byte aligned, so a zero-copy
+/// `asInt32List` view is possible on the VM. We always copy via [ByteData]
+/// instead: 259 KB is cheap, the path is identical for embedded chunks and
+/// fetched `.bin` bytes, and it avoids depending on TypedData view semantics
+/// across compilers. (An earlier Chrome failure was mis-attributed to cell
+/// views; the real bug was [zigzagDecode] on dart2js — keep this copy anyway.)
 Int32List _viewCells(Uint8List bytes, int cellsOffset, int poolOffset) {
   final byteLength = poolOffset - cellsOffset;
   if (byteLength < 0 || byteLength % 4 != 0) {
@@ -259,13 +290,13 @@ Int32List _viewCells(Uint8List bytes, int cellsOffset, int poolOffset) {
       'grid cell section is $byteLength bytes, not a whole number of int32s',
     );
   }
-  final absolute = bytes.offsetInBytes + cellsOffset;
-  if (absolute % 4 == 0) {
-    return bytes.buffer.asInt32List(absolute, byteLength ~/ 4);
+  final count = byteLength ~/ 4;
+  final view = ByteData.sublistView(bytes, cellsOffset, poolOffset);
+  final copy = Int32List(count);
+  for (var i = 0; i < count; i++) {
+    copy[i] = view.getInt32(i * 4, Endian.little);
   }
-  return Int32List.sublistView(
-    Uint8List.fromList(Uint8List.sublistView(bytes, cellsOffset, poolOffset)),
-  );
+  return copy;
 }
 
 ({int value, int next}) _varint(Uint8List bytes, int offset) {

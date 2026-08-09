@@ -1,43 +1,15 @@
-# Files excluded from the published package archive.
+# Extra paths excluded from the published package.
 #
-# IMPORTANT: pub uses this file INSTEAD OF .gitignore, not in addition to it.
-# Every path .gitignore keeps out of the repository must be repeated here, or
-# it ships to pub.dev. In particular `docs/` holds working notes and review
-# documents that must not be published.
-#
-# Keep in sync with .gitignore when adding entries there.
+# With a root `.pubignore`, pub does not apply the root `.gitignore` — repeat
+# anything that must not ship (see dart.dev/tools/pub/publishing).
 
-# Working notes, draft plans and review documents.
+# Local working notes (also gitignored as /docs/).
 docs/
 
-# Tests and fixtures. Not useful to consumers, and the golden fixtures will
-# grow large enough to be worth keeping out of every download.
+# Not for consumers.
 test/
-
-# Maintainer tooling: the data pipeline, the measurement scripts, the index
-# builder. Consumers never run any of it, and shipping it would be actively
-# harmful — several of these files import the reference oracle from `test/`,
-# which is excluded above, and they need `archive` and `http`, which are
-# dev_dependencies a consumer does not get. Published, they would be code whose
-# imports cannot resolve.
-#
-# This also excludes `tool/release/`, which holds the unsimplified boundaries.
-# They are the baseline the bundled ones are measured against, and at 25 MiB
-# compressed they are the reason the published archive is a few megabytes
-# rather than thirty.
 tool/
 
-# Local tooling settings.
-.claude/
-
-# macOS folder metadata.
-.DS_Store
-
-# Not published for library packages; see
-# https://dart.dev/tools/pub/private-files#pubspec-lock.
+# Library packages omit the lockfile.
+# https://dart.dev/tools/pub/private-files
 pubspec.lock
-
-# `.dart_tool/` is excluded by pub unconditionally; listed for the reader's
-# benefit, because it caches the ~170 MB boundary GeoJSON that must never
-# reach the archive.
-.dart_tool/

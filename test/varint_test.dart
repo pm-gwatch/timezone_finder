@@ -1,11 +1,13 @@
 // Tests for the packed coordinate format.
 //
-// Needs no boundary data, so it always runs. The round-trip over the real
-// 7.6M vertices lives in encoding_test.dart, which does need the data.
+// Needs no boundary data, so it always runs. The round-trip over every
+// vertex in the real dataset lives in encoding_test.dart, which does need
+// the data.
 
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
+import 'package:timezone_finder/src/index_format_exception.dart';
 import 'package:timezone_finder/src/varint.dart';
 
 Int32List ring(List<List<int>> points) {
@@ -25,6 +27,10 @@ Uint8List encode(Int32List value) {
 
 void main() {
   group('zigzag', () {
+    // Encode is unused on the web product path, but CI runs this file under
+    // Chrome on purpose. dart2js gives `v >> 63` as 4294967295, not −1, and
+    // `v << 1` as an unsigned 32-bit pattern; `^` still lands on the VM's
+    // answer while the zigzag result stays below 2³¹. These cases pin that.
     test('round-trips across signs and magnitudes', () {
       const samples = <int>[
         0,
@@ -53,9 +59,19 @@ void main() {
       expect(zigzagEncode(2), 4);
     });
 
-    test('stays well below the sign bit at the extreme', () {
+    test('stays well below the 32-bit sign bit at the extreme', () {
       expect(zigzagEncode(-maxCoordinateDelta), isNonNegative);
-      expect(zigzagEncode(maxCoordinateDelta), lessThan(1 << 62));
+      // Do not use large `1 << n` thresholds — under dart2js they are not 2^n.
+      expect(zigzagEncode(maxCoordinateDelta), 2 * maxCoordinateDelta);
+      expect(zigzagEncode(maxCoordinateDelta), lessThan(1000000000));
+    });
+
+    test('decode returns negatives without uint32 wrap (dart2js)', () {
+      // Regression: `(n >> 1) ^ -1` became 4294967277 on dart2js, which then
+      // corrupted polygon ids in the grid pool (Rome lookup).
+      expect(zigzagDecode(37), -19);
+      expect(zigzagDecode(1), -1);
+      expect(zigzagDecode(3), -2);
     });
   });
 
@@ -178,7 +194,9 @@ void main() {
     });
 
     test('rejects a delta that is not a coordinate', () {
-      // Guards the assumption that lets zigzag use an arithmetic shift.
+      // Guards the bound zigzagEncode relies on: a delta within
+      // ±maxCoordinateDelta keeps the encoded value under 2³¹, which is what
+      // makes the VM and dart2js agree.
       final tooFar = ring([
         [0, 0],
         [maxCoordinateDelta + 1, 0],
@@ -190,7 +208,10 @@ void main() {
   group('malformed input', () {
     test('throws rather than reading past the buffer', () {
       final truncated = Uint8List.fromList([2, 0x80]); // count 2, then a stub
-      expect(() => readRing(truncated, 0), throwsStateError);
+      expect(
+        () => readRing(truncated, 0),
+        throwsA(isA<IndexFormatException>()),
+      );
     });
 
     test('throws on a varint longer than 64 bits', () {
@@ -201,7 +222,7 @@ void main() {
         ...List<int>.filled(12, 0x80),
         0x01,
       ]);
-      expect(() => readRing(bytes, 0), throwsStateError);
+      expect(() => readRing(bytes, 0), throwsA(isA<IndexFormatException>()));
     });
   });
 }

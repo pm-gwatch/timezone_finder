@@ -19,8 +19,9 @@ import 'dart:typed_data';
 /// polygons therefore partition a shared border with no gap or overlap, and
 /// `quantizeQueryLongitude` depends on this when it collapses +180 onto -180.
 ///
-/// Intermediate products reach ~1.3e17, roughly 70x inside the 64-bit range
-/// but well past 2^53 — so this needs revisiting before it can run on the web.
+/// Intermediate products stay exact on dart2js as well as the VM: for an edge
+/// the ray can straddle, `|side| ≤ 360e6·|dy| + |dy|·|dx|`, and the index
+/// generator refuses to emit data whose maximum sound bound is ≥ 2⁵³.
 bool pointInRing(Int32List ring, int px, int py) {
   final n = ring.length ~/ 2;
   var inside = false;

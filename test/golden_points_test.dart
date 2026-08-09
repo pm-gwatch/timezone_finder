@@ -88,9 +88,9 @@ void main() {
       test('the oracle agrees with every ground-truth fixture', () {
         final byCategory = <GoldenCategory, List<String>>{};
         for (final point in all) {
-          final actual = oracle.findTimeZoneName(
-            point.latitude,
+          final actual = oracle.findLocationName(
             point.longitude,
+            point.latitude,
           );
           if (actual != point.zone) {
             byCategory
@@ -130,7 +130,7 @@ void main() {
         final misfiled = <String>[];
         for (final point in all) {
           if (point.zone == null) continue;
-          final zones = oracle.zonesContaining(point.latitude, point.longitude);
+          final zones = oracle.zonesContaining(point.longitude, point.latitude);
           if (zones.length > 1) {
             misfiled.add('${point.name}: covered by ${zones.join(' + ')}');
           }
@@ -148,8 +148,8 @@ void main() {
         // zones and open ocean alike.
         for (var lat = -80.0; lat <= 80.0; lat += 5) {
           expect(
-            oracle.findTimeZoneName(lat, 180),
-            oracle.findTimeZoneName(lat, -180),
+            oracle.findLocationName(180, lat),
+            oracle.findLocationName(-180, lat),
             reason: 'lon 180 and -180 disagree at latitude $lat',
           );
         }
@@ -173,7 +173,7 @@ void main() {
           179.9999995,
         ];
         for (final lat in seamLatitudes) {
-          final expected = oracle.findTimeZoneName(lat, -180);
+          final expected = oracle.findLocationName(-180, lat);
           expect(
             expected,
             isNotNull,
@@ -183,7 +183,7 @@ void main() {
           );
           for (final lon in band) {
             expect(
-              oracle.findTimeZoneName(lat, lon),
+              oracle.findLocationName(lon, lat),
               expected,
               reason: 'seam is discontinuous at ($lat, $lon)',
             );
@@ -194,7 +194,7 @@ void main() {
       test('overlap pins reproduce the documented tiebreak', () {
         final drift = <String>[];
         for (final pin in overlapPins) {
-          final zones = oracle.zonesContaining(pin.latitude, pin.longitude);
+          final zones = oracle.zonesContaining(pin.longitude, pin.latitude);
           if (zones.length < 2) {
             drift.add(
               '${pin.description}: now covered by ${zones.length} '
@@ -206,7 +206,7 @@ void main() {
               '${zones.join(' + ')}, pinned as ${pin.contenders.join(' + ')}',
             );
           }
-          final selected = oracle.findTimeZoneName(pin.latitude, pin.longitude);
+          final selected = oracle.findLocationName(pin.longitude, pin.latitude);
           if (selected != pin.selected) {
             drift.add(
               '${pin.description}: rule selects $selected, '

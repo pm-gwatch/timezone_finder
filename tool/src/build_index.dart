@@ -24,14 +24,51 @@ typedef SourcePolygon = ({
   List<Int32List> holes,
 });
 
+/// Largest `|side|` dart2js Number can represent exactly (2⁵³).
+const int pipDart2jsLimit = 1 << 53;
+
+/// Sound per-edge `|side|` bound for a straddling ray:
+/// `|side| ≤ 360e6·|dy| + |dy|·|dx|`.
+int pipSideBound(int dx, int dy) => 360000000 * dy + dy * dx;
+
+/// Fails the pack if any edge's sound `|side|` bound reaches [pipDart2jsLimit].
+///
+/// Without this gate, a future tzbb release could silently emit rings whose
+/// dart2js lookups disagree with the VM. Call before writing coordinates.
+void assertPipDart2jsSafe(Iterable<Int32List> rings) {
+  var maxBound = 0;
+  for (final ring in rings) {
+    final n = ring.length ~/ 2;
+    for (var i = 0; i < n; i++) {
+      final j = (i + 1) % n;
+      final dx = (ring[j * 2] - ring[i * 2]).abs();
+      final dy = (ring[j * 2 + 1] - ring[i * 2 + 1]).abs();
+      final bound = pipSideBound(dx, dy);
+      if (bound > maxBound) maxBound = bound;
+    }
+  }
+  if (maxBound >= pipDart2jsLimit) {
+    throw StateError(
+      'PIP sound |side| bound $maxBound reaches or exceeds 2^53 '
+      '($pipDart2jsLimit); dart2js cannot represent edge tests exactly',
+    );
+  }
+}
+
 /// Packs [polygons] into a container the runtime reader accepts.
 ///
 /// [cellSize] is the grid resolution in quantized units; it must divide 360°.
+///
+/// Throws [StateError] if any ring edge's sound `|side|` bound is ≥ 2⁵³.
 Uint8List buildIndex({
   required String dataVersion,
   required List<SourcePolygon> polygons,
   required int cellSize,
 }) {
+  assertPipDart2jsSafe([
+    for (final polygon in polygons) ...[polygon.outer, ...polygon.holes],
+  ]);
+
   final zoneNames = <String>{for (final p in polygons) p.zone}.toList()..sort();
   final zoneIdOf = <String, int>{
     for (var i = 0; i < zoneNames.length; i++) zoneNames[i]: i,

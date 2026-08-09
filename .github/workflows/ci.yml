@@ -29,6 +29,31 @@ jobs:
       # the maintainer's job before a data refresh lands.
       - run: dart test
 
+  # dart2js integer / bit paths that the VM cannot regress-test (zigzag, etc.).
+  # browser_parity needs Chrome + the shipped .bin over packages/; varint and
+  # quantization need no network assets. encoding_test stays VM-only (dart:io +
+  # GeoJSON cache).
+  chrome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - uses: browser-actions/setup-chrome@v2
+        id: setup-chrome
+        with:
+          install-dependencies: true
+      - run: dart pub get
+      - name: Chrome integer / bit suites
+        run: dart test -p chrome test/varint_test.dart test/quantization_test.dart
+        env:
+          CHROME_EXECUTABLE: ${{ steps.setup-chrome.outputs.chrome-path }}
+      - name: Chrome boundary parity and install contract
+        run: dart test -p chrome test/browser_parity_test.dart test/browser_preinstall_test.dart
+        env:
+          CHROME_EXECUTABLE: ${{ steps.setup-chrome.outputs.chrome-path }}
+
   publish-dry-run:
     runs-on: ubuntu-latest
     steps:

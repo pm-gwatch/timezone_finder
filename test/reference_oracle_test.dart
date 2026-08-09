@@ -70,9 +70,9 @@ void main() {
       test('agrees with every bootstrap golden', () {
         final failures = <String>[];
         for (final point in bootstrapGoldens) {
-          final actual = oracle.findTimeZoneName(
-            point.latitude,
+          final actual = oracle.findLocationName(
             point.longitude,
+            point.latitude,
           );
           if (actual != point.zone) {
             failures.add('${point.name}: expected ${point.zone}, got $actual');
@@ -100,22 +100,22 @@ void main() {
 
       test('returns null at sea', () {
         // Land-only dataset : open ocean is not in any polygon.
-        expect(oracle.findTimeZoneName(0, -140), isNull); // mid-Pacific
-        expect(oracle.findTimeZoneName(-40, -30), isNull); // South Atlantic
-        expect(oracle.findTimeZoneName(0, -25), isNull); // equatorial Atlantic
+        expect(oracle.findLocationName(-140, 0), isNull); // mid-Pacific
+        expect(oracle.findLocationName(-30, -40), isNull); // South Atlantic
+        expect(oracle.findLocationName(-25, 0), isNull); // equatorial Atlantic
       });
 
       test('rejects coordinates that are not coordinates', () {
-        expect(() => oracle.findTimeZoneName(91, 0), throwsArgumentError);
-        expect(() => oracle.findTimeZoneName(-91, 0), throwsArgumentError);
-        expect(() => oracle.findTimeZoneName(0, 181), throwsArgumentError);
-        expect(() => oracle.findTimeZoneName(0, -181), throwsArgumentError);
+        expect(() => oracle.findLocationName(0, 91), throwsArgumentError);
+        expect(() => oracle.findLocationName(0, -91), throwsArgumentError);
+        expect(() => oracle.findLocationName(181, 0), throwsArgumentError);
+        expect(() => oracle.findLocationName(-181, 0), throwsArgumentError);
         expect(
-          () => oracle.findTimeZoneName(double.nan, 0),
+          () => oracle.findLocationName(0, double.nan),
           throwsArgumentError,
         );
         expect(
-          () => oracle.findTimeZoneName(0, double.infinity),
+          () => oracle.findLocationName(double.infinity, 0),
           throwsArgumentError,
         );
       });
@@ -123,10 +123,10 @@ void main() {
       test('accepts the boundary values, which are valid coordinates', () {
         // Must not throw. The poles and the antimeridian are in range; the
         // golden fixtures cover what they return.
-        expect(() => oracle.findTimeZoneName(90, 0), returnsNormally);
-        expect(() => oracle.findTimeZoneName(-90, 0), returnsNormally);
-        expect(() => oracle.findTimeZoneName(0, 180), returnsNormally);
-        expect(() => oracle.findTimeZoneName(0, -180), returnsNormally);
+        expect(() => oracle.findLocationName(0, 90), returnsNormally);
+        expect(() => oracle.findLocationName(0, -90), returnsNormally);
+        expect(() => oracle.findLocationName(180, 0), returnsNormally);
+        expect(() => oracle.findLocationName(-180, 0), returnsNormally);
       });
 
       test('the shoelace sum is exact for every ring in the dataset', () {

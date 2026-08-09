@@ -1,30 +1,13 @@
-// Bootstrap golden fixtures.
+// Bootstrap golden fixtures — the only ground truth that does not come from
+// timezone-boundary-builder. The reference oracle is validated here first;
+// only then does it authorize the wider fixtures and differential tests.
 //
-// These pairs are the ONLY ground truth in this package that does not come
-// from the timezone-boundary-builder data. They exist to break a circular
-// dependency: the reference oracle is validated against this set, and only
-// once it passes does it become the authority for the wider fixture set and
-// for differential testing.
+// Written by hand from geography knowledge, then checked against Python
+// `timezonefinder` (see test/fixtures/README.md). Identifiers confirmed in
+// tzbb `timezone-names.json`. Major city centres only — borders, enclaves,
+// antimeridian, and overlaps belong in golden_points.dart / overlap_pins.dart.
 //
-// Provenance and rules:
-//
-//   * Every pair was written by hand from independent knowledge of world
-//     geography, BEFORE any cross-check was run. Nothing here was generated
-//     from tzbb data, from this package, or from another implementation.
-//   * Each pair was then verified against Python `timezonefinder`
-//     (`timezone_at_land`), an independent implementation with its own
-//     preprocessing. See test/fixtures/README.md for the disagreement log.
-//   * Every identifier was checked against the 419 entries in tzbb 2026c's
-//     `timezone-names.json`, which confirms the zone exists without
-//     consulting any geometry.
-//
-// Selection criteria: major city centres, well inside a country, chosen to be
-// unambiguous rather than interesting. Border cases, enclaves, antimeridian
-// zones and the 25 documented overlap pairs belong in golden_points.dart —
-// deliberately NOT here, because a bootstrap set must be beyond doubt.
-//
-// Do not add a pair to this file by running an implementation and recording
-// what it said. That defeats the entire purpose of the file.
+// Do not add a pair by recording what an implementation returned.
 
 import 'golden_point.dart';
 

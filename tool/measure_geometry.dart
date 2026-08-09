@@ -1,17 +1,14 @@
-/// Measures the numerics of the shoelace area computation.
+/// Measures shoelace area numerics on a cached release.
 ///
 ///     dart run tool/measure_geometry.dart
 ///
-/// `ringArea` accumulates in `double` because an exact integer sum was assumed
-/// to overflow int64 on the largest rings. That assumption was never checked.
-/// This reports, over every ring in the dataset:
+/// Reports, over every ring in the dataset:
 ///
-///   * the largest magnitude any partial sum reaches, against the int64 range
-///   * the relative error of the double result against an exact BigInt sum
+///   * largest partial-sum magnitude vs the int64 range
+///   * relative error of a `double` sum against an exact BigInt sum
 ///
-/// If the partial sums stay well inside int64, the area can be computed
-/// exactly in plain integer arithmetic, which removes the precision question
-/// entirely and makes the precedence comparator an integer comparison.
+/// Confirms integer accumulation stays inside int64 so areas can stay exact
+/// (as in `tool/src/geometry.dart`).
 library;
 
 import 'dart:io';

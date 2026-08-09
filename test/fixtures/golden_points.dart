@@ -1,34 +1,15 @@
-// Extended golden fixtures.
+// Extended golden fixtures: borders, enclaves, small islands, Antarctic
+// stations, the antimeridian, and open ocean.
 //
-// External ground truth, extending `bootstrapGoldens` into the cases the
-// bootstrap set deliberately excluded: zone borders, enclaves and holes,
-// small-island zones, Antarctic stations, the antimeridian, and open ocean.
+// Every expectation is external ground truth — written by hand, then verified
+// (see test/fixtures/README.md). A disagreement means investigate; never
+// adopt the implementation's answer.
 //
-// CONTRACT: every expectation in this file is a claim about the world that an
-// independent source can adjudicate. Each was written by hand before any tool
-// was run, then verified — see test/fixtures/README.md for the log and the
-// per-category verification weighting. A disagreement here means either the
-// fixture or the implementation is wrong, and it must be resolved by
-// investigation, never by adopting the implementation's answer.
+// Two noted exceptions (coordinate provenance weaker than the others):
+// 'Unclaimed Antarctic sector, 10°W' and 'Dover Strait, mid-channel'. Do not
+// add a third without the same note.
 //
-// Two documented exceptions, each carrying a note saying so:
-//
-//   * 'Unclaimed Antarctic sector, 10°W' — expectation externally verified,
-//     but the coordinate came from the dataset, because the region has no
-//     named place to anchor it to.
-//   * 'Dover Strait, mid-channel' — coordinate derived from two named ports,
-//     but which side of the maritime boundary it lands on was verified rather
-//     than predicted.
-//
-// Do not add a third without the same note. The value of this file is that its
-// provenance is knowable, entry by entry.
-//
-// Fixtures where no external source *can* adjudicate — the documented zone
-// overlaps, where two zones genuinely contain the same point and the answer
-// comes from an arbitrary tiebreak — are NOT here. They live in
-// `overlap_pins.dart` under a different contract, because filing them as
-// ground truth would assert a position on disputed sovereignty that this
-// package explicitly disclaims.
+// Zone overlaps (no adjudicable ground truth) live in `overlap_pins.dart`.
 library;
 
 import 'golden_point.dart';
