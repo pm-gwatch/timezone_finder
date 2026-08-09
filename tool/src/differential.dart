@@ -76,7 +76,7 @@ class DifferentialReport {
 /// collect-then-sort path implement the same precedence rule.
 DifferentialReport runDifferential({
   required ReferenceTimeZoneFinder oracle,
-  required String? Function(double latitude, double longitude) subject,
+  required String? Function(double longitude, double latitude) subject,
   required int points,
   required int seed,
   required List<({double lat, double lon})> overlapSeeds,
@@ -134,14 +134,16 @@ DifferentialReport runDifferential({
     final entry = stats[name]!;
     entry.checked++;
 
-    final expected = oracle.findTimeZoneName(point.lat, point.lon);
+    final expected = oracle.findLocationName(point.lon, point.lat);
     if (expected != null) entry.landHits++;
-    final actual = subject(point.lat, point.lon);
+    final actual = subject(point.lon, point.lat);
     if (actual != expected) {
       entry.disagreements++;
       if (examples.length < 40) {
+        // Longitude first, the order both finders take, so an example can be
+        // pasted into findLocation / the package-internal findLocationName.
         examples.add(
-          '[$name] (${point.lat}, ${point.lon}): '
+          '[$name] (${point.lon}, ${point.lat}): '
           'runtime ${actual ?? 'null'}, oracle ${expected ?? 'null'}',
         );
       }

@@ -29,12 +29,12 @@ void main() {
     final baselineFinder = finderOverIndex(unsimplified.loadContainer);
 
     test('works with no configuration', () {
-      expect(bundledFinder.findTimeZoneName(48.8566, 2.3522), 'Europe/Paris');
+      expect(bundledFinder.findLocationName(2.3522, 48.8566), 'Europe/Paris');
       expect(
-        bundledFinder.findTimeZoneName(-33.8688, 151.2093),
+        bundledFinder.findLocationName(151.2093, -33.8688),
         'Australia/Sydney',
       );
-      expect(bundledFinder.findTimeZoneName(0, -140), isNull);
+      expect(bundledFinder.findLocationName(-140, 0), isNull);
       expect(
         bundledFinder.ianaDatabaseVersion,
         baselineFinder.ianaDatabaseVersion,
@@ -46,11 +46,11 @@ void main() {
       // tolerance and are dropped. A zone disappears only if every one of its
       // polygons went, so the count barely moves — but it can move.
       expect(
-        bundledFinder.availableTimeZoneIds.length,
-        lessThanOrEqualTo(baselineFinder.availableTimeZoneIds.length),
+        bundledFinder.availableLocationNames.length,
+        lessThanOrEqualTo(baselineFinder.availableLocationNames.length),
       );
       expect(
-        bundledFinder.availableTimeZoneIds.length,
+        bundledFinder.availableLocationNames.length,
         greaterThan(400),
         reason: 'simplification should not be losing whole zones wholesale',
       );
@@ -67,9 +67,9 @@ void main() {
           ...bootstrapGoldens,
           ...goldenPoints,
         ]) {
-          final actual = bundledFinder.findTimeZoneName(
-            point.latitude,
+          final actual = bundledFinder.findLocationName(
             point.longitude,
+            point.latitude,
           );
           if (actual != point.zone) {
             differing.add(
@@ -106,8 +106,8 @@ void main() {
       ];
       for (final (name, lat, lon) in fragile) {
         expect(
-          bundledFinder.findTimeZoneName(lat, lon),
-          baselineFinder.findTimeZoneName(lat, lon),
+          bundledFinder.findLocationName(lon, lat),
+          baselineFinder.findLocationName(lon, lat),
           reason: '$name did not survive simplification',
         );
       }
@@ -121,10 +121,10 @@ void main() {
       for (var i = 0; i < 40000; i++) {
         final lat = -90 + (i * 7919 % 180000000) / 1000000;
         final lon = -180 + (i * 15485863 % 360000000) / 1000000;
-        final expected = baselineFinder.findTimeZoneName(lat, lon);
+        final expected = baselineFinder.findLocationName(lon, lat);
         if (expected == null) continue;
         checked++;
-        if (bundledFinder.findTimeZoneName(lat, lon) != expected) differing++;
+        if (bundledFinder.findLocationName(lon, lat) != expected) differing++;
       }
       expect(checked, greaterThan(1000), reason: 'sample missed land');
       final rate = differing / checked;
@@ -155,7 +155,7 @@ void main() {
         // Bracket the crossing, then bisect. The line is oblique, so the
         // western endpoint has to be found rather than assumed.
         var east = -66.5;
-        if (baselineFinder.findTimeZoneName(latitude, east) !=
+        if (baselineFinder.findLocationName(east, latitude) !=
             'America/Manaus') {
           continue;
         }
@@ -163,7 +163,7 @@ void main() {
         var found = false;
         while (west > -70.5) {
           west -= 0.05;
-          final zone = baselineFinder.findTimeZoneName(latitude, west);
+          final zone = baselineFinder.findLocationName(west, latitude);
           if (zone == 'America/Eirunepe') {
             found = true;
             break;
@@ -174,7 +174,7 @@ void main() {
         if (!found) continue;
         for (var i = 0; i < 40; i++) {
           final middle = (west + east) / 2;
-          if (baselineFinder.findTimeZoneName(latitude, middle) ==
+          if (baselineFinder.findLocationName(middle, latitude) ==
               'America/Eirunepe') {
             west = middle;
           } else {
@@ -186,13 +186,13 @@ void main() {
         // ~5.5 m, ~22 m, ~110 m, ~1.1 km and ~11 km either side.
         for (final offset in <double>[0.00005, 0.0002, 0.001, 0.01, 0.1]) {
           for (final longitude in <double>[line - offset, line + offset]) {
-            final expected = baselineFinder.findTimeZoneName(
-              latitude,
+            final expected = baselineFinder.findLocationName(
               longitude,
+              latitude,
             );
             probed++;
             expect(
-              bundledFinder.findTimeZoneName(latitude, longitude),
+              bundledFinder.findLocationName(longitude, latitude),
               expected,
               reason:
                   'the two differ ${(offset * 111320 * 0.995).round()} m '
@@ -210,9 +210,9 @@ void main() {
       // decides must at least be stable, and must still be one of the
       // contenders rather than something else entirely.
       for (final pin in overlapPins) {
-        final answer = bundledFinder.findTimeZoneName(
-          pin.latitude,
+        final answer = bundledFinder.findLocationName(
           pin.longitude,
+          pin.latitude,
         );
         if (answer == null) continue;
         expect(
@@ -223,7 +223,7 @@ void main() {
               'neither contender',
         );
         expect(
-          bundledFinder.findTimeZoneName(pin.latitude, pin.longitude),
+          bundledFinder.findLocationName(pin.longitude, pin.latitude),
           answer,
         );
       }

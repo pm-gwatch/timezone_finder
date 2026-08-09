@@ -139,7 +139,7 @@ void _checkNoBoxWrapsTheAntimeridian(List<PolygonBox> boxes) {
   while (count < 4000) {
     final lat = random.nextInt(180000001) - 90000000;
     final lon = random.nextInt(360000001) - 180000000;
-    if (oracle.findTimeZoneName(lat / 1000000, lon / 1000000) == null) continue;
+    if (oracle.findLocationName(lon / 1000000, lat / 1000000) == null) continue;
     final candidates = grid.candidatesAt(lon, lat).length;
     total += candidates;
     if (candidates > worst) worst = candidates;

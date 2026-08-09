@@ -12,5 +12,5 @@ pubspec.lock
 # Local Claude Code settings
 .claude/
 
-# Working notes and draft plans (not package docs)
-docs/
+# Working notes and draft plans at repo root (not package docs)
+/docs/

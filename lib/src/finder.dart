@@ -5,7 +5,10 @@ import 'dart:typed_data';
 
 import 'package:timezone/timezone.dart';
 
-import 'data/boundaries.dart' as bundled_data;
+import 'embedded_stub.dart'
+    if (dart.library.io) 'embedded_io.dart'
+    if (dart.library.js_interop) 'embedded_web.dart'
+    as embedded;
 import 'index.dart';
 import 'quantization.dart';
 
@@ -22,15 +25,38 @@ TimeZoneIndex _decode(Uint8List Function() bytes) {
   return TimeZoneIndex.fromBytes(bytes());
 }
 
+/// Installs [bytes] as the isolate-wide shared index.
+///
+/// Used by the VM embedded path after decoding chunks, and by
+/// [installBoundaries] on web after the app (or a fetch) supplies the `.bin`.
+///
+/// A second call with the same [TimeZoneIndex.dataVersion] is a no-op;
+/// a different version replaces the installed index.
+///
+/// Throws [IndexFormatException] if [bytes] are not a valid container.
+void installSharedIndex(Uint8List bytes) {
+  final index = TimeZoneIndex.fromBytes(bytes);
+  final existing = _bundledIndex;
+  if (existing != null && existing.dataVersion == index.dataVersion) {
+    return;
+  }
+  _decodes++;
+  _bundledIndex = index;
+}
+
 /// The bundled index, decoded on first use.
 ///
 /// One copy per isolate. Every default [TimeZoneFinder] (the top-level API's
 /// singleton and any constructed in tests) reads this; [ensurePreloaded]
 /// warms it for the whole isolate.
+///
+/// On web, the embedded loader throws until [installSharedIndex] has run
+/// (via `installBoundaries` in `browser.dart`).
 TimeZoneIndex get _sharedIndex {
   final existing = _bundledIndex;
   if (existing != null) return existing;
-  return _bundledIndex = _decode(bundled_data.loadContainer);
+  installSharedIndex(embedded.loadContainer());
+  return _bundledIndex!;
 }
 
 /// How many indexes this library has decoded in this isolate.
@@ -44,73 +70,80 @@ TimeZoneFinder? _default;
 /// The finder the top-level functions read through. One per isolate.
 TimeZoneFinder get _defaultFinder => _default ??= TimeZoneFinder();
 
-/// Returns the IANA identifier containing ([latitude], [longitude]),
-/// e.g. `'Europe/Paris'`, or `null` if the coordinate is not inside any land
-/// time zone polygon.
+/// Package-internal: IANA identifier for ([longitude], [latitude]), or `null`.
 ///
-/// ```dart
-/// findTimeZoneName(48.8566, 2.3522);  // 'Europe/Paris'
-/// findTimeZoneName(0.0, -140.0);      // null — open ocean
-/// ```
+/// Not exported from `package:timezone_finder/timezone_finder.dart`. Public
+/// callers should use [findLocation] and read `Location.name` (the IANA id).
+/// Kept here so [findLocation] can resolve the id before consulting tzdata,
+/// and so package tests can assert the boundary lookup without initializing
+/// `package:timezone`.
 ///
-/// This is the identifier to store: it stays correct when daylight-saving
-/// rules change under it, where a stored UTC offset does not.
+/// Argument order matches GeoJSON: longitude first, then latitude.
 ///
 /// Where zones overlap — disputed territories, see the README — returns one
 /// identifier by a documented deterministic rule: the smallest containing
 /// polygon by planar area, then lexicographic identifier.
 ///
-/// Throws [ArgumentError] if [latitude] is outside `-90 .. 90`, [longitude]
-/// is outside `-180 .. 180`, or either is NaN or infinite.
-String? findTimeZoneName(double latitude, double longitude) =>
-    _defaultFinder.findTimeZoneName(latitude, longitude);
+/// Throws [ArgumentError] if [longitude] is outside `-180 .. 180`, [latitude]
+/// is outside `-90 .. 90`, or either is NaN or infinite.
+String? findLocationName(double longitude, double latitude) =>
+    _defaultFinder.findLocationName(longitude, latitude);
 
 /// Returns the `package:timezone` [Location] containing
-/// ([latitude], [longitude]), or `null` if no land time zone covers it.
+/// ([longitude], [latitude]), or `null` if no land time zone covers it.
+///
+/// Argument order matches GeoJSON: longitude first, then latitude.
+/// `Location.name` is the IANA identifier (e.g. `'Europe/Paris'`).
 ///
 /// ```dart
-/// final paris = findLocation(48.8566, 2.3522)!;
+/// final paris = findLocation(2.3522, 48.8566)!;
+/// paris.name; // 'Europe/Paris'
 /// TZDateTime(paris, 2026, 8, 23, 17, 30);
 /// ```
 ///
-/// Throws [ArgumentError] on the same coordinates [findTimeZoneName] rejects, and
-/// [StateError] if your application has not called `initializeTimeZones()`,
-/// or if the database it initialized lacks the identifier — see
-/// [ianaDatabaseVersion] for why the two can disagree.
-Location? findLocation(double latitude, double longitude) =>
-    _defaultFinder.findLocation(latitude, longitude);
+/// Where zones overlap — disputed territories — returns one of them by a fixed
+/// rule: the smallest containing polygon, then the lexicographically first
+/// identifier.
+///
+/// Throws [ArgumentError] on invalid coordinates. Throws [StateError] if
+/// tzdata was never initialized, if that database lacks the resolved
+/// identifier (boundary release vs the tzdata variant your app loaded — use
+/// `latest_all`), or on web until boundaries are installed — see
+/// `package:timezone_finder/browser.dart`.
+Location? findLocation(double longitude, double latitude) =>
+    _defaultFinder.findLocation(longitude, latitude);
 
-/// Optional. Decodes the boundary index now rather than on the first lookup.
+/// Decodes the boundary index now rather than on the first lookup. Optional.
 ///
 /// Worth calling at startup on a server: the index is decoded lazily and
 /// **once per isolate**, so without this the first request handled by each
 /// isolate pays for it. Calling it more than once is harmless.
 ///
-/// Ring coordinates are still decoded on demand by design, so this parses the
-/// container and no more.
+/// On web, succeeds only after `installBoundaries` (or
+/// `initializeBoundaries`); otherwise throws the same [StateError] as a
+/// lookup before install.
+///
+/// Parses the index header only; polygon outlines are still decoded on
+/// demand.
 Future<void> ensurePreloaded() => _defaultFinder.ensurePreloaded();
 
-/// The IANA Time Zone Database version these boundaries were built for,
-/// e.g. `'2026c'`.
+/// The timezone-boundary-builder release these borders were built for,
+/// e.g. `'2026c'` (named after the tzdb version it targets).
 ///
-/// Strictly this is the timezone-boundary-builder release tag, and tzbb names
-/// each release after the tzdb version it was built against. The sequences are
-/// not identical — tzbb skips tzdb releases that move no boundary, so there is
-/// no tzbb `2023a` or `2023c` — but every tag does name a real tzdb version.
+/// Unrelated to the tzdb version behind `package:timezone` in your app — that
+/// one governs offsets and DST; this one governs where the borders are.
 ///
-/// This says nothing about the tzdb version backing `package:timezone` in your
-/// application. That one governs UTC offsets and DST rules and is updated on
-/// its own schedule; this one governs where the borders are.
-///
-/// Reading this decodes the index if it has not been decoded yet.
+/// Reading this decodes the index if it has not been decoded yet — on web,
+/// that means it throws [StateError] until the boundaries have been installed.
 String get ianaDatabaseVersion => _defaultFinder.ianaDatabaseVersion;
 
-/// Every IANA identifier in the dataset, sorted. Unmodifiable.
+/// Package-internal: every IANA identifier in the dataset, sorted.
 ///
-/// These are the strings [findTimeZoneName] can return, not `package:timezone`
-/// `TimeZone` objects. Reading this decodes the index if it has not been
-/// decoded yet.
-List<String> get availableTimeZoneIds => _defaultFinder.availableTimeZoneIds;
+/// Not exported from `package:timezone_finder/timezone_finder.dart`. These are
+/// the strings [findLocation] can resolve (and that appear as `Location.name`).
+/// Reading this decodes the index if it has not been decoded yet.
+List<String> get availableLocationNames =>
+    _defaultFinder.availableLocationNames;
 
 /// Builds a finder over an arbitrary index. Not exported, so not public API.
 ///
@@ -139,11 +172,8 @@ class TimeZoneFinder {
 
   TimeZoneIndex get _resolved => _index();
 
-  /// Implements the top-level `findTimeZoneName`, which documents the contract.
-  String? findTimeZoneName(double latitude, double longitude) {
-    if (!latitude.isFinite || latitude < -90 || latitude > 90) {
-      throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
-    }
+  /// Boundary lookup used by [findLocation]. Not a public package API.
+  String? findLocationName(double longitude, double latitude) {
     if (!longitude.isFinite || longitude < -180 || longitude > 180) {
       throw ArgumentError.value(
         longitude,
@@ -151,15 +181,18 @@ class TimeZoneFinder {
         'must be in [-180, 180]',
       );
     }
+    if (!latitude.isFinite || latitude < -90 || latitude > 90) {
+      throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
+    }
     return _resolved.lookup(
       quantizeQueryLongitude(longitude),
       quantize(latitude),
     );
   }
 
-  /// Implements the top-level `findLocation`, which documents the contract.
-  Location? findLocation(double latitude, double longitude) {
-    final identifier = findTimeZoneName(latitude, longitude);
+  /// Implements the top-level [findLocation], which documents the contract.
+  Location? findLocation(double longitude, double latitude) {
+    final identifier = findLocationName(longitude, latitude);
     if (identifier == null) return null;
     if (!timeZoneDatabase.isInitialized) {
       throw StateError(
@@ -172,13 +205,18 @@ class TimeZoneFinder {
       return getLocation(identifier);
     } on LocationNotFoundException {
       // Not a boundary-data problem, which is where the upstream message
-      // sends people. data/latest.dart drops the tzdb link identifiers and
-      // carries 341 of our 419; latest_all.dart carries every one.
+      // sends people. The "latest" tzdata drops the tzdb link identifiers and
+      // carries 341 of our 419; "latest_all" carries every one. Both fixes
+      // are named because the wrong variant is a deliberate import on the VM
+      // but the *default* in browsers, where there is no import to change.
       throw StateError(
         'The boundary data resolved this coordinate to $identifier, but the '
-        'initialized time zone database has no such location. Initialize from '
-        'package:timezone/data/latest_all.dart rather than data/latest.dart, '
-        'which omits the tzdb link identifiers.',
+        'initialized time zone database has no such location — it omits the '
+        'tzdb link identifiers. On the VM, initialize from '
+        'package:timezone/data/latest_all.dart rather than data/latest.dart. '
+        'In a browser, pass the path explicitly: '
+        "initializeTimeZone('packages/timezone/data/latest_all.tzf'), because "
+        'the default fetches latest.tzf.',
       );
     }
   }
@@ -190,5 +228,5 @@ class TimeZoneFinder {
   String get ianaDatabaseVersion => _resolved.dataVersion;
 
   /// Every identifier in this index, sorted. Unmodifiable.
-  List<String> get availableTimeZoneIds => _resolved.zoneNames;
+  List<String> get availableLocationNames => _resolved.zoneNames;
 }

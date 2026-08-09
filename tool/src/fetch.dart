@@ -39,6 +39,12 @@ File cachedGeoJsonFile(String release, {Directory? packageRoot}) {
   );
 }
 
+/// Identifiers of the release currently committed, for cheap release triage.
+///
+/// Written by `tool/generate_data.dart`, read by `tool/refresh.dart` before it
+/// spends 51 MB finding out whether the identifier set moved.
+File get committedNamesFile => File('tool/release/timezone-names.json');
+
 /// The URL of the release asset for [release].
 Uri releaseAssetUrl(String release) => Uri.https(
   'github.com',

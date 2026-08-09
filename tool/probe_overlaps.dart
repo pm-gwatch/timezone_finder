@@ -70,7 +70,7 @@ Future<void> _checkFixtures() async {
   final all = [...bootstrapGoldens, ...goldenPoints];
   var flagged = 0;
   for (final point in all) {
-    final zones = oracle.zonesContaining(point.latitude, point.longitude);
+    final zones = oracle.zonesContaining(point.longitude, point.latitude);
     if (zones.length > 1) {
       flagged++;
       stdout.writeln(
@@ -103,7 +103,7 @@ Future<void> _queryPoint(String spec) async {
     final parts = pair.split(',');
     final lat = double.parse(parts[0].trim());
     final lon = double.parse(parts[1].trim());
-    final zones = oracle.zonesContaining(lat, lon);
+    final zones = oracle.zonesContaining(lon, lat);
     stdout.writeln(
       '($lat, $lon) -> ${zones.length} zone(s): '
       '${zones.isEmpty ? 'none' : zones.join(', ')}',
@@ -206,7 +206,7 @@ _Coverage _coverage(ReferenceTimeZoneFinder oracle, List<Object?> regions) {
       for (var j = 0; j <= _gridSteps; j++) {
         final lon = b[0] + (b[2] - b[0]) * i / _gridSteps;
         final lat = b[1] + (b[3] - b[1]) * j / _gridSteps;
-        final hits = oracle.zonesContaining(lat, lon);
+        final hits = oracle.zonesContaining(lon, lat);
         total++;
         if (hits.isEmpty) {
           empty++;
@@ -237,7 +237,7 @@ _Hit? _searchRegions(ReferenceTimeZoneFinder oracle, List<Object?> regions) {
       for (var j = 0; j <= _gridSteps; j++) {
         final lon = west + (east - west) * i / _gridSteps;
         final lat = south + (north - south) * j / _gridSteps;
-        final zones = oracle.zonesContaining(lat, lon);
+        final zones = oracle.zonesContaining(lon, lat);
         if (zones.length >= 2) return _Hit(lat, lon, zones);
       }
     }

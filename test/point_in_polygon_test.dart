@@ -1,11 +1,4 @@
-// Tests for even-odd ray-cast containment.
-//
-// This function had no direct coverage until now: it was exercised only
-// through fixtures that pass, which says nothing about the cases near it.
-// The antimeridian bug was a reminder that a test can be exactly right about
-// its stated property and blind to the failure mode beside it.
-//
-// Needs no boundary data, so it always runs.
+// Unit tests for even-odd ray-cast containment. No boundary data required.
 
 import 'dart:typed_data';
 

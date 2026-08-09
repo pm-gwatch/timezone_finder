@@ -1,41 +1,17 @@
-// Overlap regression pins.
+// Overlap regression pins — NOT ground truth.
 //
-// ============================ THESE ARE NOT GROUND TRUTH ====================
+// Each coordinate sits in two zones; the answer is the documented tiebreak
+// (smallest planar area, then lexicographic id), not an external fact. These
+// pin determinism so a tiebreak/area/quantization change fails loudly.
+// Most regions are disputed; `selected` is not a sovereignty claim — see the
+// README.
 //
-// Every coordinate here is genuinely inside TWO time zones. Both polygons
-// really cover the point; timezone-boundary-builder documents and permits the
-// overlap. No external source can say which identifier is "correct", because
-// there is no fact of the matter — the answer is produced by the arbitrary
-// tiebreak in the overlap tiebreak (smallest polygon by planar area, then lexicographic
-// identifier).
+// If a test fails: do not update the expectation to match new output. Decide
+// deliberately. Cross-checking other libraries is meaningless — they use
+// different tiebreaks.
 //
-// These entries therefore pin DETERMINISM, not correctness. They exist so that
-// a change to the tiebreak, the area computation, or the quantization shows up
-// as a failing test rather than as a silent change in published answers.
-//
-// Most of these regions are disputed territories — Abyei, the West Bank,
-// Kashmir, the Aegean. `selected` records which identifier the rule happens to
-// return. It is not a claim about sovereignty, and this package makes no such
-// claim. See the README.
-//
-// ---------------------------------------------------------------------------
-// If one of these tests fails:
-//
-//   DO NOT update the expectation to match the new output. A change here means
-//   the tiebreak changed, which changes answers users depend on in disputed
-//   regions. Find out why it changed and decide deliberately.
-//
-// Cross-checking these against timezonefinder or tzf is meaningless: those
-// implementations have their own tiebreaks and will disagree by design. That
-// is precisely how Ürümqi was caught being mis-filed as ground truth.
-// ---------------------------------------------------------------------------
-//
-// Coverage: 21 of the 25 documented overlap pairs. The other four
-// (Asia/Ho_Chi_Minh–Asia/Manila, Asia/Ho_Chi_Minh–Asia/Shanghai,
-// Asia/Kolkata–Asia/Shanghai, Asia/Manila–Asia/Shanghai) do not overlap
-// anywhere in the 2026c land-only geometry at sampling densities up to
-// 200x200. They cannot be pinned because the situation they
-// describe does not arise in this dataset.
+// Covers 21 of 25 documented overlap pairs; the other four have no land
+// overlap in the 2026c geometry at dense sampling.
 library;
 
 /// A coordinate covered by two zones, and which one the tiebreak selects.

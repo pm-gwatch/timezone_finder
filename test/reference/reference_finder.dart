@@ -1,40 +1,12 @@
-/// The reference implementation — the correctness oracle.
+/// Correctness oracle: parse the GeoJSON, keep every polygon, test them all.
 ///
-/// This is deliberately the dumbest thing that can be correct: parse the
-/// GeoJSON, keep every polygon, test them all. No spatial index, no encoding,
-/// no size discipline. It is slow (a linear scan of 1,184 polygons per lookup)
-/// and needs ~170 MB of source data, and it **never ships** — it exists only
-/// in `test/`.
+/// No spatial index and no encoding — slow (~1,184 polygons per lookup), needs
+/// ~170 MB of source data, and never ships. It is the authority the real
+/// index is validated against; short enough to review line by line.
 ///
-/// Its job is to be the authority the real index is validated against. It is
-/// the only component whose correctness must be established by hand, which is
-/// why it is short enough to review line by line.
-///
-/// ## Validation order
-///
-/// This oracle must pass `bootstrapGoldens` before it is trusted for anything
-/// else. Those 66 pairs are the only ground truth in the package that does not
-/// derive from timezone-boundary-builder data. Once it passes them, this
-/// oracle — not the fixture file — becomes the authority for the wider golden
-/// set and for differential testing.
-///
-/// ## Known blind spot: quantization
-///
-/// This oracle quantizes coordinates with the same [quantize] the index uses.
-/// That is required — if the index compared quantized geometry and the oracle
-/// compared raw doubles, points within ~11 cm of a border would legitimately
-/// resolve differently, and the zero-disagreement gate could not
-/// be met.
-///
-/// The cost is that **this oracle cannot catch a bug in quantization itself**.
-/// A wrong scale, a wrong rounding mode, or a sign error on negative
-/// coordinates would corrupt both sides identically and the differential test
-/// would still pass. The bootstrap goldens cannot catch it either: all 66 are
-/// deep inland, so an 11 cm shift cannot move any of them across a border.
-///
-/// The round-trip test is therefore the *only* guard on
-/// quantization correctness, and it must exercise negative coordinates and
-/// values that land near a half-unit boundary.
+/// Trust it only after `bootstrapGoldens` passes. It quantizes with the same
+/// [quantize] as the index, so it cannot catch quantization bugs — that is
+/// what `quantization_test` is for (including negatives and half-unit edges).
 library;
 
 import 'dart:convert';
@@ -165,22 +137,25 @@ class ReferenceTimeZoneFinder {
   /// Unlike the real index, which sorts candidates and returns the first hit,
   /// this collects every containing polygon before choosing. Same answer, but
   /// hand-checkable, and it makes [zonesContaining] free.
-  String? findTimeZoneName(double latitude, double longitude) {
-    _validate(latitude, longitude);
-    final hits = _containing(latitude, longitude);
+  /// Argument order matches the public API: longitude first, then latitude.
+  String? findLocationName(double longitude, double latitude) {
+    _validate(longitude, latitude);
+    final hits = _containing(longitude, latitude);
     if (hits.isEmpty) return null;
     hits.sort(comparePolygons);
     return hits.first.zone;
   }
 
   /// Every distinct identifier whose polygons contain the point, ordered by
-  /// the same precedence [findTimeZoneName] applies.
+  /// the same precedence [findLocationName] applies.
   ///
   /// A diagnostic for probing the documented overlap regions. This is **not**
   /// the `findAll()` public API, which is deferred.
-  List<String> zonesContaining(double latitude, double longitude) {
-    _validate(latitude, longitude);
-    final hits = _containing(latitude, longitude)..sort(comparePolygons);
+  ///
+  /// Argument order matches the public API: longitude first, then latitude.
+  List<String> zonesContaining(double longitude, double latitude) {
+    _validate(longitude, latitude);
+    final hits = _containing(longitude, latitude)..sort(comparePolygons);
     final seen = <String>{};
     return <String>[
       for (final polygon in hits)
@@ -188,7 +163,7 @@ class ReferenceTimeZoneFinder {
     ];
   }
 
-  List<ReferencePolygon> _containing(double latitude, double longitude) {
+  List<ReferencePolygon> _containing(double longitude, double latitude) {
     // Query longitudes are normalised so the antimeridian is one seam; stored
     // vertices are not. See quantizeQueryLongitude.
     final x = quantizeQueryLongitude(longitude);
@@ -199,13 +174,7 @@ class ReferenceTimeZoneFinder {
     ];
   }
 
-  static void _validate(double latitude, double longitude) {
-    if (latitude.isNaN ||
-        !latitude.isFinite ||
-        latitude < -90 ||
-        latitude > 90) {
-      throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
-    }
+  static void _validate(double longitude, double latitude) {
     if (longitude.isNaN ||
         !longitude.isFinite ||
         longitude < -180 ||
@@ -215,6 +184,12 @@ class ReferenceTimeZoneFinder {
         'longitude',
         'must be in [-180, 180]',
       );
+    }
+    if (latitude.isNaN ||
+        !latitude.isFinite ||
+        latitude < -90 ||
+        latitude > 90) {
+      throw ArgumentError.value(latitude, 'latitude', 'must be in [-90, 90]');
     }
   }
 }

@@ -1,9 +1,11 @@
-/// Writes the packed index out as Dart source.
+/// Writes the packed index out as Dart source **and** (for the shipped tier)
+/// a raw `.bin` under `lib/data/`.
 ///
-/// A pure Dart package cannot ship binary assets: `dart:io` is unavailable on
-/// some targets, AOT binaries cannot read their own package directory, and
-/// Flutter's asset system does not exist for CLI consumers. So the
-/// index travels as base64 inside `const` strings.
+/// VM / native consumers still load base64 chunk constants: a pure Dart
+/// package cannot rely on Flutter's asset system, and AOT binaries cannot
+/// read their own package directory at runtime. Web and Flutter web load the
+/// `.bin` via [installBoundaries] instead, so those targets never link the
+/// chunks.
 ///
 /// The chunking is a **compiler** concern, not a memory one. A single ~37 MB
 /// string literal is hostile to the analyzer and to AOT; several smaller ones
@@ -154,4 +156,49 @@ EmitResult emitDartData({
     sourceBytes: sourceBytes,
     base64Bytes: encoded.length,
   );
+}
+
+/// Writes [container] as a raw `.bin` for web / Flutter asset loading.
+///
+/// Byte-identical to what the base64 chunks decode to — the web path and the
+/// VM path must answer from the same packed index.
+void emitBinaryData({required File file, required Uint8List container}) {
+  file.parent.createSync(recursive: true);
+  file.writeAsBytesSync(container);
+}
+
+/// Writes `lib/src/boundaries_bin.dart` naming the shipped `.bin` asset.
+void emitBoundariesBinMeta({
+  required File file,
+  required String dataVersion,
+  required int containerLength,
+}) {
+  final name = 'boundaries_$dataVersion.bin';
+  final source = StringBuffer()
+    ..writeln(_dataLicenceHeader)
+    ..writeln(
+      '/// Filename and default URL for the packed web index under '
+      '`lib/data/`.',
+    )
+    ..writeln('///')
+    ..writeln(
+      '/// Kept separate from the base64 chunks so web builds can name the '
+      'asset',
+    )
+    ..writeln('/// without linking megabytes of Dart source.')
+    ..writeln('library;')
+    ..writeln()
+    ..writeln(
+      '/// Packed index filename under `package:timezone_finder/data/`.',
+    )
+    ..writeln("const String boundariesBinName = '$name';")
+    ..writeln()
+    ..writeln('/// Size of [boundariesBinName], in bytes.')
+    ..writeln('const int boundariesBinLength = $containerLength;')
+    ..writeln()
+    ..writeln('/// Default URL for [initializeBoundaries] in browsers.')
+    ..writeln('const String boundariesDefaultUrl =')
+    ..writeln("    'packages/timezone_finder/data/\$boundariesBinName';");
+  file.parent.createSync(recursive: true);
+  file.writeAsStringSync(source.toString());
 }

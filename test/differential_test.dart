@@ -47,7 +47,7 @@ void main() {
         final runtime = finderOverIndex(unsimplified.loadContainer);
         report = runDifferential(
           oracle: oracle,
-          subject: runtime.findTimeZoneName,
+          subject: runtime.findLocationName,
           points: _points,
           seed: 7,
           overlapSeeds: <({double lat, double lon})>[

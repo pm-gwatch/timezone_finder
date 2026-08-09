@@ -1,0 +1,16 @@
+name: timezone_finder_server_example
+description: Local Shelf server — Zurich Airport departure board using timezone_finder and timezone packages.
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+  timezone: ">=0.11.1 <1.0.0"
+  timezone_finder:
+    path: ../..
+
+dev_dependencies:
+  lints: ^6.1.0

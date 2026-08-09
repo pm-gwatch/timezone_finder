@@ -87,9 +87,9 @@ void main() {
           ...goldenPoints,
         ]) {
           final viaGrid = gridFind(point.latitude, point.longitude);
-          final direct = oracle.findTimeZoneName(
-            point.latitude,
+          final direct = oracle.findLocationName(
             point.longitude,
+            point.latitude,
           );
           if (viaGrid != direct) {
             failures.add(
@@ -121,7 +121,7 @@ void main() {
           final lon = (random.nextInt(360000001) - 180000000) / 1000000;
           checked++;
 
-          final direct = oracle.findTimeZoneName(lat, lon);
+          final direct = oracle.findLocationName(lon, lat);
           if (direct != null) land++;
           final viaGrid = gridFind(lat, lon);
           if (viaGrid != direct) {
@@ -180,7 +180,7 @@ void main() {
           for (final lat in <double>[-90, -89, 89, 90]) {
             expect(
               gridFind(lat, lon),
-              oracle.findTimeZoneName(lat, lon),
+              oracle.findLocationName(lon, lat),
               reason: 'grid and oracle disagree at ($lat, $lon)',
             );
           }

@@ -1,8 +1,8 @@
 name: timezone_finder
 description: >-
-  Offline IANA time zone lookup for any coordinate on land, returning a
-  package:timezone Location — so you can build correct local dates and times
-  for many places at once.
+  Makes package:timezone easier to use — turn a place on Earth into the
+  Location it sits in, convert a TZDateTime from one Location to another, and
+  read English metazone labels.
 version: 0.1.0
 repository: https://github.com/pm-gwatch/timezone_finder
 issue_tracker: https://github.com/pm-gwatch/timezone_finder/issues
@@ -12,28 +12,19 @@ topics:
   - geospatial
   - iana
 
-# Across megabytes of base64, byte sequences that look like credentials occur
-# by chance; pub's scanner flagged three. Scoped to the generated data only —
-# every file there is built by tool/refresh.dart from a public release.
+# Generated data can trip pub's secret scanner; not real credentials.
 false_secrets:
   - /lib/src/data/**
 
 environment:
-  # Required by package:timezone; the lookup itself needs only Dart 3.0.
   sdk: ^3.10.0
 
-# Only the offset engine. No tzdata variant is depended on, so your
-# application picks one and initializes it — see the README.
 dependencies:
-  # Ranged, not `^0.11.1`: below 1.0.0 the caret means `<0.12.0`, which would
-  # block any app already on a newer 0.x. The surface used here has been
-  # stable since 0.9.4.
   timezone: ">=0.11.1 <1.0.0"
+  web: ^1.1.1
 
 dev_dependencies:
   lints: ^6.1.0
-  # Newest release that still resolves on the SDK floor above.
   test: ^1.31.1
-  # tool/ only — never imported from lib/.
   archive: ^4.0.0
   http: ^1.6.0

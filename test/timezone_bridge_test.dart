@@ -1,4 +1,5 @@
-// The package:timezone bridge: findLocation, toLocation and inLocation(s).
+// The package:timezone bridge: findLocation, toLocation, convertTo,
+// utcOffsetDifference.
 //
 // Initialized from `latest_all` here, which is the variant the package
 // documents. The consequences of choosing `latest` instead are covered in
@@ -9,6 +10,7 @@
 import 'package:test/test.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart';
+import 'package:timezone_finder/src/finder.dart' show availableLocationNames;
 import 'package:timezone_finder/timezone_finder.dart';
 
 /// A minimal RFC 7946 Feature. `properties` is omitted deliberately: the
@@ -43,33 +45,35 @@ void main() {
   late final Location paris;
   late final Location newYork;
   late final Location tokyo;
+  late final Location kathmandu;
+  late final Location niue;
+  late final Location kiritimati;
 
   setUpAll(() {
     tzdata.initializeTimeZones();
     paris = getLocation('Europe/Paris');
     newYork = getLocation('America/New_York');
     tokyo = getLocation('Asia/Tokyo');
+    kathmandu = getLocation('Asia/Kathmandu');
+    niue = getLocation('Pacific/Niue');
+    kiritimati = getLocation('Pacific/Kiritimati');
   });
 
   group('findLocation', () {
-    test(
-      'returns the Location for the identifier findTimeZoneName returns',
-      () {
-        final paris = findLocation(48.8566, 2.3522)!;
-        expect(paris.name, 'Europe/Paris');
-        expect(paris, same(getLocation('Europe/Paris')));
-      },
-    );
-
-    test('returns null exactly where findTimeZoneName returns null', () {
-      expect(findTimeZoneName(0, -140), isNull);
-      expect(findLocation(0, -140), isNull);
+    test('returns a Location whose name is the IANA identifier', () {
+      final paris = findLocation(2.3522, 48.8566)!;
+      expect(paris.name, 'Europe/Paris');
+      expect(paris, same(getLocation('Europe/Paris')));
     });
 
-    test('rejects the same coordinates findTimeZoneName rejects', () {
-      expect(() => findLocation(91, 0), throwsArgumentError);
-      expect(() => findLocation(0, 181), throwsArgumentError);
-      expect(() => findLocation(double.nan, 0), throwsArgumentError);
+    test('returns null for open ocean', () {
+      expect(findLocation(-140, 0), isNull);
+    });
+
+    test('rejects invalid coordinates', () {
+      expect(() => findLocation(0, 91), throwsArgumentError);
+      expect(() => findLocation(181, 0), throwsArgumentError);
+      expect(() => findLocation(0, double.nan), throwsArgumentError);
     });
 
     test('resolves every identifier in the dataset', () {
@@ -78,7 +82,7 @@ void main() {
       // tzbb identifier can arrive before the other side has it, and this is
       // where that should be reported — not in a user's application.
       final missing = <String>[];
-      for (final name in availableTimeZoneIds) {
+      for (final name in availableLocationNames) {
         try {
           getLocation(name);
         } on LocationNotFoundException {
@@ -247,15 +251,15 @@ void main() {
     });
   });
 
-  group('TZDateTime.inLocation', () {
+  group('TZDateTime.convertTo', () {
     test('keeps the instant and changes the wall clock', () {
       final takeOff = TZDateTime(paris, 2026, 8, 23, 10, 15);
-      final there = takeOff.inLocation(newYork);
+      final there = takeOff.convertTo(newYork);
 
       expect(
         there.millisecondsSinceEpoch,
         takeOff.millisecondsSinceEpoch,
-        reason: 'inLocation must not move the moment',
+        reason: 'convertTo must not move the moment',
       );
       expect(there.location, same(newYork));
       expect(there.hour, 4); // 10:15 CEST is 04:15 EDT
@@ -264,68 +268,80 @@ void main() {
 
     test('crosses the date line where the zones require it', () {
       final evening = TZDateTime(paris, 2026, 8, 23, 23, 30);
-      expect(evening.inLocation(tokyo).day, 24);
-      expect(evening.inLocation(newYork).day, 23);
+      expect(evening.convertTo(tokyo).day, 24);
+      expect(evening.convertTo(newYork).day, 23);
     });
 
     test('is a no-op onto its own location', () {
       final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(start.inLocation(paris), start);
+      expect(start.convertTo(paris), start);
     });
 
     test('tracks daylight saving rather than a fixed offset', () {
       // The reason a Location is not an offset: the same pair of zones is
       // 6 hours apart in August and 6 hours apart in January only because
       // both happen to shift. New York alone moves by an hour.
-      final summer = TZDateTime(paris, 2026, 8, 23, 12).inLocation(newYork);
-      final winter = TZDateTime(paris, 2026, 1, 23, 12).inLocation(newYork);
+      final summer = TZDateTime(paris, 2026, 8, 23, 12).convertTo(newYork);
+      final winter = TZDateTime(paris, 2026, 1, 23, 12).convertTo(newYork);
       expect(summer.timeZoneOffset, const Duration(hours: -4));
       expect(winter.timeZoneOffset, const Duration(hours: -5));
     });
   });
 
-  group('TZDateTime.inLocations', () {
-    test('returns one entry per location, in order', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      final elsewhere = start.inLocations(<Location>[newYork, tokyo]);
-
-      expect(elsewhere, hasLength(2));
-      expect(elsewhere[0].location, same(newYork));
-      expect(elsewhere[1].location, same(tokyo));
+  group('TZDateTime.utcOffsetDifference', () {
+    test('positive when the other location is ahead', () {
+      final call = TZDateTime(paris, 2026, 8, 3, 15);
+      expect(call.utcOffsetDifference(tokyo), const Duration(hours: 7));
     });
 
-    test('every entry is the same instant as the receiver', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      for (final other in start.inLocations(<Location>[
-        newYork,
-        tokyo,
+    test('preserves sub-hour offsets', () {
+      final call = TZDateTime(paris, 2026, 8, 1, 12);
+      expect(
+        call.utcOffsetDifference(kathmandu),
+        const Duration(hours: 3, minutes: 45),
+      );
+    });
+
+    test('preserves gaps larger than a day', () {
+      final call = TZDateTime(niue, 2026, 8, 1, 12);
+      expect(call.utcOffsetDifference(kiritimati), const Duration(hours: 25));
+    });
+
+    test('changes exactly at a DST transition', () {
+      final before = TZDateTime.from(
+        DateTime.utc(2026, 3, 29, 0, 59, 59, 999),
         paris,
-      ])) {
-        expect(other.millisecondsSinceEpoch, start.millisecondsSinceEpoch);
-      }
+      );
+      final after = TZDateTime.from(DateTime.utc(2026, 3, 29, 1), paris);
+      expect(before.utcOffsetDifference(tokyo), const Duration(hours: 8));
+      expect(after.utcOffsetDifference(tokyo), const Duration(hours: 7));
     });
 
-    test('an empty list yields an empty list', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(start.inLocations(const <Location>[]), isEmpty);
+    test('is zero for the same location', () {
+      final call = TZDateTime(paris, 2026, 8, 3, 15);
+      expect(call.utcOffsetDifference(paris), Duration.zero);
     });
 
-    test('does not include the receiver location unless asked', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      final elsewhere = start.inLocations(<Location>[newYork]);
-      expect(elsewhere.map((d) => d.location.name), <String>[
-        'America/New_York',
-      ]);
-    });
-
-    test('agrees with inLocation applied one at a time', () {
-      final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(start.inLocations(<Location>[newYork, tokyo]), <TZDateTime>[
-        start.inLocation(newYork),
-        start.inLocation(tokyo),
-      ]);
+    test('is the negation of the reverse pair', () {
+      final call = TZDateTime(paris, 2026, 8, 3, 15);
+      expect(
+        call.utcOffsetDifference(newYork),
+        -call.convertTo(newYork).utcOffsetDifference(paris),
+      );
+      // Both sides must read the same instant. Noon in Niue and noon in
+      // Kiritimati are 25 hours apart, so comparing those two would test the
+      // stability of the pair rather than the sign convention.
+      final noon = TZDateTime(niue, 2026, 8, 1, 12);
+      expect(
+        noon.utcOffsetDifference(kiritimati),
+        -noon.convertTo(kiritimati).utcOffsetDifference(niue),
+      );
     });
   });
+
+  // There is no Location.utcOffsetDifference: a clock gap is a fact about an
+  // instant, and TZDateTime is the receiver that carries one. Holding two
+  // places and no moment, ask TZDateTime.now(a).utcOffsetDifference(b).
 
   test('a geocoder answer reaches a civil time end to end', () {
     // The path the package exists to make short: two geocoded places, one
@@ -338,7 +354,7 @@ void main() {
 
     expect(charlesDeGaulle.name, 'Europe/Paris');
     expect(jfk.name, 'America/New_York');
-    expect(landing.inLocation(jfk).hour, 12);
-    expect(landing.inLocation(jfk).day, 23);
+    expect(landing.convertTo(jfk).hour, 12);
+    expect(landing.convertTo(jfk).day, 23);
   });
 }

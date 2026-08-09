@@ -12,22 +12,43 @@ library;
 
 import 'dart:typed_data';
 
+import 'index_format_exception.dart';
+
 /// Largest coordinate delta the format admits: the full width of the
 /// quantized coordinate space, 360°.
 ///
-/// Zigzag doubles it, so encoded values stay under 7.2e8 — far below the sign
-/// bit, which is what lets the encoder use a plain arithmetic shift. Anything
-/// larger is not a coordinate and the encoder rejects it.
+/// Zigzag doubles it, so encoded values stay under 7.2e8 — comfortably below
+/// the **32-bit** sign bit at 2³¹. That is the bound [zigzagEncode] depends on
+/// to agree between the VM and dart2js. Anything larger is not a coordinate
+/// and the encoder rejects it.
 const int maxCoordinateDelta = 360000000;
 
 /// Maps a signed value onto the non-negative integers, small magnitudes first.
 ///
 /// Without this, a delta of -1 would set every high bit and encode as ten
-/// bytes. See [maxCoordinateDelta] for why the shift is safe.
+/// bytes.
+///
+/// **Unused on web at runtime** — packing runs only in the VM index builder;
+/// lookup uses [zigzagDecode] alone. It is still correct under dart2js, and
+/// the Chrome `varint_test` run pins that, but not for the obvious reason:
+/// dart2js evaluates `value >> 63` to 4294967295 rather than −1, and
+/// `value << 1` to an unsigned 32-bit pattern. `^` combines the two patterns
+/// and lands on the value the VM computes, which holds only while the zigzag
+/// result stays below 2³¹ — guaranteed by [maxCoordinateDelta]. Do not rewrite
+/// the XOR as arithmetic: `(value << 1) + (value >> 63)` is right on the VM
+/// and wrong on dart2js. (dart2wasm has true 64-bit ints; this subtlety is
+/// dart2js-specific.)
 int zigzagEncode(int value) => (value << 1) ^ (value >> 63);
 
 /// Inverse of [zigzagEncode].
-int zigzagDecode(int value) => (value >> 1) ^ -(value & 1);
+///
+/// Written without `^(−1)` so dart2js cannot turn a negative delta into a
+/// large unsigned value (e.g. −19 becoming 4294967277), which blew up polygon
+/// ids when reading the grid pool on Chrome.
+int zigzagDecode(int value) {
+  final half = value >> 1;
+  return (value & 1) == 0 ? half : -half - 1;
+}
 
 /// Appends [ring] to [out] as `count, dx0, dy0, dx1, dy1, …`.
 ///
@@ -57,6 +78,10 @@ void writeRing(BytesBuilder out, Int32List ring) {
 ///
 /// Returns the decoded ring and the offset just past it, so rings stored back
 /// to back can be read in sequence.
+///
+/// Throws [IndexFormatException] if the bytes do not decode — the same type
+/// the container reader raises, because this runs during a lookup and a caller
+/// catching bad data should not have to know which section it came from.
 ({Int32List ring, int next}) readRing(Uint8List bytes, int offset) {
   var position = offset;
   final count = _readVarint(bytes, position);
@@ -121,14 +146,16 @@ void _writeVarint(BytesBuilder out, int value) {
   var position = offset;
   while (true) {
     if (position >= bytes.length) {
-      throw StateError('varint runs past the end of the buffer at $offset');
+      throw IndexFormatException(
+        'varint runs past the end of the buffer at $offset',
+      );
     }
     // The encoder never emits more than nine continuation bytes, so a tenth
     // means the data is corrupt. Checked because the index ships as source
     // that could in principle be edited, and a silently wrong coordinate is
     // worse than a thrown error.
     if (shift > 63) {
-      throw StateError('varint longer than 64 bits at $offset');
+      throw IndexFormatException('varint longer than 64 bits at $offset');
     }
     final byte = bytes[position++];
     value |= (byte & 0x7f) << shift;

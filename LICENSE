@@ -26,6 +26,6 @@ NOTE ON BUNDLED DATA
 
 This MIT licence covers the source code of this package only.
 
-The generated time zone boundary index shipped in `lib/data/` is a derived
-database produced from OpenStreetMap data and is licensed separately under the
-Open Data Commons Open Database License (ODbL) v1.0. See LICENSE-DATA.
+The bundled time zone boundary index is licensed separately — see LICENSE-DATA.
+
+English metazone display strings are licensed separately — see LICENSE-CLDR.
