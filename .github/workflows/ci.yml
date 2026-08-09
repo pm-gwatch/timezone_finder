@@ -22,6 +22,9 @@ jobs:
         with:
           sdk: ${{ matrix.sdk }}
       - run: dart pub get
+      # The example server is its own package; without its own pub get the
+      # analyzer reports its shelf_router import as unresolvable.
+      - run: dart pub get --directory example/server
       - run: dart analyze --fatal-infos
       - run: dart format --output=none --set-exit-if-changed .
       # Tests needing the 170 MB source GeoJSON skip themselves when it is
@@ -44,6 +47,13 @@ jobs:
         id: setup-chrome
         with:
           install-dependencies: true
+      # Ubuntu 24.04 runners restrict unprivileged user namespaces via
+      # AppArmor, which kills Chrome's sandboxed zygote on startup
+      # ("No usable sandbox!", SIGABRT). Re-allow them; preferable to
+      # passing --no-sandbox through dart_test.yaml, which would also
+      # apply locally.
+      - name: Allow Chrome's sandbox on Ubuntu 24.04
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: dart pub get
       - name: Chrome integer / bit suites
         run: dart test -p chrome test/varint_test.dart test/quantization_test.dart
