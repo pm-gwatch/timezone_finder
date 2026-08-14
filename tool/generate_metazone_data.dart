@@ -168,9 +168,7 @@ Future<void> main(List<String> args) async {
     )
     ..writeln('// source. See LICENSE-CLDR at the package root.')
     ..writeln('//')
-    ..writeln(
-      '// Metazones with no long daylight name: ${noDaylight.length}.',
-    )
+    ..writeln('// Metazones with no long daylight name: ${noDaylight.length}.')
     ..writeln(
       '// Metazone ids in history but not localized in en-001: '
       '${unlocalized.length}.',

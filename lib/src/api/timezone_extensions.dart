@@ -35,10 +35,7 @@ extension GeoJsonLocation on String {
       );
     }
     if (decoded is! Map<String, dynamic>) {
-      throw FormatException(
-        'Expected a GeoJSON Feature or Point object',
-        this,
-      );
+      throw FormatException('Expected a GeoJSON Feature or Point object', this);
     }
     final Map<String, dynamic> geometry;
     switch (decoded['type']) {
