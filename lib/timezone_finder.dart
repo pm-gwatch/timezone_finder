@@ -1,6 +1,6 @@
 /// Makes `package:timezone` easier to use: turn a place on Earth into the
 /// [Location] it sits in, convert a [TZDateTime] from one [Location] to
-/// another, and read English metazone labels.
+/// another, and read English time zone labels.
 ///
 /// ```dart
 /// findLocation(2.3522, 48.8566);      // Europe/Paris Location — longitude, latitude
@@ -8,32 +8,26 @@
 /// findLocation(-140.0, 0.0);          // null — not inside any land zone
 /// ```
 ///
-/// Boundaries are simplified to roughly 110 m — far finer than a time zone,
-/// and small enough that the whole package is a few megabytes. On the VM,
-/// native and Flutter mobile or desktop they are embedded in this library, so
-/// lookups work offline with no network and no setup. **On web they are not**:
-/// import `package:timezone_finder/browser.dart` and install the packed index
-/// once before any lookup, or every call throws a [StateError] saying so.
+/// Borders are simplified to ~110 m and embedded on VM / native / Flutter
+/// mobile and desktop. **On web they are not:** import
+/// `package:timezone_finder/browser.dart` only and install the `.bin` before
+/// any lookup.
 ///
-/// [findLocation] and [GeoJsonLocation.toLocation] return a `package:timezone`
-/// `Location` (store `Location.name` when you need the IANA identifier). Both
-/// need your application to have initialized the **`latest_all`** tzdata first —
-/// `initializeTimeZones()` from `package:timezone/data/latest_all.dart` on the
-/// VM, or `await initializeTimeZone('packages/timezone/data/latest_all.tzf')`
-/// from `package:timezone/browser.dart` on web, whose default path would
-/// otherwise load a variant missing 106 of this package's 419 identifiers.
-///
-/// To show one instant in several places, resolve each place to a [Location]
-/// — with [findLocation] from coordinates, or [GeoJsonLocation.toLocation]
-/// from a geocoder's GeoJSON — then use [TZDateTimeAcrossLocations.convertTo].
-///
-/// The index is decoded lazily and **once per isolate**. On a server, call
-/// [ensurePreloaded] at startup so no request pays for it.
+/// [findLocation] and [GeoJsonLocation.findLocation] return a `Location`
+/// (store `Location.name`). Initialize **`latest_all`** tzdata first —
+/// `initializeTimeZones()` on the VM, or
+/// `initializeTimeZone('packages/timezone/data/latest_all.tzf')` on web.
+/// Convert across places with [TZDateTimeAcrossLocations.toLocation].
+/// On a server, call [ensurePreloaded] at isolate startup so the first
+/// request is not the first decode.
 library;
 
-export 'src/finder.dart'
-    show ensurePreloaded, findLocation, ianaDatabaseVersion;
-export 'src/metazone.dart'
-    show MetazoneLocation, MetazoneTZDateTime, cldrVersion;
-export 'src/timezone_bridge.dart'
-    show TZDateTimeAcrossLocations, GeoJsonLocation;
+export 'src/api/location_finder.dart'
+    show ensurePreloaded, findLocation, boundaryDataVersion;
+export 'src/api/timezone_extensions.dart'
+    show
+        GeoJsonLocation,
+        LocationZoneNames,
+        TZDateTimeAcrossLocations,
+        TZDateTimeZoneNames,
+        cldrVersion;

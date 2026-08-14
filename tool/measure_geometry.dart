@@ -14,7 +14,7 @@ library;
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../test/reference/reference_finder.dart';
+import '../test/reference/reference_location_finder.dart';
 import 'src/fetch.dart';
 import 'src/geometry.dart';
 
@@ -27,7 +27,7 @@ Future<void> main() async {
   }
 
   stdout.writeln('Loading reference oracle …');
-  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  final oracle = await ReferenceLocationFinder.load(cached);
 
   final rings = <Int32List>[];
   for (final polygon in oracle.polygons) {

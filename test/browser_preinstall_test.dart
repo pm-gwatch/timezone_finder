@@ -1,25 +1,20 @@
-/// Chrome behaviour *before* boundaries are installed.
-///
-///     dart test -p chrome test/browser_preinstall_test.dart
-///
-/// Deliberately its own suite: `browser_parity_test` installs in `setUpAll`,
-/// so the uninstalled state it leaves behind is unobservable there. The shared
-/// index is per-isolate, and each test file is its own isolate, so nothing
-/// here may install — the first install would make every later test vacuous.
+/// Chrome before install. Own suite: browser_parity_test installs in
+/// setUpAll. Shared index is per-isolate — nothing here may install.
 @TestOn('chrome')
 library;
 
 import 'package:test/test.dart';
 import 'package:timezone_finder/browser.dart';
-import 'package:timezone_finder/src/finder.dart' show findLocationName;
+import 'package:timezone_finder/src/api/location_finder.dart'
+    show LocationFinder;
 
 void main() {
   test('a lookup before install throws, naming the fix', () {
-    // embedded_web.dart throws this: on web the base64 chunks are not linked,
+    // load_container_web.dart throws this: on web the base64 chunks are not linked,
     // so there is nothing to fall back to. The message is the only thing
     // standing between a developer and a blank page.
     expect(
-      () => findLocationName(2.3522, 48.8566),
+      () => LocationFinder().findLocationName(2.3522, 48.8566),
       throwsA(
         isA<StateError>().having(
           (e) => e.message,
@@ -37,7 +32,7 @@ void main() {
     expect(ensurePreloaded(), throwsA(isA<StateError>()));
   });
 
-  test('ianaDatabaseVersion before install throws rather than guessing', () {
-    expect(() => ianaDatabaseVersion, throwsA(isA<StateError>()));
+  test('boundaryDataVersion before install throws rather than guessing', () {
+    expect(() => boundaryDataVersion, throwsA(isA<StateError>()));
   });
 }

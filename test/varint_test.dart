@@ -1,14 +1,11 @@
-// Tests for the packed coordinate format.
-//
-// Needs no boundary data, so it always runs. The round-trip over every
-// vertex in the real dataset lives in encoding_test.dart, which does need
-// the data.
+// Packed coordinate format. No boundary data; full-dataset round-trip is
+// encoding_test.dart.
 
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/index_format_exception.dart';
-import 'package:timezone_finder/src/varint.dart';
+import 'package:timezone_finder/src/exceptions.dart';
+import 'package:timezone_finder/src/index/varint.dart';
 
 Int32List ring(List<List<int>> points) {
   final out = Int32List(points.length * 2);

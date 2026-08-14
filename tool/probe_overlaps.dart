@@ -24,7 +24,7 @@ import 'package:http/http.dart' as http;
 
 import '../test/fixtures/bootstrap_goldens.dart';
 import '../test/fixtures/golden_points.dart';
-import '../test/reference/reference_finder.dart';
+import '../test/reference/reference_location_finder.dart';
 import 'src/fetch.dart';
 
 const _overlapsUrl =
@@ -66,7 +66,7 @@ Future<void> _checkFixtures() async {
     exitCode = 1;
     return;
   }
-  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  final oracle = await ReferenceLocationFinder.load(cached);
   final all = [...bootstrapGoldens, ...goldenPoints];
   var flagged = 0;
   for (final point in all) {
@@ -98,7 +98,7 @@ Future<void> _queryPoint(String spec) async {
     exitCode = 1;
     return;
   }
-  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  final oracle = await ReferenceLocationFinder.load(cached);
   for (final pair in spec.split(';')) {
     final parts = pair.split(',');
     final lat = double.parse(parts[0].trim());
@@ -120,7 +120,7 @@ Future<void> _run(String? only) async {
   }
 
   stdout.writeln('Loading reference oracle …');
-  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  final oracle = await ReferenceLocationFinder.load(cached);
 
   var vertices = 0;
   var rings = 0;
@@ -197,7 +197,7 @@ class _Coverage {
 }
 
 /// How much of a documented region has any land geometry at all.
-_Coverage _coverage(ReferenceTimeZoneFinder oracle, List<Object?> regions) {
+_Coverage _coverage(ReferenceLocationFinder oracle, List<Object?> regions) {
   var total = 0, empty = 0, single = 0;
   final zones = <String>{};
   for (final region in regions) {
@@ -225,7 +225,7 @@ List<double> _bounds(Object? region) =>
         .map((v) => (v! as num).toDouble())
         .toList();
 
-_Hit? _searchRegions(ReferenceTimeZoneFinder oracle, List<Object?> regions) {
+_Hit? _searchRegions(ReferenceLocationFinder oracle, List<Object?> regions) {
   for (final region in regions) {
     // [west, south, east, north]
     final bounds = _bounds(region);

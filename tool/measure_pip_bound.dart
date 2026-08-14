@@ -6,25 +6,26 @@
 ///     dart run tool/measure_pip_bound.dart
 library;
 
-import 'package:timezone_finder/src/data/boundaries.dart' as bundled;
-import 'package:timezone_finder/src/index.dart';
+import 'package:timezone_finder/src/generated/boundaries.dart' as bundled;
+import 'package:timezone_finder/src/index/boundary_index.dart';
+
+import 'src/build_index.dart';
 
 void main() {
   final bytes = bundled.loadContainer();
-  final index = TimeZoneIndex.fromBytes(bytes);
-  final maxBound = index.maxPipSideBound();
+  final index = BoundaryIndex.fromBytes(bytes);
+  final maxBound = maxPipSideBound(index.decodeAllRings);
 
-  const limit = 1 << 53;
   print('Packed container: ${bytes.length} bytes');
   print('dataVersion: ${index.dataVersion}');
   print('polygonCount: ${index.polygonCount}');
   print('max sound |side| bound: $maxBound');
-  print('2^53: $limit');
-  print('headroom: ${(limit / maxBound).toStringAsFixed(3)}x');
+  print('2^53: $pipDart2jsLimit');
+  print('headroom: ${(pipDart2jsLimit / maxBound).toStringAsFixed(3)}x');
 
-  if (maxBound >= limit) {
+  if (maxBound >= pipDart2jsLimit) {
     throw StateError(
-      'bundled PIP bound $maxBound is not dart2js-safe (limit $limit)',
+      'bundled PIP bound $maxBound is not dart2js-safe (limit $pipDart2jsLimit)',
     );
   }
   print('OK — bundled rings are dart2js-safe under the sound bound.');

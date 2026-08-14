@@ -1,18 +1,10 @@
-/// The packed coordinate format: delta encoding with zigzag varints.
-///
-/// Rings are stored as deltas between consecutive vertices rather than as
-/// absolute coordinates. Neighbouring vertices on a coastline are close
-/// together, so the deltas are small, and a variable-length encoding spends
-/// one or two bytes on them instead of eight.
-///
-/// Reading runs at lookup time; writing runs only in the index builder. Both
-/// live here because a wire format is one artifact — splitting the halves
-/// across directories would make it impossible to review as a unit.
+/// Packed coordinates: delta + zigzag varints. Lookup reads; the builder
+/// writes. One artifact — do not split the halves.
 library;
 
 import 'dart:typed_data';
 
-import 'index_format_exception.dart';
+import '../exceptions.dart';
 
 /// Largest coordinate delta the format admits: the full width of the
 /// quantized coordinate space, 360°.
@@ -23,21 +15,11 @@ import 'index_format_exception.dart';
 /// and the encoder rejects it.
 const int maxCoordinateDelta = 360000000;
 
-/// Maps a signed value onto the non-negative integers, small magnitudes first.
-///
-/// Without this, a delta of -1 would set every high bit and encode as ten
-/// bytes.
-///
-/// **Unused on web at runtime** — packing runs only in the VM index builder;
-/// lookup uses [zigzagDecode] alone. It is still correct under dart2js, and
-/// the Chrome `varint_test` run pins that, but not for the obvious reason:
-/// dart2js evaluates `value >> 63` to 4294967295 rather than −1, and
-/// `value << 1` to an unsigned 32-bit pattern. `^` combines the two patterns
-/// and lands on the value the VM computes, which holds only while the zigzag
-/// result stays below 2³¹ — guaranteed by [maxCoordinateDelta]. Do not rewrite
-/// the XOR as arithmetic: `(value << 1) + (value >> 63)` is right on the VM
-/// and wrong on dart2js. (dart2wasm has true 64-bit ints; this subtlety is
-/// dart2js-specific.)
+/// Maps signed deltas to small non-negative ints (−1 would otherwise be 10
+/// bytes). Unused on the web lookup path. dart2js: `value >> 63` is
+/// 4294967295, not −1; the XOR still matches the VM while the result stays
+/// below 2³¹ ([maxCoordinateDelta]). Do not rewrite as
+/// `(value << 1) + (value >> 63)` — VM-right, dart2js-wrong.
 int zigzagEncode(int value) => (value << 1) ^ (value >> 63);
 
 /// Inverse of [zigzagEncode].
@@ -52,10 +34,8 @@ int zigzagDecode(int value) {
 
 /// Appends [ring] to [out] as `count, dx0, dy0, dx1, dy1, …`.
 ///
-/// [ring] is interleaved `[x0, y0, x1, y1, …]` in quantized units. The vertex
-/// count is written first so a ring can be decoded from its start offset
-/// alone, without consulting a length table — which is what per-chunk lazy
-/// decoding needs.
+/// [ring] is interleaved `[x0, y0, x1, y1, …]` in quantized units. Vertex
+/// count first so a ring can be decoded from its start offset alone.
 ///
 /// Throws [ArgumentError] if a delta exceeds [maxCoordinateDelta], which would
 /// mean the input is not a quantized coordinate.
@@ -150,10 +130,8 @@ void _writeVarint(BytesBuilder out, int value) {
         'varint runs past the end of the buffer at $offset',
       );
     }
-    // The encoder never emits more than nine continuation bytes, so a tenth
-    // means the data is corrupt. Checked because the index ships as source
-    // that could in principle be edited, and a silently wrong coordinate is
-    // worse than a thrown error.
+    // A tenth continuation byte means corrupt data; fail instead of inventing
+    // a coordinate.
     if (shift > 63) {
       throw IndexFormatException('varint longer than 64 bits at $offset');
     }

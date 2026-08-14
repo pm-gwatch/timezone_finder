@@ -1,9 +1,9 @@
-// Unit tests for even-odd ray-cast containment. No boundary data required.
+// Even-odd ray-cast; no boundary data.
 
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/point_in_polygon.dart';
+import 'package:timezone_finder/src/index/point_in_polygon.dart';
 
 /// A ring, as interleaved quantized `[x, y]` pairs.
 Int32List ring(List<List<int>> points) {

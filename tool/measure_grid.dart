@@ -12,7 +12,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import '../test/reference/reference_finder.dart';
+import '../test/reference/reference_location_finder.dart';
 import 'src/fetch.dart';
 import 'src/grid.dart';
 
@@ -28,7 +28,7 @@ Future<void> main() async {
   }
 
   stdout.writeln('Loading reference oracle …');
-  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  final oracle = await ReferenceLocationFinder.load(cached);
   final boxes = <PolygonBox>[
     for (var i = 0; i < oracle.polygons.length; i++)
       (
@@ -126,7 +126,7 @@ void _checkNoBoxWrapsTheAntimeridian(List<PolygonBox> boxes) {
 }
 
 ({double mean, int worst}) _averageCandidatesOverLand(
-  ReferenceTimeZoneFinder oracle,
+  ReferenceLocationFinder oracle,
   BuiltGrid grid,
 ) {
   // Sampling uniformly over the globe would be dominated by empty ocean cells

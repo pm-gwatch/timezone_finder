@@ -1,12 +1,12 @@
-/// Builds `lib/src/data/metazone_data.dart` from Unicode CLDR JSON.
+/// Builds `lib/src/generated/metazone_data.dart` from Unicode CLDR JSON.
 ///
 ///     dart run tool/generate_metazone_data.dart
 ///
 /// Fetches metaZones, en-001 timeZoneNames, and BCP-47 timezone aliases from
 /// `unicode-org/cldr-json` **main** (not a pinned CLDR release), joins them to
 /// `tool/release/timezone-names.json`, and fails unless every bundled id has
-/// a current `generic ?? standard` name — except the known gaps in
-/// [_knownNullMetazoneNameNow].
+/// a current generic name — or standard when the metazone has no daylight
+/// name — except the known gaps in [_knownNullMetazoneNameNow].
 library;
 
 import 'dart:convert';
@@ -17,8 +17,9 @@ import 'package:http/http.dart' as http;
 const _cldrJsonBase =
     'https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json';
 
-/// Bundled ids whose current `Location.metazoneName` is expected to be null
-/// (no current membership, or a current metazone with no en-001 long names).
+/// Bundled ids whose current `Location.timeZoneGenericName` is expected to be
+/// null (no current membership, or a current metazone with no en-001 long
+/// names).
 const _knownNullMetazoneNameNow = <String>{
   'Africa/Casablanca',
   'Africa/El_Aaiun',
@@ -95,7 +96,7 @@ Future<void> main(List<String> args) async {
     final meta = mzId == null ? null : metazoneLong[mzId];
     final generic = zone?.generic ?? meta?.generic;
     final standard = zone?.standard ?? meta?.standard;
-    final selected = generic ?? standard;
+    final selected = generic ?? (meta?.daylight == null ? standard : null);
     final allowNull = _knownNullMetazoneNameNow.contains(name);
     if (selected == null) {
       nullNow.add(name);
@@ -108,7 +109,7 @@ Future<void> main(List<String> args) async {
   if (unexpectedNull.isNotEmpty || unexpectedNamed.isNotEmpty) {
     if (unexpectedNull.isNotEmpty) {
       stderr.writeln(
-        'Build gate failed — null metazoneName at now, not on allow-list:',
+        'Build gate failed — null timeZoneGenericName at now, not on allow-list:',
       );
       for (final f in unexpectedNull) {
         stderr.writeln('  $f');
@@ -128,7 +129,7 @@ Future<void> main(List<String> args) async {
   }
 
   stdout.writeln(
-    'Null Location.metazoneName at now: ${nullNow.length} '
+    'Null Location.timeZoneGenericName at now: ${nullNow.length} '
     '(${nullNow.join(', ')})',
   );
 
@@ -167,17 +168,14 @@ Future<void> main(List<String> args) async {
     )
     ..writeln('// source. See LICENSE-CLDR at the package root.')
     ..writeln('//')
-    ..writeln('// Metazones with no long daylight name (${noDaylight.length}):')
-    ..writeln('// ${noDaylight.join(', ')}')
-    ..writeln('//')
+    ..writeln('// Metazones with no long daylight name: ${noDaylight.length}.')
     ..writeln(
-      '// Metazone ids referenced by membership history but not localized '
-      'in en-001',
+      '// Metazone ids in history but not localized in en-001: '
+      '${unlocalized.length}.',
     )
-    ..writeln('// (${unlocalized.length}): ${unlocalized.join(', ')}')
     ..writeln('library;')
     ..writeln()
-    ..writeln('/// CLDR release the metazone names in this package come from.')
+    ..writeln('/// CLDR release used for English time-zone long names.')
     ..writeln("const String cldrVersion = '$cldrVersion';")
     ..writeln()
     ..writeln('/// CLDR long names: generic, standard, and daylight.')
@@ -193,23 +191,25 @@ Future<void> main(List<String> args) async {
     ..writeln('  final String? daylight;')
     ..writeln('}')
     ..writeln()
-    ..writeln(
-      '/// Metazone membership interval in UTC milliseconds (half-open).',
-    )
+    ..writeln('/// Metazone membership interval.')
     ..writeln('class MetazoneRange {')
     ..writeln('  const MetazoneRange({')
     ..writeln('    required this.metazoneId,')
-    ..writeln('    this.fromMs,')
-    ..writeln('    this.toMs,')
+    ..writeln('    this.start,')
+    ..writeln('    this.end,')
     ..writeln('  });')
     ..writeln()
     ..writeln('  final String metazoneId;')
     ..writeln()
-    ..writeln('  /// Inclusive start, or null for −∞.')
-    ..writeln('  final int? fromMs;')
+    ..writeln(
+      '  /// Inclusive start as milliseconds since the Unix epoch, or null for −∞.',
+    )
+    ..writeln('  final int? start;')
     ..writeln()
-    ..writeln('  /// Exclusive end, or null for +∞.')
-    ..writeln('  final int? toMs;')
+    ..writeln(
+      '  /// Exclusive end as milliseconds since the Unix epoch, or null for +∞.',
+    )
+    ..writeln('  final int? end;')
     ..writeln('}')
     ..writeln()
     ..writeln(
@@ -260,19 +260,19 @@ Future<void> main(List<String> args) async {
     for (final r in usedHistory[k]!) {
       out.writeln(
         '    MetazoneRange(metazoneId: ${_q(r.metazoneId)}, '
-        'fromMs: ${r.fromMs}, toMs: ${r.toMs}),',
+        'start: ${r.start}, end: ${r.end}),',
       );
     }
     out.writeln('  ],');
   }
   out.writeln('};');
 
-  final dest = File('lib/src/data/metazone_data.dart');
+  final dest = File('lib/src/generated/metazone_data.dart');
   dest.writeAsStringSync(out.toString());
   stdout.writeln('Wrote ${dest.path} (${dest.lengthSync()} bytes)');
   // Emitted long, like the boundary generator's output: the checked-in file is
   // formatted, so skipping this leaves the tree dirty for no reason.
-  stdout.writeln('\nNow run: dart format lib/src/data && dart analyze');
+  stdout.writeln('\nNow run: dart format lib/src/generated && dart analyze');
 }
 
 Future<Map<String, dynamic>> _getJson(String url) async {
@@ -352,8 +352,8 @@ List<_Range> _parseRanges(List<Map<String, dynamic>> entries) {
     for (final u in entries)
       _Range(
         metazoneId: u['_mzone'] as String,
-        fromMs: _parseCldrUtc(u['_from'] as String?),
-        toMs: _parseCldrUtc(u['_to'] as String?),
+        start: _parseCldrUtc(u['_from'] as String?),
+        end: _parseCldrUtc(u['_to'] as String?),
       ),
   ];
 }
@@ -378,8 +378,8 @@ int? _parseCldrUtc(String? raw) {
 
 String? _metazoneAt(List<_Range> ranges, int ms) {
   for (final r in ranges) {
-    if (r.fromMs != null && ms < r.fromMs!) continue;
-    if (r.toMs != null && ms >= r.toMs!) continue;
+    if (r.start != null && ms < r.start!) continue;
+    if (r.end != null && ms >= r.end!) continue;
     return r.metazoneId;
   }
   return null;
@@ -411,11 +411,11 @@ final class _Triple {
 final class _Range {
   const _Range({
     required this.metazoneId,
-    required this.fromMs,
-    required this.toMs,
+    required this.start,
+    required this.end,
   });
 
   final String metazoneId;
-  final int? fromMs;
-  final int? toMs;
+  final int? start;
+  final int? end;
 }

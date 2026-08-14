@@ -1,17 +1,6 @@
-// Overlap regression pins — NOT ground truth.
-//
-// Each coordinate sits in two zones; the answer is the documented tiebreak
-// (smallest planar area, then lexicographic id), not an external fact. These
-// pin determinism so a tiebreak/area/quantization change fails loudly.
-// Most regions are disputed; `selected` is not a sovereignty claim — see the
-// README.
-//
-// If a test fails: do not update the expectation to match new output. Decide
-// deliberately. Cross-checking other libraries is meaningless — they use
-// different tiebreaks.
-//
-// Covers 21 of 25 documented overlap pairs; the other four have no land
-// overlap in the 2026c geometry at dense sampling.
+// Overlap pins — NOT ground truth. Documented tiebreak (smallest area, then
+// id), not sovereignty. Do not update a fail to match new output.
+// 21 of 25 pairs; four have no land overlap in 2026c.
 library;
 
 /// A coordinate covered by two zones, and which one the tiebreak selects.

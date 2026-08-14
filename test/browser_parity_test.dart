@@ -1,11 +1,4 @@
-/// Chrome parity for the bytes-installed web path.
-///
-///     dart test -p chrome test/browser_parity_test.dart
-///
-/// Fetches the shipped `.bin` (same bytes as the VM chunks), installs it, then
-/// checks the **same** [bootstrapGoldens] fixtures the VM suite uses — that is
-/// the load-bearing VM/Chrome parity proof. Ocean, overlap, and a small city
-/// smoke list are extra; they are not a live differential against the VM.
+/// Chrome: install `.bin`, then the same [bootstrapGoldens] as the VM.
 @TestOn('chrome')
 library;
 
@@ -13,19 +6,22 @@ import 'dart:typed_data';
 
 import 'package:test/test.dart';
 import 'package:timezone_finder/browser.dart';
-import 'package:timezone_finder/src/boundaries_bin.dart'
+import 'package:timezone_finder/src/generated/boundaries_bin.dart'
     show boundariesBinLength;
-import 'package:timezone_finder/src/finder.dart'
-    show availableLocationNames, findLocationName;
+import 'package:timezone_finder/src/api/location_finder.dart'
+    show LocationFinder;
 
 import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/overlap_pins.dart';
 
 void main() {
+  late LocationFinder finder;
+
   setUpAll(() async {
     await initializeBoundaries();
-    expect(ianaDatabaseVersion, '2026c');
-    expect(availableLocationNames.length, 419);
+    finder = LocationFinder();
+    expect(boundaryDataVersion, '2026c');
+    expect(finder.availableLocationNames.length, 419);
   });
 
   // Load-bearing parity: shared fixtures with the VM suite. Do not delete this
@@ -33,7 +29,7 @@ void main() {
   test('bootstrap goldens match (VM/Chrome parity)', () {
     for (final point in bootstrapGoldens) {
       expect(
-        findLocationName(point.longitude, point.latitude),
+        finder.findLocationName(point.longitude, point.latitude),
         point.zone,
         reason: '$point',
       );
@@ -41,13 +37,13 @@ void main() {
   });
 
   test('open ocean is null', () {
-    expect(findLocationName(-140.0, 0.0), isNull);
+    expect(finder.findLocationName(-140.0, 0.0), isNull);
   });
 
   test('one overlap pin follows the documented tiebreak', () {
     final pin = overlapPins.first;
     expect(
-      findLocationName(pin.longitude, pin.latitude),
+      finder.findLocationName(pin.longitude, pin.latitude),
       pin.selected,
       reason: pin.description,
     );
@@ -71,13 +67,13 @@ void main() {
       (0.0, 0.0, null),
     ];
     for (final (lng, lat, zone) in samples) {
-      expect(findLocationName(lng, lat), zone, reason: '($lng, $lat)');
+      expect(finder.findLocationName(lng, lat), zone, reason: '($lng, $lat)');
     }
   });
 
   test('ensurePreloaded succeeds after install', () async {
     await ensurePreloaded();
-    expect(ianaDatabaseVersion, isNotEmpty);
+    expect(boundaryDataVersion, isNotEmpty);
   });
 
   test('corrupt bytes throw IndexFormatException', () {
@@ -88,9 +84,8 @@ void main() {
   });
 
   group('initializeBoundaries failure modes', () {
-    // These are the only place the fetch path's error handling runs: on the VM
-    // the stub throws before any of it is reached. A successful install is
-    // already proven by setUpAll, so these can only fail closed.
+    // Chrome-only: this is the fetch error path. VM never compiles
+    // browser.dart. A successful install is already proven by setUpAll.
 
     test('a missing URL fails as a fetch problem, not a format one', () {
       expect(
@@ -127,7 +122,7 @@ void main() {
     });
 
     test('a failed fetch leaves the installed index intact', () {
-      expect(findLocationName(2.3522, 48.8566), 'Europe/Paris');
+      expect(finder.findLocationName(2.3522, 48.8566), 'Europe/Paris');
     });
   });
 }

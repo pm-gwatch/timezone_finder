@@ -1,19 +1,12 @@
-// The dart2js exactness gate for point-in-polygon.
-//
-// `pointInRing` cross-multiplies to stay in integers. On dart2js `int` is a
-// double, so those products must stay below 2^53 or edge tests silently give
-// the wrong answer in browsers while the VM stays correct. `buildIndex` refuses
-// to pack rings that breach the bound; nothing proved the refusal works, and
-// its only call sites are GeoJSON-gated, so CI never reached it.
-//
-// These run from the bundled index and hand-built rings — no 51 MB cache — so
-// the gate is exercised on every CI run.
+// dart2js PiP: pointInRing products must stay < 2⁵³. buildIndex refuses
+// oversize rings; CI never hit that (GeoJSON-gated). Uses bundled + synthetic
+// rings.
 
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/data/boundaries.dart' as bundled;
-import 'package:timezone_finder/src/index.dart';
+import 'package:timezone_finder/src/generated/boundaries.dart' as bundled;
+import 'package:timezone_finder/src/index/boundary_index.dart';
 
 import '../tool/src/build_index.dart';
 
@@ -25,8 +18,8 @@ Int32List _verticalRing(int dy) =>
 void main() {
   group('bundled index headroom', () {
     test('every shipped edge stays exactly representable on dart2js', () {
-      final index = TimeZoneIndex.fromBytes(bundled.loadContainer());
-      final bound = index.maxPipSideBound();
+      final index = BoundaryIndex.fromBytes(bundled.loadContainer());
+      final bound = maxPipSideBound(index.decodeAllRings);
 
       expect(bound, greaterThan(0), reason: 'no edges measured — bad scan');
       expect(
@@ -43,8 +36,8 @@ void main() {
       // margin is only ~1.14x, so a tzbb release with longer edges could
       // cross the limit — and then buildIndex hard-fails rather than shipping
       // something subtly wrong. Run tool/measure_pip_bound.dart for the number.
-      final index = TimeZoneIndex.fromBytes(bundled.loadContainer());
-      final headroom = pipDart2jsLimit / index.maxPipSideBound();
+      final index = BoundaryIndex.fromBytes(bundled.loadContainer());
+      final headroom = pipDart2jsLimit / maxPipSideBound(index.decodeAllRings);
       expect(
         headroom,
         greaterThan(1.0),

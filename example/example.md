@@ -7,7 +7,7 @@ Two small programs — each entrypoint is a `main.dart` you can run directly.
 | VM / CLI | [`main.dart`](main.dart) | `dart run example/main.dart` |
 | Local HTTP | [`server/main.dart`](server/main.dart) | `cd example/server && dart pub get && dart run` |
 
-- **`main.dart`** — geocode five university hospitals, schedule a Geneva-anchored
+- **`main.dart`** — geocode four university hospitals, schedule a UTC-anchored
   conference call, print local start/end times (`dart:io`, embedded boundaries).
 - **`server/main.dart`** — Shelf + `shelf_router` departure board for Zurich Airport
   (ZRH). Takeoff is Zurich-local; landing is destination-local after the flight
@@ -15,4 +15,5 @@ Two small programs — each entrypoint is a `main.dart` you can run directly.
 
 Browser / Flutter web init (`initializeTimeZone` + `installBoundaries`) is
 documented in the package README’s
-[Web / Flutter web](../README.md#web--flutter-web) section.
+[Dart web](../README.md#dart-web) and
+[Flutter web](../README.md#flutter-web) sections.

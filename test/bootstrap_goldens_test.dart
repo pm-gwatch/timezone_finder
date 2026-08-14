@@ -1,12 +1,5 @@
-// Integrity tests for the bootstrap golden fixtures.
-//
-// These tests validate
-// the fixture file's own consistency rather than any behaviour. They make the
-// integrity of the ground-truth set a CI concern instead of a review-time hope.
-//
-// The external cross-check — that each coordinate really maps to its claimed
-// zone — is documented in test/fixtures/README.md and is deliberately not run
-// here: it needs a Python dependency this repository does not carry.
+// Bootstrap fixture integrity (not behaviour). External cross-check is in
+// test/fixtures/README.md.
 
 import 'package:test/test.dart';
 

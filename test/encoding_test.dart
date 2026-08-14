@@ -1,14 +1,5 @@
-// The packed coordinate format, against the real dataset.
-//
-// Round-tripping all 7,649,092 vertices is three tests at once: it exercises
-// the encoder, it proves the encoder and decoder are inverses, and it is the
-// strongest available check on quantization — which nothing else can provide,
-// because the reference oracle quantizes with the same functions the index
-// will, so a quantization bug corrupts both sides identically.
-//
-// It also re-derives the encoded size independently. The 27.84 MB the whole
-// size budget rests on was measured with a separate prototype; if the Dart
-// encoder disagrees, one of them is wrong.
+// Packed format vs the real dataset: encoder/decoder inverses + independent
+// size check. Quantization_test is the only other quantization guard.
 
 @Timeout(Duration(minutes: 10))
 library;
@@ -16,10 +7,10 @@ library;
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/varint.dart';
+import 'package:timezone_finder/src/index/varint.dart';
 
 import '../tool/src/fetch.dart';
-import 'reference/reference_finder.dart';
+import 'reference/reference_location_finder.dart';
 
 void main() {
   final cached = cachedGeoJsonFile(defaultRelease);
@@ -36,7 +27,7 @@ void main() {
       late List<Int32List> rings;
 
       setUpAll(() async {
-        final oracle = await ReferenceTimeZoneFinder.load(cached);
+        final oracle = await ReferenceLocationFinder.load(cached);
         rings = <Int32List>[
           for (final polygon in oracle.polygons) ...<Int32List>[
             polygon.outer,

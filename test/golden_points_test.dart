@@ -1,15 +1,5 @@
-// The full golden set, run against the reference oracle.
-//
-// Two fixture sets with two different contracts:
-//
-//   * `bootstrapGoldens` + `goldenPoints` are external ground truth. A failure
-//     means the oracle or the fixture is wrong.
-//   * `overlapPins` pin the overlap tiebreak in regions where two zones genuinely
-//     contain the point. A failure means the rule changed.
-//
-// Failures are reported grouped by category, because a cluster in one category
-// is a systematic bug — a hole-handling or coastline problem — rather than
-// several unrelated bad fixtures.
+// Full golden set vs oracle. bootstrapGoldens + goldenPoints: external truth.
+// overlapPins: tiebreak. Failures grouped by category.
 
 @Timeout(Duration(minutes: 10))
 library;
@@ -20,7 +10,7 @@ import '../tool/src/fetch.dart';
 import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/golden_points.dart';
 import 'fixtures/overlap_pins.dart';
-import 'reference/reference_finder.dart';
+import 'reference/reference_location_finder.dart';
 
 void main() {
   final cached = cachedGeoJsonFile(defaultRelease);
@@ -34,11 +24,11 @@ void main() {
               '  dart run tool/fetch_data.dart\n'
               '(downloads ~51 MB into .dart_tool/, which is gitignored)',
     () {
-      late ReferenceTimeZoneFinder oracle;
+      late ReferenceLocationFinder oracle;
       final all = <GoldenPoint>[...bootstrapGoldens, ...goldenPoints];
 
       setUpAll(() async {
-        oracle = await ReferenceTimeZoneFinder.load(cached);
+        oracle = await ReferenceLocationFinder.load(cached);
       });
 
       test('the set is broad enough to be worth running', () {

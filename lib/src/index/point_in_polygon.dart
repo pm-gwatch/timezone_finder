@@ -1,27 +1,13 @@
-/// Point-in-polygon testing in fixed-point integer space.
-///
-/// Shared by the runtime lookup, the index builder and the reference oracle:
-/// three implementations of the containment rule would be three chances to
-/// disagree, and index/oracle disagreement is indistinguishable from a bug in
-/// the index.
+/// Point-in-polygon in quantized integers. Shared by runtime, builder, and
+/// oracle so they cannot disagree on containment.
 library;
 
 import 'dart:typed_data';
 
-/// Whether (`px`, `py`) lies inside [ring], by even-odd ray casting.
-///
-/// [ring] is interleaved `[x0, y0, x1, y1, …]` in quantized units and is
-/// implicitly closed, so a GeoJSON ring that repeats its first vertex as its
-/// last works unchanged.
-///
-/// **A point on an edge resolves to the polygon east of it** — inside when the
-/// edge is the ring's west side, outside when it is the east. Adjacent
-/// polygons therefore partition a shared border with no gap or overlap, and
-/// `quantizeQueryLongitude` depends on this when it collapses +180 onto -180.
-///
-/// Intermediate products stay exact on dart2js as well as the VM: for an edge
-/// the ray can straddle, `|side| ≤ 360e6·|dy| + |dy|·|dx|`, and the index
-/// generator refuses to emit data whose maximum sound bound is ≥ 2⁵³.
+/// Even-odd ray cast. [ring] is interleaved quantized `[x,y]`, implicitly
+/// closed. **A point on an edge belongs to the polygon east of it** (inside on
+/// a west edge, outside on an east). dart2js: products must stay below 2⁵³;
+/// the generator refuses rings that would not.
 bool pointInRing(Int32List ring, int px, int py) {
   final n = ring.length ~/ 2;
   var inside = false;

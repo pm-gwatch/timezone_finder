@@ -1,12 +1,8 @@
-// Tests for the fixed-point coordinate representation.
-//
-// These need no boundary data and always run. That matters more here than
-// elsewhere: the reference oracle quantizes with the same functions the index
-// will use, so a bug in quantization corrupts both sides identically and the
-// differential test cannot see it. This file is the only guard on it.
+// Fixed-point coordinates. No boundary data. Oracle uses the same quantize,
+// so this is the only quantization guard.
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/quantization.dart';
+import 'package:timezone_finder/src/index/quantization.dart';
 
 void main() {
   group('quantize', () {

@@ -11,14 +11,14 @@ library;
 
 import 'dart:io';
 
-import 'package:timezone_finder/src/finder.dart';
+import 'package:timezone_finder/src/api/location_finder.dart';
 
 import 'release/boundaries_unsimplified.dart' as unsimplified;
 
 import '../test/fixtures/bootstrap_goldens.dart';
 import '../test/fixtures/golden_points.dart';
 import '../test/fixtures/overlap_pins.dart';
-import '../test/reference/reference_finder.dart';
+import '../test/reference/reference_location_finder.dart';
 import 'src/differential.dart';
 import 'src/fetch.dart';
 
@@ -38,8 +38,8 @@ Future<void> main(List<String> args) async {
   }
 
   stdout.writeln('Loading reference oracle …');
-  final oracle = await ReferenceTimeZoneFinder.load(cached);
-  final bundledFinder = TimeZoneFinder();
+  final oracle = await ReferenceLocationFinder.load(cached);
+  final bundledFinder = LocationFinder();
   final baselineFinder = finderOverIndex(unsimplified.loadContainer);
 
   // --- the fixtures, which are ground truth for the unsimplified baseline only --------

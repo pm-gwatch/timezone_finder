@@ -1,50 +1,25 @@
-// Conference call across five university hospitals.
+// Conference call across four university hospitals.
 //
 // Shows the whole pipeline this package is built for:
 //
 //   place name → geocoder → GeoJSON Feature → IANA zone → civil time
-//
-// Only the first step needs the network. Geocoding is the geocoder's job —
-// Nominatim for some hospitals, Photon for others — and from the coordinates
-// onward everything runs offline against the bundled boundaries.
-//
-// Uses dart:io rather than package:http so the example carries no dependency
-// the package itself does not have.
-//
-//     dart run example/main.dart
 
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:timezone/data/latest_all.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
-/// A geocoded place: its display name, and its GeoJSON Feature verbatim.
-///
-/// The Feature is kept as text rather than unpacked, because unpacking
-/// `[longitude, latitude]` by hand is exactly the mistake `toLocation` exists
-/// to prevent.
 typedef Place = ({String name, String feature});
 
-/// One hospital row for the conference-call table.
-typedef HospitalSchedule = ({
+typedef TimeSlot = ({
   String city,
-  String metazone,
-  String utcOffset,
-  TZDateTime start,
-  TZDateTime end,
+  TZDateTime localStartTime,
+  TZDateTime localEndTime,
 });
 
-/// Collapses an error body to one readable line. These services report
-/// failures as an HTML page, unreadable verbatim and short once flattened.
-String _oneLine(String body) {
-  final flat = body.replaceAll(RegExp(r'\s+'), ' ').trim();
-  return flat.length <= 160 ? flat : '${flat.substring(0, 160)}…';
-}
-
-/// Wall-clock formatting for the schedule table.
 String _civil(TZDateTime t) {
   final y = t.year.toString().padLeft(4, '0');
   final mo = t.month.toString().padLeft(2, '0');
@@ -54,48 +29,46 @@ String _civil(TZDateTime t) {
   return '$y-$mo-$d $h:$mi';
 }
 
-/// Looks [query] up in Nominatim, OpenStreetMap's own geocoder.
-Future<Place> geocodeWithNominatim(String query) => _geocode(
+/// Nominatim free-text search.
+Future<Place> searchWithNominatim(String query) => _geocode(
   Uri.parse(
     'https://nominatim.openstreetmap.org/search'
-    '?q=${Uri.encodeQueryComponent(query)}&format=geojson',
+    '?q=${Uri.encodeQueryComponent(query)}&limit=1&format=geojson',
   ),
 );
 
-/// Looks [query] up in Photon, a second geocoder over the same OSM data.
-Future<Place> geocodeWithPhoton(String query) => _geocode(
+/// Nominatim structured search.
+Future<Place> advancedSearchWithNominatim(
+  Map<String, dynamic> queryComponents,
+) => _geocode(
   Uri.parse(
-    'https://photon.komoot.io/api/'
-    '?q=${Uri.encodeQueryComponent(query)}&limit=1',
+    'https://nominatim.openstreetmap.org/search'
+    '?${queryComponents.entries.map((e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}').join('&')}&limit=1&format=geojson',
   ),
 );
 
 /// Fetches [uri] and returns the first GeoJSON feature.
 ///
-/// One parser serves both services: they answer with the same shape, a
-/// `FeatureCollection` of Features. `toLocation` takes one Feature, not the
-/// collection — a collection is several places — so this hands back a single
-/// feature re-encoded as text. The hospital name comes from
-/// `properties.name`.
+/// Nominatim returns a FeatureCollection; [GeoJsonLocation.findLocation] wants
+/// one Feature. Hospital name comes from `properties.name`.
 Future<Place> _geocode(Uri uri) async {
   final client = HttpClient();
   try {
     final request = await client.getUrl(uri);
-    // Photon answers 403 to Dart's default agent, and Nominatim's usage
-    // policy requires identification outright. Send something that names you,
-    // and keep to their rate limits — Nominatim allows one request a second.
+    // Nominatim rejects stock library User-Agents.
     request.headers.set(
       HttpHeaders.userAgentHeader,
-      'timezone_finder/example/0.1.0 (https://github.com/pm-gwatch/timezone_finder)',
+      'timezone_finder/example/0.2.0 (https://github.com/pm-gwatch/timezone_finder)',
     );
     final response = await request.close();
     final text = await response.transform(utf8.decoder).join();
+    final bodyPreview = text.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (response.statusCode != HttpStatus.ok) {
       throw HttpException(
         '${uri.host} returned ${response.statusCode} '
         '${response.reasonPhrase}\n'
         '  request: $uri\n'
-        '  body:    ${_oneLine(text)}',
+        '  body:    ${bodyPreview.substring(0, math.min(bodyPreview.length, 160))}',
       );
     }
     final body = jsonDecode(text) as Map<String, dynamic>;
@@ -106,8 +79,7 @@ Future<Place> _geocode(Uri uri) async {
 
     final feature = features.first as Map<String, dynamic>;
     final properties = feature['properties'] as Map<String, dynamic>;
-    // Only used in error messages, so an unnamed feature is not a failure —
-    // Nominatim's structured search returns an empty name for some buildings.
+    // Display-only: Nominatim structured search sometimes omits the name.
     final name = properties['name'];
     return (
       name: name is String && name.isNotEmpty ? name : uri.host,
@@ -118,52 +90,46 @@ Future<Place> _geocode(Uri uri) async {
   }
 }
 
-/// Nominatim asks for at most one request per second.
-///
-/// Call this immediately before every Nominatim request after the first, so
-/// the guard stays attached to the call it protects: the Photon requests in
-/// between are a different service with a different policy, and reordering
-/// them must not silently remove the spacing.
+/// Nominatim allows at most one request per second.
 Future<void> _nominatimPause() =>
     Future<void>.delayed(const Duration(seconds: 1));
 
-HospitalSchedule _schedule(
+TimeSlot _schedule(
   String city,
   Place place,
-  TZDateTime startGeneva,
+  TZDateTime start,
   Duration length,
 ) {
-  final location = place.feature.toLocation();
+  final location = place.feature.findLocation();
   if (location == null) {
     throw StateError('No land time zone for $city (${place.name})');
   }
-  final start = startGeneva.convertTo(location);
-  final end = startGeneva.add(length).convertTo(location);
+  final localStartTime = start.toLocation(location);
+  final localEndTime = start.add(length).toLocation(location);
   return (
     city: city,
-    metazone: start.metazoneName ?? location.metazoneName ?? location.name,
-    utcOffset: start.utcOffset,
-    start: start,
-    end: end,
+    localStartTime: localStartTime,
+    localEndTime: localEndTime,
   );
 }
 
-void _printTable(List<HospitalSchedule> rows) {
+void _printConfCallTable(List<TimeSlot> rows) {
   final header = <String>[
     'City',
     'Start (local)',
     'End (local)',
-    'Metazone',
+    'Zone',
     'Offset',
   ];
   final body = <List<String>>[
     for (final row in rows)
       <String>[
         row.city,
-        _civil(row.start),
-        _civil(row.end),
-        row.metazone,
-        row.utcOffset,
+        _civil(row.localStartTime),
+        _civil(row.localEndTime),
+        // Africa/Casablanca has had no English CLDR name since 2018-10-28.
+        row.localStartTime.timeZoneLongName ?? '',
+        row.localStartTime.utcOffsetLabel,
       ],
   ];
   final table = <List<String>>[header, ...body];
@@ -189,78 +155,54 @@ void _printTable(List<HospitalSchedule> rows) {
 }
 
 Future<void> main() async {
-  initializeTimeZones();
-
-  // Geneva wall clock: Wednesday 16 September 2026, 14:00–14:45.
-  const callLength = Duration(minutes: 45);
+  tz.initializeTimeZones();
 
   late final Place geneva;
-  late final Place dublin;
-  late final Place istanbul;
+  late final Place casablanca;
   late final Place montreal;
   late final Place tokyo;
   try {
-    // Geocode with Photon and Nominatim (GeoJSON Feature):
-    // University Hospital Geneva:
-    // https://nominatim.openstreetmap.org/search?q=hug+geneva&format=geojson
-    geneva = await geocodeWithNominatim('hug geneva');
+    // Geneva University Hospitals
+    geneva = await searchWithNominatim('hug geneva');
 
-    // St Vincent's University Hospital, Dublin:
-    // https://photon.komoot.io/api/?q=st+vincent+hospital+dublin&limit=1
-    dublin = await geocodeWithPhoton('st vincent hospital dublin');
+    await _nominatimPause();
 
-    // Başkent University Istanbul Hospital:
-    // https://photon.komoot.io/api/?q=ba%C5%9Fkent+university+istanbul+hospital&limit=1
-    istanbul = await geocodeWithPhoton('başkent university istanbul hospital');
+    // Hospital Ibn Rochd, Casablanca
+    casablanca = await searchWithNominatim('hospital ibn rochd casablanca');
 
-    // CHUM, Montreal:
-    // https://photon.komoot.io/api/?q=centre+hospitalier+universite+montreal&limit=1
-    montreal = await geocodeWithPhoton(
+    await _nominatimPause();
+
+    // CHUM, Montreal
+    montreal = await searchWithNominatim(
       'centre hospitalier universite montreal',
     );
 
-    // Second Nominatim request, so space it from the first.
     await _nominatimPause();
 
-    // Tokyo Medical University Hospital (structured Nominatim search):
-    // https://nominatim.openstreetmap.org/search?amenity=university+hospital&street=nishi+shinjuku+6&city=tokyo&country=japan&format=geojson
-    tokyo = await _geocode(
-      Uri.parse(
-        'https://nominatim.openstreetmap.org/search'
-        '?amenity=${Uri.encodeQueryComponent('university hospital')}'
-        '&street=${Uri.encodeQueryComponent('nishi shinjuku 6')}'
-        '&city=${Uri.encodeQueryComponent('tokyo')}'
-        '&country=${Uri.encodeQueryComponent('japan')}'
-        '&format=geojson',
-      ),
-    );
+    // Tokyo Medical University Hospital
+    tokyo = await advancedSearchWithNominatim({
+      'amenity': 'hospital',
+      'street': 'nishi shinjuku 6',
+      'city': 'tokyo',
+      'country': 'japan',
+    });
   } on IOException catch (error) {
-    // Only this first step needs the network. Everything after it — the
-    // boundary lookup, the zone, the civil time — runs offline.
     stderr
-      ..writeln('Geocoding failed, so there are no coordinates to look up.')
+      ..writeln('Geocoding failed.')
       ..writeln(error);
     exitCode = 1;
     return;
   }
 
-  final genevaLocation = geneva.feature.toLocation();
-  if (genevaLocation == null) {
-    stderr.writeln('No land time zone for ${geneva.name}');
-    exitCode = 1;
-    return;
-  }
-
-  final startGeneva = TZDateTime(genevaLocation, 2026, 9, 16, 14);
-  final confCall = <HospitalSchedule>[
-    _schedule('Geneva', geneva, startGeneva, callLength),
-    _schedule('Dublin', dublin, startGeneva, callLength),
-    _schedule('Istanbul', istanbul, startGeneva, callLength),
-    _schedule('Montreal', montreal, startGeneva, callLength),
-    _schedule('Tokyo', tokyo, startGeneva, callLength),
+  final start = TZDateTime.utc(2026, 9, 16, 12, 0);
+  const callLength = Duration(minutes: 45);
+  final confCall = <TimeSlot>[
+    _schedule('Geneva', geneva, start, callLength),
+    _schedule('Casablanca', casablanca, start, callLength),
+    _schedule('Montreal', montreal, start, callLength),
+    _schedule('Tokyo', tokyo, start, callLength),
   ];
 
-  _printTable(confCall);
-  print('');
-  print('Boundaries for IANA tzdb $ianaDatabaseVersion, CLDR $cldrVersion');
+  _printConfCallTable(confCall);
+  print('TZBB boundary release: $boundaryDataVersion, CLDR: $cldrVersion');
 }

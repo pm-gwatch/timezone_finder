@@ -1,18 +1,11 @@
-// Container validation branches the runtime suite does not reach.
-//
-// `runtime_test` covers four rejections (short buffer, bad magic, unknown
-// version, truncated) but its whole group is skipped without the 51 MB GeoJSON
-// cache, so on CI none of them run. These work from the bundled container and a
-// synthetic one, so the reader's guards are exercised on every run.
-//
-// The index ships as editable Dart source, which is why it validates at all —
-// see the rationale on `indexFormatVersion`.
+// Container guards runtime_test skips without the 51 MB cache. Uses bundled +
+// synthetic bytes. See indexFormatVersion.
 
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/data/boundaries.dart' as bundled;
-import 'package:timezone_finder/src/index.dart';
+import 'package:timezone_finder/src/generated/boundaries.dart' as bundled;
+import 'package:timezone_finder/src/index/boundary_index.dart';
 
 import '../tool/src/build_index.dart';
 
@@ -56,7 +49,7 @@ void main() {
       // not divide the globe silently skews every cell index.
       expect(
         () =>
-            TimeZoneIndex.fromBytes(_withHeaderField(IndexHeader.cellSize, 7)),
+            BoundaryIndex.fromBytes(_withHeaderField(IndexHeader.cellSize, 7)),
         throwsA(isA<IndexFormatException>()),
       );
     });
@@ -64,7 +57,7 @@ void main() {
     test('a cell size of zero', () {
       expect(
         () =>
-            TimeZoneIndex.fromBytes(_withHeaderField(IndexHeader.cellSize, 0)),
+            BoundaryIndex.fromBytes(_withHeaderField(IndexHeader.cellSize, 0)),
         throwsA(isA<IndexFormatException>()),
       );
     });
@@ -72,7 +65,7 @@ void main() {
     test('a section offset past the end of the buffer', () {
       final length = bundled.loadContainer().length;
       expect(
-        () => TimeZoneIndex.fromBytes(
+        () => BoundaryIndex.fromBytes(
           _withHeaderField(IndexHeader.coordinates, length + 1),
         ),
         throwsA(isA<IndexFormatException>()),
@@ -83,7 +76,7 @@ void main() {
       final bytes = bundled.loadContainer();
       final cells = _headerField(bytes, IndexHeader.gridCells);
       expect(
-        () => TimeZoneIndex.fromBytes(
+        () => BoundaryIndex.fromBytes(
           _withHeaderField(IndexHeader.gridPool, cells + 1),
         ),
         throwsA(isA<IndexFormatException>()),
@@ -94,7 +87,7 @@ void main() {
       final bytes = bundled.loadContainer();
       final cells = _headerField(bytes, IndexHeader.gridCells);
       expect(
-        () => TimeZoneIndex.fromBytes(
+        () => BoundaryIndex.fromBytes(
           _withHeaderField(IndexHeader.gridPool, cells - 4),
         ),
         throwsA(isA<IndexFormatException>()),
@@ -111,7 +104,7 @@ void main() {
       const x = 500000, y = 500000;
 
       expect(
-        TimeZoneIndex.fromBytes(clean).lookup(x, y),
+        BoundaryIndex.fromBytes(clean).lookup(x, y),
         'Test/Synthetic',
         reason: 'the pool entry must be live before corrupting it',
       );
@@ -125,7 +118,7 @@ void main() {
       expect(corrupt[pool + 1], 0, reason: 'expected a zero id delta');
       corrupt[pool + 1] = 10;
 
-      final index = TimeZoneIndex.fromBytes(corrupt);
+      final index = BoundaryIndex.fromBytes(corrupt);
       expect(
         () => index.lookup(x, y),
         throwsA(isA<IndexFormatException>()),
@@ -144,7 +137,7 @@ void main() {
         corrupt[i] = 0x80; // continuation bytes with no terminator
       }
 
-      final index = TimeZoneIndex.fromBytes(corrupt);
+      final index = BoundaryIndex.fromBytes(corrupt);
       expect(
         index,
         isNotNull,

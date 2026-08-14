@@ -1,10 +1,4 @@
-/// Compile-size proof that web builds do not link the base64 chunks.
-///
-///     dart test test/web_compile_size_test.dart
-///
-/// Compiles a minimal entry that imports `timezone_finder.dart` (not
-/// `browser.dart`) with dart2js and fails if the output contains chunk source
-/// or grows past a size that implies the ~4 MB index was linked as strings.
+/// dart2js of timezone_finder.dart (not browser.dart) must not link chunks.
 library;
 
 import 'dart:io';

@@ -3,7 +3,7 @@
 ///     dart run tool/generate_data.dart [--release 2026c] [--tolerance 1000]
 ///         [--chunk-kb 1024] [--emit bundled|unsimplified|both] [--verify]
 ///
-/// The bundled index goes to `lib/src/data/` and ships; the unsimplified
+/// The bundled index goes to `lib/src/generated/` and ships; the unsimplified
 /// baseline goes to `tool/release/` and does not. `--verify` rebuilds both and
 /// compares them against what is committed, writing nothing.
 ///
@@ -16,9 +16,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:timezone_finder/src/data/boundaries.dart' as bundled_container;
+import 'package:timezone_finder/src/generated/boundaries.dart'
+    as bundled_container;
 
-import '../test/reference/reference_finder.dart';
+import '../test/reference/reference_location_finder.dart';
 import 'release/boundaries_unsimplified.dart' as unsimplified_container;
 import 'src/build_index.dart';
 import 'src/emit_dart.dart';
@@ -108,7 +109,7 @@ Future<void> main(List<String> args) async {
   final cached = await ensureGeoJson(release: release, log: stdout.writeln);
 
   stdout.writeln('Loading boundaries …');
-  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  final oracle = await ReferenceLocationFinder.load(cached);
   stdout.writeln(
     '  ${oracle.zones.length} zones, ${oracle.polygons.length} polygons',
   );
@@ -132,7 +133,7 @@ Future<void> main(List<String> args) async {
     final polygons = _simplified(oracle, tolerance);
     tiers.add((
       name: 'boundaries',
-      directory: Directory('lib/src/data'),
+      directory: Directory('lib/src/generated'),
       polygons: polygons,
       container: _pack(release, polygons),
       committed: bundled_container.loadContainer,
@@ -163,7 +164,7 @@ Future<void> main(List<String> args) async {
   }
   _writeCommittedNames(release, oracle.zones);
 
-  stdout.writeln('\nNow run: dart format lib/src/data && dart analyze');
+  stdout.writeln('\nNow run: dart format lib/src/generated && dart analyze');
 }
 
 void _emitTier(_Tier tier, {required String release, required int chunkKb}) {
@@ -186,7 +187,7 @@ void _emitTier(_Tier tier, {required String release, required int chunkKb}) {
     final binFile = File('lib/data/boundaries_$release.bin');
     emitBinaryData(file: binFile, container: tier.container);
     emitBoundariesBinMeta(
-      file: File('lib/src/boundaries_bin.dart'),
+      file: File('lib/src/generated/boundaries_bin.dart'),
       dataVersion: release,
       containerLength: tier.container.length,
     );
@@ -225,7 +226,7 @@ void _writeCommittedNames(String release, List<String> names) {
 Uint8List _pack(String release, List<SourcePolygon> polygons) =>
     buildIndex(dataVersion: release, cellSize: 1000000, polygons: polygons);
 
-List<SourcePolygon> _sourcePolygons(ReferenceTimeZoneFinder oracle) =>
+List<SourcePolygon> _sourcePolygons(ReferenceLocationFinder oracle) =>
     <SourcePolygon>[
       for (final p in oracle.polygons)
         (
@@ -240,7 +241,7 @@ List<SourcePolygon> _sourcePolygons(ReferenceTimeZoneFinder oracle) =>
         ),
     ];
 
-List<SourcePolygon> _simplified(ReferenceTimeZoneFinder oracle, int tolerance) {
+List<SourcePolygon> _simplified(ReferenceLocationFinder oracle, int tolerance) {
   final stats = SimplifyStats();
   final out = <SourcePolygon>[];
   for (final p in oracle.polygons) {

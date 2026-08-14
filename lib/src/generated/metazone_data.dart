@@ -6,14 +6,11 @@
 // under Unicode License v3, not the MIT licence of this package's
 // source. See LICENSE-CLDR at the package root.
 //
-// Metazones with no long daylight name (74):
-// Afghanistan, Africa_Central, Africa_Eastern, Africa_Southern, Africa_Western, Bhutan, Bolivia, Brunei, Casey, Chamorro, Christmas, Cocos, Davis, DumontDUrville, East_Timor, Ecuador, Europe_Further_Eastern, French_Guiana, French_Southern, GMT, Galapagos, Gambier, Gilbert_Islands, Guam, Gulf, Guyana, Hawaii, India, Indian_Ocean, Indochina, Indonesia_Central, Indonesia_Eastern, Indonesia_Western, Kazakhstan, Kazakhstan_Eastern, Kazakhstan_Western, Kosrae, Kyrgystan, Lanka, Line_Islands, Malaysia, Maldives, Marquesas, Marshall_Islands, Mawson, Myanmar, Nauru, Nepal, Niue, North_Mariana, Palau, Papua_New_Guinea, Phoenix_Islands, Pitcairn, Ponape, Pyongyang, Reunion, Rothera, Seychelles, Singapore, Solomon, South_Georgia, Suriname, Syowa, Tahiti, Tajikistan, Tokelau, Truk, Tuvalu, Venezuela, Vostok, Wake, Wallis, Yukon
-//
-// Metazone ids referenced by membership history but not localized in en-001
-// (31): Africa_FarWestern, Aktyubinsk, Alaska_Hawaii, Ashkhabad, Baku, Bering, Borneo, British, Dacca, Dominican, Dushanbe, Dutch_Guiana, Frunze, Goose_Bay, Greenland_Central, Irish, Karachi, Kizilorda, Kuybyshev, Kwajalein, Liberia, Malaya, Oral, Samarkand, Shevchenko, Sverdlovsk, Tashkent, Tbilisi, Uralsk, Urumqi, Yerevan
+// Metazones with no long daylight name: 74.
+// Metazone ids in history but not localized in en-001: 31.
 library;
 
-/// CLDR release the metazone names in this package come from.
+/// CLDR release used for English time-zone long names.
 const String cldrVersion = '48';
 
 /// CLDR long names: generic, standard, and daylight.
@@ -25,17 +22,17 @@ class MetazoneLongNames {
   final String? daylight;
 }
 
-/// Metazone membership interval in UTC milliseconds (half-open).
+/// Metazone membership interval.
 class MetazoneRange {
-  const MetazoneRange({required this.metazoneId, this.fromMs, this.toMs});
+  const MetazoneRange({required this.metazoneId, this.start, this.end});
 
   final String metazoneId;
 
-  /// Inclusive start, or null for −∞.
-  final int? fromMs;
+  /// Inclusive start as milliseconds since the Unix epoch, or null for −∞.
+  final int? start;
 
-  /// Exclusive end, or null for +∞.
-  final int? toMs;
+  /// Exclusive end as milliseconds since the Unix epoch, or null for +∞.
+  final int? end;
 }
 
 /// IANA id → CLDR zone key when they differ (BCP-47 alias head).
@@ -890,2475 +887,2355 @@ const Map<String, MetazoneLongNames> zoneLongNames =
 const Map<String, List<MetazoneRange>>
 zoneMetazoneHistory = <String, List<MetazoneRange>>{
   "Africa/Abidjan": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Accra": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Addis_Ababa": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Africa/Algiers": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "Europe_Western",
-      fromMs: null,
-      toMs: 246236400000,
-    ),
+    MetazoneRange(metazoneId: "Europe_Western", start: null, end: 246236400000),
     MetazoneRange(
       metazoneId: "Europe_Central",
-      fromMs: 246236400000,
-      toMs: 309740400000,
+      start: 246236400000,
+      end: 309740400000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Western",
-      fromMs: 309740400000,
-      toMs: 357523200000,
+      start: 309740400000,
+      end: 357523200000,
     ),
-    MetazoneRange(
-      metazoneId: "Europe_Central",
-      fromMs: 357523200000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Europe_Central", start: 357523200000, end: null),
   ],
   "Africa/Asmera": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Africa/Bamako": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Bangui": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Banjul": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Bissau": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Africa_FarWestern",
-      fromMs: null,
-      toMs: 157770000000,
+      start: null,
+      end: 157770000000,
     ),
-    MetazoneRange(metazoneId: "GMT", fromMs: 157770000000, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: 157770000000, end: null),
   ],
   "Africa/Blantyre": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: null),
   ],
   "Africa/Brazzaville": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Bujumbura": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: null),
   ],
   "Africa/Cairo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: null),
   ],
   "Africa/Casablanca": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "Europe_Western",
-      fromMs: null,
-      toMs: 448243200000,
-    ),
+    MetazoneRange(metazoneId: "Europe_Western", start: null, end: 448243200000),
     MetazoneRange(
       metazoneId: "Europe_Central",
-      fromMs: 448243200000,
-      toMs: 504918000000,
+      start: 448243200000,
+      end: 504918000000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Western",
-      fromMs: 504918000000,
-      toMs: 1540692000000,
+      start: 504918000000,
+      end: 1540692000000,
     ),
   ],
   "Africa/Ceuta": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "Europe_Western",
-      fromMs: null,
-      toMs: 448243200000,
-    ),
-    MetazoneRange(
-      metazoneId: "Europe_Central",
-      fromMs: 448243200000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Europe_Western", start: null, end: 448243200000),
+    MetazoneRange(metazoneId: "Europe_Central", start: 448243200000, end: null),
   ],
   "Africa/Conakry": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Dakar": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Dar_es_Salaam": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Africa/Djibouti": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Africa/Douala": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/El_Aaiun": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Africa_FarWestern",
-      fromMs: null,
-      toMs: 198291600000,
+      start: null,
+      end: 198291600000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Western",
-      fromMs: 198291600000,
-      toMs: 1540692000000,
+      start: 198291600000,
+      end: 1540692000000,
     ),
   ],
   "Africa/Freetown": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Gaborone": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: null),
   ],
   "Africa/Harare": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: null),
   ],
   "Africa/Johannesburg": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Southern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Southern", start: null, end: null),
   ],
   "Africa/Juba": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "Africa_Central",
-      fromMs: null,
-      toMs: 947930400000,
-    ),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: 947930400000),
     MetazoneRange(
       metazoneId: "Africa_Eastern",
-      fromMs: 947930400000,
-      toMs: 1612126800000,
+      start: 947930400000,
+      end: 1612126800000,
     ),
     MetazoneRange(
       metazoneId: "Africa_Central",
-      fromMs: 1612126800000,
-      toMs: null,
+      start: 1612126800000,
+      end: null,
     ),
   ],
   "Africa/Kampala": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Africa/Khartoum": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "Africa_Central",
-      fromMs: null,
-      toMs: 947930400000,
-    ),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: 947930400000),
     MetazoneRange(
       metazoneId: "Africa_Eastern",
-      fromMs: 947930400000,
-      toMs: 1509483600000,
+      start: 947930400000,
+      end: 1509483600000,
     ),
     MetazoneRange(
       metazoneId: "Africa_Central",
-      fromMs: 1509483600000,
-      toMs: null,
+      start: 1509483600000,
+      end: null,
     ),
   ],
   "Africa/Kigali": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: null),
   ],
   "Africa/Kinshasa": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Lagos": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Libreville": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Lome": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Luanda": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Lubumbashi": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: null),
   ],
   "Africa/Lusaka": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: null),
   ],
   "Africa/Malabo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Maputo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Central", start: null, end: null),
   ],
   "Africa/Maseru": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Southern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Southern", start: null, end: null),
   ],
   "Africa/Mbabane": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Southern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Southern", start: null, end: null),
   ],
   "Africa/Mogadishu": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Africa/Monrovia": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Liberia", fromMs: null, toMs: 63593100000),
-    MetazoneRange(metazoneId: "GMT", fromMs: 63593100000, toMs: null),
+    MetazoneRange(metazoneId: "Liberia", start: null, end: 63593100000),
+    MetazoneRange(metazoneId: "GMT", start: 63593100000, end: null),
   ],
   "Africa/Nairobi": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Africa/Ndjamena": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Niamey": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Nouakchott": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Ouagadougou": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Africa/Porto-Novo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Western", start: null, end: null),
   ],
   "Africa/Sao_Tome": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: 1514768400000),
+    MetazoneRange(metazoneId: "GMT", start: null, end: 1514768400000),
     MetazoneRange(
       metazoneId: "Africa_Western",
-      fromMs: 1514768400000,
-      toMs: 1546304400000,
+      start: 1514768400000,
+      end: 1546304400000,
     ),
-    MetazoneRange(metazoneId: "GMT", fromMs: 1546304400000, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: 1546304400000, end: null),
   ],
   "Africa/Tripoli": <MetazoneRange>[
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: 378684000000),
+    MetazoneRange(
+      metazoneId: "Europe_Central",
+      start: 378684000000,
+      end: 641775600000,
+    ),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: null,
-      toMs: 378684000000,
+      start: 641775600000,
+      end: 844034400000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Central",
-      fromMs: 378684000000,
-      toMs: 641775600000,
+      start: 844034400000,
+      end: 875916000000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 641775600000,
-      toMs: 844034400000,
+      start: 875916000000,
+      end: 1352505600000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Central",
-      fromMs: 844034400000,
-      toMs: 875916000000,
+      start: 1352505600000,
+      end: 1382659200000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 875916000000,
-      toMs: 1352505600000,
-    ),
-    MetazoneRange(
-      metazoneId: "Europe_Central",
-      fromMs: 1352505600000,
-      toMs: 1382659200000,
-    ),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 1382659200000,
-      toMs: null,
+      start: 1382659200000,
+      end: null,
     ),
   ],
   "Africa/Tunis": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Africa/Windhoek": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Africa_Southern",
-      fromMs: null,
-      toMs: 637970400000,
+      start: null,
+      end: 637970400000,
     ),
     MetazoneRange(
       metazoneId: "Africa_Central",
-      fromMs: 637970400000,
-      toMs: 764200800000,
+      start: 637970400000,
+      end: 764200800000,
     ),
     MetazoneRange(
       metazoneId: "Africa_Western",
-      fromMs: 764200800000,
-      toMs: 1508796000000,
+      start: 764200800000,
+      end: 1508796000000,
     ),
     MetazoneRange(
       metazoneId: "Africa_Central",
-      fromMs: 1508796000000,
-      toMs: null,
+      start: 1508796000000,
+      end: null,
     ),
   ],
   "America/Adak": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Bering", fromMs: null, toMs: 436363200000),
+    MetazoneRange(metazoneId: "Bering", start: null, end: 436363200000),
     MetazoneRange(
       metazoneId: "Hawaii_Aleutian",
-      fromMs: 439034400000,
-      toMs: null,
+      start: 439034400000,
+      end: null,
     ),
   ],
   "America/Anchorage": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "Alaska_Hawaii",
-      fromMs: null,
-      toMs: 436359600000,
-    ),
-    MetazoneRange(metazoneId: "Alaska", fromMs: 439030800000, toMs: null),
+    MetazoneRange(metazoneId: "Alaska_Hawaii", start: null, end: 436359600000),
+    MetazoneRange(metazoneId: "Alaska", start: 439030800000, end: null),
   ],
   "America/Anguilla": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Antigua": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Araguaina": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Brasilia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Brasilia", start: null, end: null),
   ],
   "America/Argentina/La_Rioja": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 667792800000),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 667792800000),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 667792800000,
-      toMs: 673588800000,
+      start: 667792800000,
+      end: 673588800000,
     ),
     MetazoneRange(
       metazoneId: "Argentina",
-      fromMs: 673588800000,
-      toMs: 1086058800000,
+      start: 673588800000,
+      end: 1086058800000,
     ),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 1086058800000,
-      toMs: 1087704000000,
+      start: 1086058800000,
+      end: 1087704000000,
     ),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 1087704000000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: 1087704000000, end: null),
   ],
   "America/Argentina/Rio_Gallegos": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 1086058800000),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 1086058800000),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 1086058800000,
-      toMs: 1087704000000,
+      start: 1086058800000,
+      end: 1087704000000,
     ),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 1087704000000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: 1087704000000, end: null),
   ],
   "America/Argentina/Salta": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 667965600000),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 687931200000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 667965600000),
+    MetazoneRange(metazoneId: "Argentina", start: 687931200000, end: null),
   ],
   "America/Argentina/San_Juan": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 667792800000),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 667792800000),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 667792800000,
-      toMs: 673588800000,
+      start: 667792800000,
+      end: 673588800000,
     ),
     MetazoneRange(
       metazoneId: "Argentina",
-      fromMs: 673588800000,
-      toMs: 1085972400000,
+      start: 673588800000,
+      end: 1085972400000,
     ),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 1085972400000,
-      toMs: 1090728000000,
+      start: 1085972400000,
+      end: 1090728000000,
     ),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 1090728000000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: 1090728000000, end: null),
   ],
   "America/Argentina/San_Luis": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 637380000000),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 637380000000),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 637380000000,
-      toMs: 675748800000,
+      start: 637380000000,
+      end: 675748800000,
     ),
     MetazoneRange(
       metazoneId: "Argentina",
-      fromMs: 675748800000,
-      toMs: 938919600000,
+      start: 675748800000,
+      end: 938919600000,
     ),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 938919600000,
-      toMs: 952052400000,
+      start: 938919600000,
+      end: 952052400000,
     ),
     MetazoneRange(
       metazoneId: "Argentina",
-      fromMs: 952052400000,
-      toMs: 1085972400000,
+      start: 952052400000,
+      end: 1085972400000,
     ),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 1085972400000,
-      toMs: 1090728000000,
+      start: 1085972400000,
+      end: 1090728000000,
     ),
     MetazoneRange(
       metazoneId: "Argentina",
-      fromMs: 1090728000000,
-      toMs: 1200880800000,
+      start: 1090728000000,
+      end: 1200880800000,
     ),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 1200880800000,
-      toMs: 1255233600000,
+      start: 1200880800000,
+      end: 1255233600000,
     ),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 1255233600000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: 1255233600000, end: null),
   ],
   "America/Argentina/Tucuman": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 667965600000),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 667965600000),
     MetazoneRange(
       metazoneId: "Argentina",
-      fromMs: 687931200000,
-      toMs: 1086058800000,
+      start: 687931200000,
+      end: 1086058800000,
     ),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 1086058800000,
-      toMs: 1087099200000,
+      start: 1086058800000,
+      end: 1087099200000,
     ),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 1087099200000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: 1087099200000, end: null),
   ],
   "America/Argentina/Ushuaia": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 1085886000000),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 1087704000000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 1085886000000),
+    MetazoneRange(metazoneId: "Argentina", start: 1087704000000, end: null),
   ],
   "America/Aruba": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Asuncion": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Paraguay", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Paraguay", start: null, end: null),
   ],
   "America/Bahia": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Brasilia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Brasilia", start: null, end: null),
   ],
   "America/Bahia_Banderas": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: null,
-      toMs: 1270371600000,
+      start: null,
+      end: 1270371600000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1270371600000,
-      toMs: null,
+      start: 1270371600000,
+      end: null,
     ),
   ],
   "America/Barbados": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Belem": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Brasilia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Brasilia", start: null, end: null),
   ],
   "America/Belize": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Blanc-Sablon": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Boa_Vista": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Amazon", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Amazon", start: null, end: null),
   ],
   "America/Bogota": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Colombia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Colombia", start: null, end: null),
   ],
   "America/Boise": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Mountain", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Mountain", start: null, end: null),
   ],
   "America/Buenos_Aires": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: null),
   ],
   "America/Cambridge_Bay": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: null,
-      toMs: 941356800000,
+      start: null,
+      end: 941356800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 941356800000,
-      toMs: 972802800000,
+      start: 941356800000,
+      end: 972802800000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 972802800000,
-      toMs: 973400400000,
+      start: 972802800000,
+      end: 973400400000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 973400400000,
-      toMs: 986115600000,
+      start: 973400400000,
+      end: 986115600000,
     ),
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: 986115600000,
-      toMs: null,
+      start: 986115600000,
+      end: null,
     ),
   ],
   "America/Campo_Grande": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Amazon", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Amazon", start: null, end: null),
   ],
   "America/Cancun": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 378201600000,
+      start: null,
+      end: 378201600000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 378201600000,
-      toMs: 410504400000,
+      start: 378201600000,
+      end: 410504400000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 410504400000,
-      toMs: 877849200000,
+      start: 410504400000,
+      end: 877849200000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 877849200000,
-      toMs: 902037600000,
+      start: 877849200000,
+      end: 902037600000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 902037600000,
-      toMs: 1422777600000,
+      start: 902037600000,
+      end: 1422777600000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 1422777600000,
-      toMs: null,
+      start: 1422777600000,
+      end: null,
     ),
   ],
   "America/Caracas": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Venezuela", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Venezuela", start: null, end: null),
   ],
   "America/Catamarca": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 667965600000),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 667965600000),
     MetazoneRange(
       metazoneId: "Argentina",
-      fromMs: 687931200000,
-      toMs: 1086058800000,
+      start: 687931200000,
+      end: 1086058800000,
     ),
     MetazoneRange(
       metazoneId: "Argentina_Western",
-      fromMs: 1086058800000,
-      toMs: 1087704000000,
+      start: 1086058800000,
+      end: 1087704000000,
     ),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 1087704000000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: 1087704000000, end: null),
   ],
   "America/Cayenne": <MetazoneRange>[
-    MetazoneRange(metazoneId: "French_Guiana", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "French_Guiana", start: null, end: null),
   ],
   "America/Cayman": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Chicago": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Chihuahua": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 891766800000,
+      start: null,
+      end: 891766800000,
     ),
     MetazoneRange(
       metazoneId: "Mexico_Pacific",
-      fromMs: 891766800000,
-      toMs: 1667116800000,
+      start: 891766800000,
+      end: 1667116800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1667116800000,
-      toMs: null,
+      start: 1667116800000,
+      end: null,
     ),
   ],
   "America/Ciudad_Juarez": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 891766800000,
+      start: null,
+      end: 891766800000,
     ),
     MetazoneRange(
       metazoneId: "Mexico_Pacific",
-      fromMs: 891766800000,
-      toMs: 1667116800000,
+      start: 891766800000,
+      end: 1667116800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1667116800000,
-      toMs: 1669788000000,
+      start: 1667116800000,
+      end: 1669788000000,
     ),
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: 1669788000000,
-      toMs: null,
+      start: 1669788000000,
+      end: null,
     ),
   ],
   "America/Coral_Harbour": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Cordoba": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 667965600000),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 687931200000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 667965600000),
+    MetazoneRange(metazoneId: "Argentina", start: 687931200000, end: null),
   ],
   "America/Costa_Rica": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Coyhaique": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Chile", fromMs: null, toMs: 1742439600000),
+    MetazoneRange(metazoneId: "Chile", start: null, end: 1742439600000),
   ],
   "America/Creston": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Mountain", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Mountain", start: null, end: null),
   ],
   "America/Cuiaba": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Amazon", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Amazon", start: null, end: null),
   ],
   "America/Curacao": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Danmarkshavn": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Greenland_Western",
-      fromMs: null,
-      toMs: 820465200000,
+      start: null,
+      end: 820465200000,
     ),
-    MetazoneRange(metazoneId: "GMT", fromMs: 820465200000, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: 820465200000, end: null),
   ],
   "America/Dawson": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: 120646800000,
-      toMs: 1604214000000,
+      start: 120646800000,
+      end: 1604214000000,
     ),
-    MetazoneRange(metazoneId: "Yukon", fromMs: 1604214000000, toMs: null),
+    MetazoneRange(metazoneId: "Yukon", start: 1604214000000, end: null),
   ],
   "America/Dawson_Creek": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "America_Pacific",
-      fromMs: null,
-      toMs: 84013200000,
-    ),
+    MetazoneRange(metazoneId: "America_Pacific", start: null, end: 84013200000),
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: 84013200000,
-      toMs: null,
+      start: 84013200000,
+      end: null,
     ),
   ],
   "America/Denver": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Mountain", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Mountain", start: null, end: null),
   ],
   "America/Detroit": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Dominica": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Edmonton": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Mountain", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Mountain", start: null, end: null),
   ],
   "America/Eirunepe": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Acre", fromMs: null, toMs: 1214283600000),
+    MetazoneRange(metazoneId: "Acre", start: null, end: 1214283600000),
     MetazoneRange(
       metazoneId: "Amazon",
-      fromMs: 1214283600000,
-      toMs: 1384056000000,
+      start: 1214283600000,
+      end: 1384056000000,
     ),
-    MetazoneRange(metazoneId: "Acre", fromMs: 1384056000000, toMs: null),
+    MetazoneRange(metazoneId: "Acre", start: 1384056000000, end: null),
   ],
   "America/El_Salvador": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Fort_Nelson": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: null,
-      toMs: 1425808800000,
+      start: null,
+      end: 1425808800000,
     ),
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: 1425808800000,
-      toMs: null,
+      start: 1425808800000,
+      end: null,
     ),
   ],
   "America/Fortaleza": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Brasilia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Brasilia", start: null, end: null),
   ],
   "America/Glace_Bay": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Godthab": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Greenland_Western",
-      fromMs: null,
-      toMs: 1711414800000,
+      start: null,
+      end: 1711414800000,
     ),
-    MetazoneRange(metazoneId: "Greenland", fromMs: 1711414800000, toMs: null),
+    MetazoneRange(metazoneId: "Greenland", start: 1711414800000, end: null),
   ],
   "America/Goose_Bay": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: 576043260000),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: 576043260000),
     MetazoneRange(
       metazoneId: "Goose_Bay",
-      fromMs: 576043260000,
-      toMs: 594180060000,
+      start: 576043260000,
+      end: 594180060000,
     ),
-    MetazoneRange(metazoneId: "Atlantic", fromMs: 594180060000, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: 594180060000, end: null),
   ],
   "America/Grand_Turk": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: null,
-      toMs: 1425798000000,
+      start: null,
+      end: 1425798000000,
     ),
     MetazoneRange(
       metazoneId: "Atlantic",
-      fromMs: 1425798000000,
-      toMs: 1520751600000,
+      start: 1425798000000,
+      end: 1520751600000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 1520751600000,
-      toMs: null,
+      start: 1520751600000,
+      end: null,
     ),
   ],
   "America/Grenada": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Guadeloupe": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Guatemala": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Guayaquil": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Ecuador", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Ecuador", start: null, end: null),
   ],
   "America/Guyana": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Guyana", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Guyana", start: null, end: null),
   ],
   "America/Halifax": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Havana": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Cuba", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Cuba", start: null, end: null),
   ],
   "America/Hermosillo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Mexico_Pacific", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Mexico_Pacific", start: null, end: null),
   ],
   "America/Indiana/Knox": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 688546800000,
+      start: null,
+      end: 688546800000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 688546800000,
-      toMs: 1143961200000,
+      start: 688546800000,
+      end: 1143961200000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1143961200000,
-      toMs: null,
+      start: 1143961200000,
+      end: null,
     ),
   ],
   "America/Indiana/Marengo": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: null,
-      toMs: 126687600000,
+      start: null,
+      end: 126687600000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 126687600000,
-      toMs: 152089200000,
+      start: 126687600000,
+      end: 152089200000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 152089200000,
-      toMs: null,
+      start: 152089200000,
+      end: null,
     ),
   ],
   "America/Indiana/Petersburg": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 247042800000,
+      start: null,
+      end: 247042800000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 247042800000,
-      toMs: 1143961200000,
+      start: 247042800000,
+      end: 1143961200000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1143961200000,
-      toMs: 1194159600000,
+      start: 1143961200000,
+      end: 1194159600000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 1194159600000,
-      toMs: null,
+      start: 1194159600000,
+      end: null,
     ),
   ],
   "America/Indiana/Tell_City": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: null,
-      toMs: 1143961200000,
+      start: null,
+      end: 1143961200000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1143961200000,
-      toMs: null,
+      start: 1143961200000,
+      end: null,
     ),
   ],
   "America/Indiana/Vevay": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Indiana/Vincennes": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: null,
-      toMs: 1143961200000,
+      start: null,
+      end: 1143961200000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1143961200000,
-      toMs: 1194159600000,
+      start: 1143961200000,
+      end: 1194159600000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 1194159600000,
-      toMs: null,
+      start: 1194159600000,
+      end: null,
     ),
   ],
   "America/Indiana/Winamac": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: null,
-      toMs: 1143961200000,
+      start: null,
+      end: 1143961200000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1143961200000,
-      toMs: 1173600000000,
+      start: 1143961200000,
+      end: 1173600000000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 1173600000000,
-      toMs: null,
+      start: 1173600000000,
+      end: null,
     ),
   ],
   "America/Indianapolis": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Inuvik": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: null,
-      toMs: 294228000000,
+      start: null,
+      end: 294228000000,
     ),
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: 294228000000,
-      toMs: null,
+      start: 294228000000,
+      end: null,
     ),
   ],
   "America/Iqaluit": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: null,
-      toMs: 941349600000,
+      start: null,
+      end: 941349600000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 941349600000,
-      toMs: 972802800000,
+      start: 941349600000,
+      end: 972802800000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 972802800000,
-      toMs: null,
+      start: 972802800000,
+      end: null,
     ),
   ],
   "America/Jamaica": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Jujuy": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 636516000000),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 686721600000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 636516000000),
+    MetazoneRange(metazoneId: "Argentina", start: 686721600000, end: null),
   ],
   "America/Juneau": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: null,
-      toMs: 325677600000,
+      start: null,
+      end: 325677600000,
     ),
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: 341402400000,
-      toMs: 436352400000,
+      start: 341402400000,
+      end: 436352400000,
     ),
-    MetazoneRange(metazoneId: "Alaska", fromMs: 439030800000, toMs: null),
+    MetazoneRange(metazoneId: "Alaska", start: 439030800000, end: null),
   ],
   "America/Kentucky/Monticello": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 972802800000,
+      start: null,
+      end: 972802800000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 972802800000,
-      toMs: null,
+      start: 972802800000,
+      end: null,
     ),
   ],
   "America/Kralendijk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/La_Paz": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Bolivia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Bolivia", start: null, end: null),
   ],
   "America/Lima": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Peru", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Peru", start: null, end: null),
   ],
   "America/Los_Angeles": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Pacific", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Pacific", start: null, end: null),
   ],
   "America/Louisville": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: null,
-      toMs: 126687600000,
+      start: null,
+      end: 126687600000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 126687600000,
-      toMs: 152089200000,
+      start: 126687600000,
+      end: 152089200000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 152089200000,
-      toMs: null,
+      start: 152089200000,
+      end: null,
     ),
   ],
   "America/Lower_Princes": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Maceio": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Brasilia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Brasilia", start: null, end: null),
   ],
   "America/Managua": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 105084000000,
+      start: null,
+      end: 105084000000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 105084000000,
-      toMs: 161758800000,
+      start: 105084000000,
+      end: 161758800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 161758800000,
-      toMs: 694260000000,
+      start: 161758800000,
+      end: 694260000000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 694260000000,
-      toMs: 717310800000,
+      start: 694260000000,
+      end: 717310800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 717310800000,
-      toMs: 725868000000,
+      start: 717310800000,
+      end: 725868000000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 725868000000,
-      toMs: 852094800000,
+      start: 725868000000,
+      end: 852094800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 852094800000,
-      toMs: null,
+      start: 852094800000,
+      end: null,
     ),
   ],
   "America/Manaus": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Amazon", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Amazon", start: null, end: null),
   ],
   "America/Marigot": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Martinique": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Matamoros": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Mazatlan": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Mexico_Pacific", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Mexico_Pacific", start: null, end: null),
   ],
   "America/Mendoza": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 636516000000),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 636516000000),
     MetazoneRange(
       metazoneId: "Argentina",
-      fromMs: 719380800000,
-      toMs: 1085281200000,
+      start: 719380800000,
+      end: 1085281200000,
     ),
-    MetazoneRange(metazoneId: "Argentina", fromMs: 1096171200000, toMs: null),
+    MetazoneRange(metazoneId: "Argentina", start: 1096171200000, end: null),
   ],
   "America/Menominee": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: null,
-      toMs: 104914800000,
+      start: null,
+      end: 104914800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 104914800000,
-      toMs: null,
+      start: 104914800000,
+      end: null,
     ),
   ],
   "America/Merida": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 378201600000,
+      start: null,
+      end: 378201600000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 378201600000,
-      toMs: 405068400000,
+      start: 378201600000,
+      end: 405068400000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 405068400000,
-      toMs: null,
+      start: 405068400000,
+      end: null,
     ),
   ],
   "America/Metlakatla": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: null,
-      toMs: 1446372000000,
+      start: null,
+      end: 1446372000000,
     ),
     MetazoneRange(
       metazoneId: "Alaska",
-      fromMs: 1446372000000,
-      toMs: 1541325600000,
+      start: 1446372000000,
+      end: 1541325600000,
     ),
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: 1541325600000,
-      toMs: 1547978400000,
+      start: 1541325600000,
+      end: 1547978400000,
     ),
-    MetazoneRange(metazoneId: "Alaska", fromMs: 1547978400000, toMs: null),
+    MetazoneRange(metazoneId: "Alaska", start: 1547978400000, end: null),
   ],
   "America/Mexico_City": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Miquelon": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: 326001600000),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: 326001600000),
     MetazoneRange(
       metazoneId: "Pierre_Miquelon",
-      fromMs: 326001600000,
-      toMs: null,
+      start: 326001600000,
+      end: null,
     ),
   ],
   "America/Moncton": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Monterrey": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Montevideo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Uruguay", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Uruguay", start: null, end: null),
   ],
   "America/Montserrat": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Nassau": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/New_York": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Nome": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Bering", fromMs: null, toMs: 436363200000),
-    MetazoneRange(metazoneId: "Alaska", fromMs: 439030800000, toMs: null),
+    MetazoneRange(metazoneId: "Bering", start: null, end: 436363200000),
+    MetazoneRange(metazoneId: "Alaska", start: 439030800000, end: null),
   ],
   "America/Noronha": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Noronha", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Noronha", start: null, end: null),
   ],
   "America/North_Dakota/Beulah": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: null,
-      toMs: 1289116800000,
+      start: null,
+      end: 1289116800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1289116800000,
-      toMs: null,
+      start: 1289116800000,
+      end: null,
     ),
   ],
   "America/North_Dakota/Center": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: null,
-      toMs: 720000000000,
+      start: null,
+      end: 720000000000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 720000000000,
-      toMs: null,
+      start: 720000000000,
+      end: null,
     ),
   ],
   "America/North_Dakota/New_Salem": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: null,
-      toMs: 1067155200000,
+      start: null,
+      end: 1067155200000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1067155200000,
-      toMs: null,
+      start: 1067155200000,
+      end: null,
     ),
   ],
   "America/Ojinaga": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 891766800000,
+      start: null,
+      end: 891766800000,
     ),
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: 891766800000,
-      toMs: 1667116800000,
+      start: 891766800000,
+      end: 1667116800000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1667116800000,
-      toMs: null,
+      start: 1667116800000,
+      end: null,
     ),
   ],
   "America/Panama": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Paramaribo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Dutch_Guiana", fromMs: null, toMs: 185686200000),
-    MetazoneRange(metazoneId: "Suriname", fromMs: 185686200000, toMs: null),
+    MetazoneRange(metazoneId: "Dutch_Guiana", start: null, end: 185686200000),
+    MetazoneRange(metazoneId: "Suriname", start: 185686200000, end: null),
   ],
   "America/Phoenix": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Mountain", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Mountain", start: null, end: null),
   ],
   "America/Port-au-Prince": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Port_of_Spain": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Porto_Velho": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Amazon", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Amazon", start: null, end: null),
   ],
   "America/Puerto_Rico": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Punta_Arenas": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Chile", fromMs: null, toMs: 1480806000000),
+    MetazoneRange(metazoneId: "Chile", start: null, end: 1480806000000),
   ],
   "America/Rankin_Inlet": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 972802800000,
+      start: null,
+      end: 972802800000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 972802800000,
-      toMs: 986112000000,
+      start: 972802800000,
+      end: 986112000000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 986112000000,
-      toMs: null,
+      start: 986112000000,
+      end: null,
     ),
   ],
   "America/Recife": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Brasilia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Brasilia", start: null, end: null),
   ],
   "America/Regina": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Resolute": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: null,
-      toMs: 972802800000,
+      start: null,
+      end: 972802800000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 972802800000,
-      toMs: 986112000000,
+      start: 972802800000,
+      end: 986112000000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 986112000000,
-      toMs: 1162105200000,
+      start: 986112000000,
+      end: 1162105200000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 1162105200000,
-      toMs: 1173600000000,
+      start: 1162105200000,
+      end: 1173600000000,
     ),
     MetazoneRange(
       metazoneId: "America_Central",
-      fromMs: 1173600000000,
-      toMs: null,
+      start: 1173600000000,
+      end: null,
     ),
   ],
   "America/Rio_Branco": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Acre", fromMs: null, toMs: 1214283600000),
+    MetazoneRange(metazoneId: "Acre", start: null, end: 1214283600000),
     MetazoneRange(
       metazoneId: "Amazon",
-      fromMs: 1214283600000,
-      toMs: 1384056000000,
+      start: 1214283600000,
+      end: 1384056000000,
     ),
-    MetazoneRange(metazoneId: "Acre", fromMs: 1384056000000, toMs: null),
+    MetazoneRange(metazoneId: "Acre", start: 1384056000000, end: null),
   ],
   "America/Santarem": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Amazon", fromMs: null, toMs: 1214280000000),
-    MetazoneRange(metazoneId: "Brasilia", fromMs: 1214280000000, toMs: null),
+    MetazoneRange(metazoneId: "Amazon", start: null, end: 1214280000000),
+    MetazoneRange(metazoneId: "Brasilia", start: 1214280000000, end: null),
   ],
   "America/Santiago": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Chile", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Chile", start: null, end: null),
   ],
   "America/Santo_Domingo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Dominican", fromMs: null, toMs: 152082000000),
+    MetazoneRange(metazoneId: "Dominican", start: null, end: 152082000000),
     MetazoneRange(
       metazoneId: "Atlantic",
-      fromMs: 152082000000,
-      toMs: 972799200000,
+      start: 152082000000,
+      end: 972799200000,
     ),
     MetazoneRange(
       metazoneId: "America_Eastern",
-      fromMs: 972799200000,
-      toMs: 975823200000,
+      start: 972799200000,
+      end: 975823200000,
     ),
-    MetazoneRange(metazoneId: "Atlantic", fromMs: 975823200000, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: 975823200000, end: null),
   ],
   "America/Sao_Paulo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Brasilia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Brasilia", start: null, end: null),
   ],
   "America/Scoresbysund": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Greenland_Central",
-      fromMs: null,
-      toMs: 354679200000,
+      start: null,
+      end: 354679200000,
     ),
     MetazoneRange(
       metazoneId: "Greenland_Eastern",
-      fromMs: 354679200000,
-      toMs: 1711846800000,
+      start: 354679200000,
+      end: 1711846800000,
     ),
-    MetazoneRange(metazoneId: "Greenland", fromMs: 1711846800000, toMs: null),
+    MetazoneRange(metazoneId: "Greenland", start: 1711846800000, end: null),
   ],
   "America/Sitka": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: null,
-      toMs: 436352400000,
+      start: null,
+      end: 436352400000,
     ),
-    MetazoneRange(metazoneId: "Alaska", fromMs: 439030800000, toMs: null),
+    MetazoneRange(metazoneId: "Alaska", start: 439030800000, end: null),
   ],
   "America/St_Barthelemy": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/St_Johns": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Newfoundland", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Newfoundland", start: null, end: null),
   ],
   "America/St_Kitts": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/St_Lucia": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/St_Thomas": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/St_Vincent": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Swift_Current": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Mountain",
-      fromMs: null,
-      toMs: 73472400000,
+      start: null,
+      end: 73472400000,
     ),
-    MetazoneRange(
-      metazoneId: "America_Central",
-      fromMs: 73472400000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "America_Central", start: 73472400000, end: null),
   ],
   "America/Tegucigalpa": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Thule": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Tijuana": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Pacific", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Pacific", start: null, end: null),
   ],
   "America/Toronto": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Eastern", start: null, end: null),
   ],
   "America/Tortola": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "America/Vancouver": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Pacific", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Pacific", start: null, end: null),
   ],
   "America/Whitehorse": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "America_Pacific",
-      fromMs: null,
-      toMs: 1604214000000,
+      start: null,
+      end: 1604214000000,
     ),
-    MetazoneRange(metazoneId: "Yukon", fromMs: 1604214000000, toMs: null),
+    MetazoneRange(metazoneId: "Yukon", start: 1604214000000, end: null),
   ],
   "America/Winnipeg": <MetazoneRange>[
-    MetazoneRange(metazoneId: "America_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "America_Central", start: null, end: null),
   ],
   "America/Yakutat": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Alaska", fromMs: 439030800000, toMs: null),
+    MetazoneRange(metazoneId: "Alaska", start: 439030800000, end: null),
   ],
   "Antarctica/Casey": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: null,
-      toMs: 1255802400000,
+      start: null,
+      end: 1255802400000,
     ),
     MetazoneRange(
       metazoneId: "Casey",
-      fromMs: 1255802400000,
-      toMs: 1267714800000,
+      start: 1255802400000,
+      end: 1267714800000,
     ),
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: 1267714800000,
-      toMs: 1319738400000,
+      start: 1267714800000,
+      end: 1319738400000,
     ),
     MetazoneRange(
       metazoneId: "Casey",
-      fromMs: 1319738400000,
-      toMs: 1329843600000,
+      start: 1319738400000,
+      end: 1329843600000,
     ),
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: 1329843600000,
-      toMs: 1477065600000,
+      start: 1329843600000,
+      end: 1477065600000,
     ),
     MetazoneRange(
       metazoneId: "Casey",
-      fromMs: 1477065600000,
-      toMs: 1520701200000,
+      start: 1477065600000,
+      end: 1520701200000,
     ),
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: 1520701200000,
-      toMs: 1538856000000,
+      start: 1520701200000,
+      end: 1538856000000,
     ),
     MetazoneRange(
       metazoneId: "Casey",
-      fromMs: 1538856000000,
-      toMs: 1552752000000,
+      start: 1538856000000,
+      end: 1552752000000,
     ),
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: 1552752000000,
-      toMs: 1570129200000,
+      start: 1552752000000,
+      end: 1570129200000,
     ),
     MetazoneRange(
       metazoneId: "Casey",
-      fromMs: 1570129200000,
-      toMs: 1583596800000,
+      start: 1570129200000,
+      end: 1583596800000,
     ),
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: 1583596800000,
-      toMs: 1601740860000,
+      start: 1583596800000,
+      end: 1601740860000,
     ),
     MetazoneRange(
       metazoneId: "Casey",
-      fromMs: 1601740860000,
-      toMs: 1615640400000,
+      start: 1601740860000,
+      end: 1615640400000,
     ),
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: 1615640400000,
-      toMs: 1633190460000,
+      start: 1615640400000,
+      end: 1633190460000,
     ),
     MetazoneRange(
       metazoneId: "Casey",
-      fromMs: 1633190460000,
-      toMs: 1647090000000,
+      start: 1633190460000,
+      end: 1647090000000,
     ),
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: 1647090000000,
-      toMs: 1664640060000,
+      start: 1647090000000,
+      end: 1664640060000,
     ),
     MetazoneRange(
       metazoneId: "Casey",
-      fromMs: 1664640060000,
-      toMs: 1678291200000,
+      start: 1664640060000,
+      end: 1678291200000,
     ),
     MetazoneRange(
       metazoneId: "Australia_Western",
-      fromMs: 1678291200000,
-      toMs: null,
+      start: 1678291200000,
+      end: null,
     ),
   ],
   "Antarctica/Davis": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Davis", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Davis", start: null, end: null),
   ],
   "Antarctica/DumontDUrville": <MetazoneRange>[
-    MetazoneRange(metazoneId: "DumontDUrville", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "DumontDUrville", start: null, end: null),
   ],
   "Antarctica/Macquarie": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Eastern", start: null, end: null),
   ],
   "Antarctica/Mawson": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Mawson", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Mawson", start: null, end: null),
   ],
   "Antarctica/McMurdo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "New_Zealand", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "New_Zealand", start: null, end: null),
   ],
   "Antarctica/Palmer": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Argentina", fromMs: null, toMs: 389070000000),
-    MetazoneRange(
-      metazoneId: "Chile",
-      fromMs: 389070000000,
-      toMs: 1480820400000,
-    ),
+    MetazoneRange(metazoneId: "Argentina", start: null, end: 389070000000),
+    MetazoneRange(metazoneId: "Chile", start: 389070000000, end: 1480820400000),
   ],
   "Antarctica/Rothera": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Rothera", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Rothera", start: null, end: null),
   ],
   "Antarctica/Syowa": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Syowa", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Syowa", start: null, end: null),
   ],
   "Antarctica/Troll": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Antarctica/Vostok": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Vostok", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Vostok", start: null, end: null),
   ],
   "Arctic/Longyearbyen": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Asia/Aden": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Arabian", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Arabian", start: null, end: null),
   ],
   "Asia/Almaty": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Almaty", fromMs: null, toMs: 1099166400000),
+    MetazoneRange(metazoneId: "Almaty", start: null, end: 1099166400000),
     MetazoneRange(
       metazoneId: "Kazakhstan_Eastern",
-      fromMs: 1099166400000,
-      toMs: 1709229600000,
+      start: 1099166400000,
+      end: 1709229600000,
     ),
-    MetazoneRange(metazoneId: "Kazakhstan", fromMs: 1709229600000, toMs: null),
+    MetazoneRange(metazoneId: "Kazakhstan", start: 1709229600000, end: null),
   ],
   "Asia/Amman": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: null,
-      toMs: 1666908000000,
+      start: null,
+      end: 1666908000000,
     ),
   ],
   "Asia/Anadyr": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Anadyr", fromMs: null, toMs: 1269698400000),
+    MetazoneRange(metazoneId: "Anadyr", start: null, end: 1269698400000),
     MetazoneRange(
       metazoneId: "Magadan",
-      fromMs: 1269698400000,
-      toMs: 1301151600000,
+      start: 1269698400000,
+      end: 1301151600000,
     ),
-    MetazoneRange(metazoneId: "Kamchatka", fromMs: 1301151600000, toMs: null),
+    MetazoneRange(metazoneId: "Kamchatka", start: 1301151600000, end: null),
   ],
   "Asia/Aqtau": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Shevchenko", fromMs: null, toMs: 692823600000),
-    MetazoneRange(
-      metazoneId: "Aqtau",
-      fromMs: 692823600000,
-      toMs: 1099173600000,
-    ),
+    MetazoneRange(metazoneId: "Shevchenko", start: null, end: 692823600000),
+    MetazoneRange(metazoneId: "Aqtau", start: 692823600000, end: 1099173600000),
     MetazoneRange(
       metazoneId: "Kazakhstan_Western",
-      fromMs: 1099173600000,
-      toMs: 1709229600000,
+      start: 1099173600000,
+      end: 1709229600000,
     ),
-    MetazoneRange(metazoneId: "Kazakhstan", fromMs: 1709229600000, toMs: null),
+    MetazoneRange(metazoneId: "Kazakhstan", start: 1709229600000, end: null),
   ],
   "Asia/Aqtobe": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Aktyubinsk", fromMs: null, toMs: 692823600000),
+    MetazoneRange(metazoneId: "Aktyubinsk", start: null, end: 692823600000),
     MetazoneRange(
       metazoneId: "Aqtobe",
-      fromMs: 692823600000,
-      toMs: 1099170000000,
+      start: 692823600000,
+      end: 1099170000000,
     ),
     MetazoneRange(
       metazoneId: "Kazakhstan_Western",
-      fromMs: 1099170000000,
-      toMs: 1709229600000,
+      start: 1099170000000,
+      end: 1709229600000,
     ),
-    MetazoneRange(metazoneId: "Kazakhstan", fromMs: 1709229600000, toMs: null),
+    MetazoneRange(metazoneId: "Kazakhstan", start: 1709229600000, end: null),
   ],
   "Asia/Ashgabat": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Ashkhabad", fromMs: null, toMs: 695772000000),
-    MetazoneRange(metazoneId: "Turkmenistan", fromMs: 695772000000, toMs: null),
+    MetazoneRange(metazoneId: "Ashkhabad", start: null, end: 695772000000),
+    MetazoneRange(metazoneId: "Turkmenistan", start: 695772000000, end: null),
   ],
   "Asia/Atyrau": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Kazakhstan_Western",
-      fromMs: 1099173600000,
-      toMs: 1709229600000,
+      start: 1099173600000,
+      end: 1709229600000,
     ),
-    MetazoneRange(metazoneId: "Kazakhstan", fromMs: 1709229600000, toMs: null),
+    MetazoneRange(metazoneId: "Kazakhstan", start: 1709229600000, end: null),
   ],
   "Asia/Baghdad": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Arabian", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Arabian", start: null, end: null),
   ],
   "Asia/Bahrain": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Gulf", fromMs: null, toMs: 76190400000),
-    MetazoneRange(metazoneId: "Arabian", fromMs: 76190400000, toMs: null),
+    MetazoneRange(metazoneId: "Gulf", start: null, end: 76190400000),
+    MetazoneRange(metazoneId: "Arabian", start: 76190400000, end: null),
   ],
   "Asia/Baku": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Baku", fromMs: null, toMs: 670370400000),
-    MetazoneRange(metazoneId: "Azerbaijan", fromMs: 670370400000, toMs: null),
+    MetazoneRange(metazoneId: "Baku", start: null, end: 670370400000),
+    MetazoneRange(metazoneId: "Azerbaijan", start: 670370400000, end: null),
   ],
   "Asia/Bangkok": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Indochina", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Indochina", start: null, end: null),
   ],
   "Asia/Barnaul": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Krasnoyarsk", fromMs: 1459022400000, toMs: null),
+    MetazoneRange(metazoneId: "Krasnoyarsk", start: 1459022400000, end: null),
   ],
   "Asia/Beirut": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: null),
   ],
   "Asia/Bishkek": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Frunze", fromMs: null, toMs: 670363200000),
-    MetazoneRange(metazoneId: "Kyrgystan", fromMs: 670363200000, toMs: null),
+    MetazoneRange(metazoneId: "Frunze", start: null, end: 670363200000),
+    MetazoneRange(metazoneId: "Kyrgystan", start: 670363200000, end: null),
   ],
   "Asia/Brunei": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Brunei", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Brunei", start: null, end: null),
   ],
   "Asia/Calcutta": <MetazoneRange>[
-    MetazoneRange(metazoneId: "India", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "India", start: null, end: null),
   ],
   "Asia/Chita": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Yakutsk", fromMs: null, toMs: 1414252800000),
+    MetazoneRange(metazoneId: "Yakutsk", start: null, end: 1414252800000),
     MetazoneRange(
       metazoneId: "Irkutsk",
-      fromMs: 1414256400000,
-      toMs: 1459015200000,
+      start: 1414256400000,
+      end: 1459015200000,
     ),
-    MetazoneRange(metazoneId: "Yakutsk", fromMs: 1459015200000, toMs: null),
+    MetazoneRange(metazoneId: "Yakutsk", start: 1459015200000, end: null),
   ],
   "Asia/Colombo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "India", fromMs: null, toMs: 832962600000),
-    MetazoneRange(
-      metazoneId: "Lanka",
-      fromMs: 832962600000,
-      toMs: 1145039400000,
-    ),
-    MetazoneRange(metazoneId: "India", fromMs: 1145039400000, toMs: null),
+    MetazoneRange(metazoneId: "India", start: null, end: 832962600000),
+    MetazoneRange(metazoneId: "Lanka", start: 832962600000, end: 1145039400000),
+    MetazoneRange(metazoneId: "India", start: 1145039400000, end: null),
   ],
   "Asia/Damascus": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: null,
-      toMs: 1666904400000,
+      start: null,
+      end: 1666904400000,
     ),
   ],
   "Asia/Dhaka": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Dacca", fromMs: null, toMs: 38772000000),
-    MetazoneRange(metazoneId: "Bangladesh", fromMs: 38772000000, toMs: null),
+    MetazoneRange(metazoneId: "Dacca", start: null, end: 38772000000),
+    MetazoneRange(metazoneId: "Bangladesh", start: 38772000000, end: null),
   ],
   "Asia/Dili": <MetazoneRange>[
-    MetazoneRange(metazoneId: "East_Timor", fromMs: null, toMs: 199897200000),
+    MetazoneRange(metazoneId: "East_Timor", start: null, end: 199897200000),
     MetazoneRange(
       metazoneId: "Indonesia_Central",
-      fromMs: 199897200000,
-      toMs: 969120000000,
+      start: 199897200000,
+      end: 969120000000,
     ),
-    MetazoneRange(metazoneId: "East_Timor", fromMs: 969120000000, toMs: null),
+    MetazoneRange(metazoneId: "East_Timor", start: 969120000000, end: null),
   ],
   "Asia/Dubai": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Gulf", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Gulf", start: null, end: null),
   ],
   "Asia/Dushanbe": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Dushanbe", fromMs: null, toMs: 684363600000),
-    MetazoneRange(metazoneId: "Tajikistan", fromMs: 684363600000, toMs: null),
+    MetazoneRange(metazoneId: "Dushanbe", start: null, end: 684363600000),
+    MetazoneRange(metazoneId: "Tajikistan", start: 684363600000, end: null),
   ],
   "Asia/Famagusta": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: null,
-      toMs: 1473282000000,
+      start: null,
+      end: 1473282000000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 1509238800000,
-      toMs: null,
+      start: 1509238800000,
+      end: null,
     ),
   ],
   "Asia/Gaza": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Israel", fromMs: null, toMs: 820447200000),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 820447200000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Israel", start: null, end: 820447200000),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: 820447200000, end: null),
   ],
   "Asia/Hebron": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Israel", fromMs: null, toMs: 820447200000),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 820447200000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Israel", start: null, end: 820447200000),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: 820447200000, end: null),
   ],
   "Asia/Hong_Kong": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Hong_Kong", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Hong_Kong", start: null, end: null),
   ],
   "Asia/Hovd": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Hovd", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Hovd", start: null, end: null),
   ],
   "Asia/Irkutsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Irkutsk", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Irkutsk", start: null, end: null),
   ],
   "Asia/Jakarta": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Indonesia_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Indonesia_Western", start: null, end: null),
   ],
   "Asia/Jayapura": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Indonesia_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Indonesia_Eastern", start: null, end: null),
   ],
   "Asia/Jerusalem": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Israel", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Israel", start: null, end: null),
   ],
   "Asia/Kabul": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Afghanistan", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Afghanistan", start: null, end: null),
   ],
   "Asia/Kamchatka": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Kamchatka", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Kamchatka", start: null, end: null),
   ],
   "Asia/Karachi": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Karachi", fromMs: null, toMs: 38775600000),
-    MetazoneRange(metazoneId: "Pakistan", fromMs: 38775600000, toMs: null),
+    MetazoneRange(metazoneId: "Karachi", start: null, end: 38775600000),
+    MetazoneRange(metazoneId: "Pakistan", start: 38775600000, end: null),
   ],
   "Asia/Katmandu": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Nepal", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Nepal", start: null, end: null),
   ],
   "Asia/Khandyga": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Yakutsk", fromMs: null, toMs: 1072882800000),
+    MetazoneRange(metazoneId: "Yakutsk", start: null, end: 1072882800000),
     MetazoneRange(
       metazoneId: "Vladivostok",
-      fromMs: 1072882800000,
-      toMs: 1315832400000,
+      start: 1072882800000,
+      end: 1315832400000,
     ),
-    MetazoneRange(metazoneId: "Yakutsk", fromMs: 1315832400000, toMs: null),
+    MetazoneRange(metazoneId: "Yakutsk", start: 1315832400000, end: null),
   ],
   "Asia/Krasnoyarsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Krasnoyarsk", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Krasnoyarsk", start: null, end: null),
   ],
   "Asia/Kuala_Lumpur": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Malaya", fromMs: null, toMs: 378662400000),
-    MetazoneRange(metazoneId: "Malaysia", fromMs: 378662400000, toMs: null),
+    MetazoneRange(metazoneId: "Malaya", start: null, end: 378662400000),
+    MetazoneRange(metazoneId: "Malaysia", start: 378662400000, end: null),
   ],
   "Asia/Kuching": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Borneo", fromMs: null, toMs: 378662400000),
-    MetazoneRange(metazoneId: "Malaysia", fromMs: 378662400000, toMs: null),
+    MetazoneRange(metazoneId: "Borneo", start: null, end: 378662400000),
+    MetazoneRange(metazoneId: "Malaysia", start: 378662400000, end: null),
   ],
   "Asia/Kuwait": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Arabian", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Arabian", start: null, end: null),
   ],
   "Asia/Macau": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Macau", fromMs: null, toMs: 945619200000),
-    MetazoneRange(metazoneId: "China", fromMs: 945619200000, toMs: null),
+    MetazoneRange(metazoneId: "Macau", start: null, end: 945619200000),
+    MetazoneRange(metazoneId: "China", start: 945619200000, end: null),
   ],
   "Asia/Magadan": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Magadan", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Magadan", start: null, end: null),
   ],
   "Asia/Makassar": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Indonesia_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Indonesia_Central", start: null, end: null),
   ],
   "Asia/Manila": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Philippines", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Philippines", start: null, end: null),
   ],
   "Asia/Muscat": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Gulf", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Gulf", start: null, end: null),
   ],
   "Asia/Nicosia": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: null),
   ],
   "Asia/Novokuznetsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Krasnoyarsk", fromMs: null, toMs: 1269716400000),
+    MetazoneRange(metazoneId: "Krasnoyarsk", start: null, end: 1269716400000),
     MetazoneRange(
       metazoneId: "Novosibirsk",
-      fromMs: 1269716400000,
-      toMs: 1414263600000,
+      start: 1269716400000,
+      end: 1414263600000,
     ),
-    MetazoneRange(metazoneId: "Krasnoyarsk", fromMs: 1414263600000, toMs: null),
+    MetazoneRange(metazoneId: "Krasnoyarsk", start: 1414263600000, end: null),
   ],
   "Asia/Novosibirsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Novosibirsk", fromMs: null, toMs: 1469304000000),
-    MetazoneRange(metazoneId: "Krasnoyarsk", fromMs: 1469304000000, toMs: null),
+    MetazoneRange(metazoneId: "Novosibirsk", start: null, end: 1469304000000),
+    MetazoneRange(metazoneId: "Krasnoyarsk", start: 1469304000000, end: null),
   ],
   "Asia/Omsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Omsk", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Omsk", start: null, end: null),
   ],
   "Asia/Oral": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Uralsk", fromMs: null, toMs: 692827200000),
-    MetazoneRange(
-      metazoneId: "Oral",
-      fromMs: 692827200000,
-      toMs: 1099173600000,
-    ),
+    MetazoneRange(metazoneId: "Uralsk", start: null, end: 692827200000),
+    MetazoneRange(metazoneId: "Oral", start: 692827200000, end: 1099173600000),
     MetazoneRange(
       metazoneId: "Kazakhstan_Western",
-      fromMs: 1099173600000,
-      toMs: 1709229600000,
+      start: 1099173600000,
+      end: 1709229600000,
     ),
-    MetazoneRange(metazoneId: "Kazakhstan", fromMs: 1709229600000, toMs: null),
+    MetazoneRange(metazoneId: "Kazakhstan", start: 1709229600000, end: null),
   ],
   "Asia/Phnom_Penh": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Indochina", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Indochina", start: null, end: null),
   ],
   "Asia/Pontianak": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Indonesia_Central",
-      fromMs: null,
-      toMs: 567964800000,
+      start: null,
+      end: 567964800000,
     ),
     MetazoneRange(
       metazoneId: "Indonesia_Western",
-      fromMs: 567964800000,
-      toMs: null,
+      start: 567964800000,
+      end: null,
     ),
   ],
   "Asia/Pyongyang": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Korea", fromMs: null, toMs: 1439564400000),
+    MetazoneRange(metazoneId: "Korea", start: null, end: 1439564400000),
     MetazoneRange(
       metazoneId: "Pyongyang",
-      fromMs: 1439564400000,
-      toMs: 1525446000000,
+      start: 1439564400000,
+      end: 1525446000000,
     ),
-    MetazoneRange(metazoneId: "Korea", fromMs: 1525446000000, toMs: null),
+    MetazoneRange(metazoneId: "Korea", start: 1525446000000, end: null),
   ],
   "Asia/Qatar": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Gulf", fromMs: null, toMs: 76190400000),
-    MetazoneRange(metazoneId: "Arabian", fromMs: 76190400000, toMs: null),
+    MetazoneRange(metazoneId: "Gulf", start: null, end: 76190400000),
+    MetazoneRange(metazoneId: "Arabian", start: 76190400000, end: null),
   ],
   "Asia/Qostanay": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Kazakhstan_Eastern",
-      fromMs: 1099170000000,
-      toMs: 1709229600000,
+      start: 1099170000000,
+      end: 1709229600000,
     ),
-    MetazoneRange(metazoneId: "Kazakhstan", fromMs: 1709229600000, toMs: null),
+    MetazoneRange(metazoneId: "Kazakhstan", start: 1709229600000, end: null),
   ],
   "Asia/Qyzylorda": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Kizilorda", fromMs: null, toMs: 692823600000),
+    MetazoneRange(metazoneId: "Kizilorda", start: null, end: 692823600000),
     MetazoneRange(
       metazoneId: "Qyzylorda",
-      fromMs: 692823600000,
-      toMs: 1099170000000,
+      start: 692823600000,
+      end: 1099170000000,
     ),
     MetazoneRange(
       metazoneId: "Kazakhstan_Eastern",
-      fromMs: 1099170000000,
-      toMs: 1545328800000,
+      start: 1099170000000,
+      end: 1545328800000,
     ),
     MetazoneRange(
       metazoneId: "Kazakhstan_Western",
-      fromMs: 1545328800000,
-      toMs: 1709229600000,
+      start: 1545328800000,
+      end: 1709229600000,
     ),
-    MetazoneRange(metazoneId: "Kazakhstan", fromMs: 1709229600000, toMs: null),
+    MetazoneRange(metazoneId: "Kazakhstan", start: 1709229600000, end: null),
   ],
   "Asia/Rangoon": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Myanmar", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Myanmar", start: null, end: null),
   ],
   "Asia/Riyadh": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Arabian", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Arabian", start: null, end: null),
   ],
   "Asia/Saigon": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Indochina", fromMs: 171820800000, toMs: null),
+    MetazoneRange(metazoneId: "Indochina", start: 171820800000, end: null),
   ],
   "Asia/Sakhalin": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Sakhalin", fromMs: null, toMs: 1414249200000),
+    MetazoneRange(metazoneId: "Sakhalin", start: null, end: 1414249200000),
     MetazoneRange(
       metazoneId: "Magadan",
-      fromMs: 1414249200000,
-      toMs: 1459008000000,
+      start: 1414249200000,
+      end: 1459008000000,
     ),
-    MetazoneRange(metazoneId: "Magadan", fromMs: 1461686400000, toMs: null),
+    MetazoneRange(metazoneId: "Magadan", start: 1461686400000, end: null),
   ],
   "Asia/Samarkand": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Samarkand", fromMs: null, toMs: 370720800000),
+    MetazoneRange(metazoneId: "Samarkand", start: null, end: 370720800000),
     MetazoneRange(
       metazoneId: "Tashkent",
-      fromMs: 370720800000,
-      toMs: 386445600000,
+      start: 370720800000,
+      end: 386445600000,
     ),
     MetazoneRange(
       metazoneId: "Samarkand",
-      fromMs: 386445600000,
-      toMs: 683661600000,
+      start: 386445600000,
+      end: 683661600000,
     ),
-    MetazoneRange(metazoneId: "Uzbekistan", fromMs: 683661600000, toMs: null),
+    MetazoneRange(metazoneId: "Uzbekistan", start: 683661600000, end: null),
   ],
   "Asia/Seoul": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Korea", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Korea", start: null, end: null),
   ],
   "Asia/Shanghai": <MetazoneRange>[
-    MetazoneRange(metazoneId: "China", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "China", start: null, end: null),
   ],
   "Asia/Singapore": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Singapore", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Singapore", start: null, end: null),
   ],
   "Asia/Srednekolymsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Magadan", fromMs: null, toMs: 1414245600000),
-    MetazoneRange(metazoneId: "Magadan", fromMs: 1461427200000, toMs: null),
+    MetazoneRange(metazoneId: "Magadan", start: null, end: 1414245600000),
+    MetazoneRange(metazoneId: "Magadan", start: 1461427200000, end: null),
   ],
   "Asia/Taipei": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Taipei", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Taipei", start: null, end: null),
   ],
   "Asia/Tashkent": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Tashkent", fromMs: null, toMs: 670363200000),
-    MetazoneRange(metazoneId: "Uzbekistan", fromMs: 670363200000, toMs: null),
+    MetazoneRange(metazoneId: "Tashkent", start: null, end: 670363200000),
+    MetazoneRange(metazoneId: "Uzbekistan", start: 670363200000, end: null),
   ],
   "Asia/Tbilisi": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Tbilisi", fromMs: null, toMs: 670370400000),
-    MetazoneRange(metazoneId: "Georgia", fromMs: 670370400000, toMs: null),
+    MetazoneRange(metazoneId: "Tbilisi", start: null, end: 670370400000),
+    MetazoneRange(metazoneId: "Georgia", start: 670370400000, end: null),
   ],
   "Asia/Tehran": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Iran", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Iran", start: null, end: null),
   ],
   "Asia/Thimphu": <MetazoneRange>[
-    MetazoneRange(metazoneId: "India", fromMs: null, toMs: 560025000000),
-    MetazoneRange(metazoneId: "Bhutan", fromMs: 560025000000, toMs: null),
+    MetazoneRange(metazoneId: "India", start: null, end: 560025000000),
+    MetazoneRange(metazoneId: "Bhutan", start: 560025000000, end: null),
   ],
   "Asia/Tokyo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Japan", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Japan", start: null, end: null),
   ],
   "Asia/Tomsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Krasnoyarsk", fromMs: 1464465600000, toMs: null),
+    MetazoneRange(metazoneId: "Krasnoyarsk", start: 1464465600000, end: null),
   ],
   "Asia/Ulaanbaatar": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Mongolia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Mongolia", start: null, end: null),
   ],
   "Asia/Urumqi": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Urumqi", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Urumqi", start: null, end: null),
   ],
   "Asia/Ust-Nera": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Yakutsk", fromMs: null, toMs: 354898800000),
+    MetazoneRange(metazoneId: "Yakutsk", start: null, end: 354898800000),
     MetazoneRange(
       metazoneId: "Magadan",
-      fromMs: 354898800000,
-      toMs: 1315828800000,
+      start: 354898800000,
+      end: 1315828800000,
     ),
-    MetazoneRange(metazoneId: "Vladivostok", fromMs: 1315828800000, toMs: null),
+    MetazoneRange(metazoneId: "Vladivostok", start: 1315828800000, end: null),
   ],
   "Asia/Vientiane": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Indochina", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Indochina", start: null, end: null),
   ],
   "Asia/Vladivostok": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Vladivostok", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Vladivostok", start: null, end: null),
   ],
   "Asia/Yakutsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Yakutsk", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Yakutsk", start: null, end: null),
   ],
   "Asia/Yekaterinburg": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Sverdlovsk", fromMs: null, toMs: 695772000000),
-    MetazoneRange(
-      metazoneId: "Yekaterinburg",
-      fromMs: 695772000000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Sverdlovsk", start: null, end: 695772000000),
+    MetazoneRange(metazoneId: "Yekaterinburg", start: 695772000000, end: null),
   ],
   "Asia/Yerevan": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Yerevan", fromMs: null, toMs: 670370400000),
-    MetazoneRange(metazoneId: "Armenia", fromMs: 670370400000, toMs: null),
+    MetazoneRange(metazoneId: "Yerevan", start: null, end: 670370400000),
+    MetazoneRange(metazoneId: "Armenia", start: 670370400000, end: null),
   ],
   "Atlantic/Azores": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Azores", fromMs: null, toMs: 725421600000),
+    MetazoneRange(metazoneId: "Azores", start: null, end: 725421600000),
     MetazoneRange(
       metazoneId: "Europe_Western",
-      fromMs: 725421600000,
-      toMs: 740278800000,
+      start: 725421600000,
+      end: 740278800000,
     ),
-    MetazoneRange(metazoneId: "Azores", fromMs: 740278800000, toMs: null),
+    MetazoneRange(metazoneId: "Azores", start: 740278800000, end: null),
   ],
   "Atlantic/Bermuda": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Atlantic", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Atlantic", start: null, end: null),
   ],
   "Atlantic/Canary": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Western", start: null, end: null),
   ],
   "Atlantic/Cape_Verde": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Cape_Verde", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Cape_Verde", start: null, end: null),
   ],
   "Atlantic/Faeroe": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Western", start: null, end: null),
   ],
   "Atlantic/Madeira": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Western", start: null, end: null),
   ],
   "Atlantic/Reykjavik": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Atlantic/South_Georgia": <MetazoneRange>[
-    MetazoneRange(metazoneId: "South_Georgia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "South_Georgia", start: null, end: null),
   ],
   "Atlantic/St_Helena": <MetazoneRange>[
-    MetazoneRange(metazoneId: "GMT", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "GMT", start: null, end: null),
   ],
   "Atlantic/Stanley": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Falkland", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Falkland", start: null, end: null),
   ],
   "Australia/Adelaide": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Central", start: null, end: null),
   ],
   "Australia/Brisbane": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Eastern", start: null, end: null),
   ],
   "Australia/Broken_Hill": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Central", start: null, end: null),
   ],
   "Australia/Darwin": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Central", start: null, end: null),
   ],
   "Australia/Eucla": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Australia_CentralWestern",
-      fromMs: null,
-      toMs: null,
+      start: null,
+      end: null,
     ),
   ],
   "Australia/Hobart": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Eastern", start: null, end: null),
   ],
   "Australia/Lindeman": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Eastern", start: null, end: null),
   ],
   "Australia/Lord_Howe": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Australia_Eastern",
-      fromMs: null,
-      toMs: 352216800000,
+      start: null,
+      end: 352216800000,
     ),
-    MetazoneRange(metazoneId: "Lord_Howe", fromMs: 352216800000, toMs: null),
+    MetazoneRange(metazoneId: "Lord_Howe", start: 352216800000, end: null),
   ],
   "Australia/Melbourne": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Eastern", start: null, end: null),
   ],
   "Australia/Perth": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Western", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Western", start: null, end: null),
   ],
   "Australia/Sydney": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Australia_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Australia_Eastern", start: null, end: null),
   ],
   "Europe/Amsterdam": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Andorra": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Astrakhan": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Moscow",
-      fromMs: 701820000000,
-      toMs: 1459033200000,
+      start: 701820000000,
+      end: 1459033200000,
     ),
-    MetazoneRange(metazoneId: "Samara", fromMs: 1459033200000, toMs: null),
+    MetazoneRange(metazoneId: "Samara", start: 1459033200000, end: null),
   ],
   "Europe/Athens": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: null),
   ],
   "Europe/Belgrade": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Berlin": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Bratislava": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Brussels": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Bucharest": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: null),
   ],
   "Europe/Budapest": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Busingen": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Chisinau": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 641944800000),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 641944800000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 641944800000),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: 641944800000, end: null),
   ],
   "Europe/Copenhagen": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Dublin": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Irish", fromMs: null, toMs: 57722400000),
-    MetazoneRange(metazoneId: "GMT", fromMs: 57722400000, toMs: null),
+    MetazoneRange(metazoneId: "Irish", start: null, end: 57722400000),
+    MetazoneRange(metazoneId: "GMT", start: 57722400000, end: null),
   ],
   "Europe/Gibraltar": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Guernsey": <MetazoneRange>[
-    MetazoneRange(metazoneId: "British", fromMs: null, toMs: 57722400000),
-    MetazoneRange(metazoneId: "GMT", fromMs: 57722400000, toMs: null),
+    MetazoneRange(metazoneId: "British", start: null, end: 57722400000),
+    MetazoneRange(metazoneId: "GMT", start: 57722400000, end: null),
   ],
   "Europe/Helsinki": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: null),
   ],
   "Europe/Isle_of_Man": <MetazoneRange>[
-    MetazoneRange(metazoneId: "British", fromMs: null, toMs: 57722400000),
-    MetazoneRange(metazoneId: "GMT", fromMs: 57722400000, toMs: null),
+    MetazoneRange(metazoneId: "British", start: null, end: 57722400000),
+    MetazoneRange(metazoneId: "GMT", start: 57722400000, end: null),
   ],
   "Europe/Istanbul": <MetazoneRange>[
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: 267915600000),
+    MetazoneRange(metazoneId: "Turkey", start: 267915600000, end: 468111600000),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: null,
-      toMs: 267915600000,
+      start: 468111600000,
+      end: 1473195600000,
     ),
-    MetazoneRange(
-      metazoneId: "Turkey",
-      fromMs: 267915600000,
-      toMs: 468111600000,
-    ),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 468111600000,
-      toMs: 1473195600000,
-    ),
-    MetazoneRange(metazoneId: "Turkey", fromMs: 1473195600000, toMs: null),
+    MetazoneRange(metazoneId: "Turkey", start: 1473195600000, end: null),
   ],
   "Europe/Jersey": <MetazoneRange>[
-    MetazoneRange(metazoneId: "British", fromMs: null, toMs: 57722400000),
-    MetazoneRange(metazoneId: "GMT", fromMs: 57722400000, toMs: null),
+    MetazoneRange(metazoneId: "British", start: null, end: 57722400000),
+    MetazoneRange(metazoneId: "GMT", start: 57722400000, end: null),
   ],
   "Europe/Kaliningrad": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 606870000000),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 606870000000),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 606870000000,
-      toMs: 1301184000000,
+      start: 606870000000,
+      end: 1301184000000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Further_Eastern",
-      fromMs: 1301184000000,
-      toMs: 1414278000000,
+      start: 1301184000000,
+      end: 1414278000000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 1414278000000,
-      toMs: null,
+      start: 1414278000000,
+      end: null,
     ),
   ],
   "Europe/Kiev": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 646783200000),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 646783200000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 646783200000),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: 646783200000, end: null),
   ],
   "Europe/Kirov": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: 1414274400000, toMs: null),
+    MetazoneRange(metazoneId: "Moscow", start: 1414274400000, end: null),
   ],
   "Europe/Lisbon": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "Europe_Central",
-      fromMs: null,
-      toMs: 212544000000,
-    ),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: 212544000000),
     MetazoneRange(
       metazoneId: "Europe_Western",
-      fromMs: 212544000000,
-      toMs: 717555600000,
+      start: 212544000000,
+      end: 717555600000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Central",
-      fromMs: 717555600000,
-      toMs: 828234000000,
+      start: 717555600000,
+      end: 828234000000,
     ),
-    MetazoneRange(
-      metazoneId: "Europe_Western",
-      fromMs: 828234000000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Europe_Western", start: 828234000000, end: null),
   ],
   "Europe/Ljubljana": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/London": <MetazoneRange>[
-    MetazoneRange(metazoneId: "British", fromMs: null, toMs: 57722400000),
-    MetazoneRange(metazoneId: "GMT", fromMs: 57722400000, toMs: null),
+    MetazoneRange(metazoneId: "British", start: null, end: 57722400000),
+    MetazoneRange(metazoneId: "GMT", start: 57722400000, end: null),
   ],
   "Europe/Luxembourg": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Madrid": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Malta": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Mariehamn": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: null),
   ],
   "Europe/Minsk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 670374000000),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 670374000000),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 670374000000,
-      toMs: 1301184000000,
+      start: 670374000000,
+      end: 1301184000000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Further_Eastern",
-      fromMs: 1301184000000,
-      toMs: 1414360800000,
+      start: 1301184000000,
+      end: 1414360800000,
     ),
-    MetazoneRange(metazoneId: "Moscow", fromMs: 1414360800000, toMs: null),
+    MetazoneRange(metazoneId: "Moscow", start: 1414360800000, end: null),
   ],
   "Europe/Monaco": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Moscow": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 670374000000),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 670374000000),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 670374000000,
-      toMs: 695779200000,
+      start: 670374000000,
+      end: 695779200000,
     ),
-    MetazoneRange(metazoneId: "Moscow", fromMs: 695779200000, toMs: null),
+    MetazoneRange(metazoneId: "Moscow", start: 695779200000, end: null),
   ],
   "Europe/Oslo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Paris": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Podgorica": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Prague": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Riga": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 606870000000),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 606870000000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 606870000000),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: 606870000000, end: null),
   ],
   "Europe/Rome": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Samara": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Kuybyshev", fromMs: null, toMs: 606866400000),
-    MetazoneRange(
-      metazoneId: "Moscow",
-      fromMs: 606866400000,
-      toMs: 670374000000,
-    ),
+    MetazoneRange(metazoneId: "Kuybyshev", start: null, end: 606866400000),
+    MetazoneRange(metazoneId: "Moscow", start: 606866400000, end: 670374000000),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 670374000000,
-      toMs: 686102400000,
+      start: 670374000000,
+      end: 686102400000,
     ),
-    MetazoneRange(metazoneId: "Samara", fromMs: 686102400000, toMs: null),
+    MetazoneRange(metazoneId: "Samara", start: 686102400000, end: null),
   ],
   "Europe/San_Marino": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Sarajevo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Saratov": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Moscow",
-      fromMs: 701820000000,
-      toMs: 1480806000000,
+      start: 701820000000,
+      end: 1480806000000,
     ),
-    MetazoneRange(metazoneId: "Samara", fromMs: 1480806000000, toMs: null),
+    MetazoneRange(metazoneId: "Samara", start: 1480806000000, end: null),
   ],
   "Europe/Simferopol": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 646786800000),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 646786800000),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 646786800000,
-      toMs: 767739600000,
+      start: 646786800000,
+      end: 767739600000,
     ),
-    MetazoneRange(
-      metazoneId: "Moscow",
-      fromMs: 767739600000,
-      toMs: 859683600000,
-    ),
+    MetazoneRange(metazoneId: "Moscow", start: 767739600000, end: 859683600000),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 859683600000,
-      toMs: 1396137600000,
+      start: 859683600000,
+      end: 1396137600000,
     ),
-    MetazoneRange(metazoneId: "Moscow", fromMs: 1396137600000, toMs: null),
+    MetazoneRange(metazoneId: "Moscow", start: 1396137600000, end: null),
   ],
   "Europe/Skopje": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Sofia": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: null, end: null),
   ],
   "Europe/Stockholm": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Tallinn": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 606870000000),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 606870000000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 606870000000),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: 606870000000, end: null),
   ],
   "Europe/Tirane": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Ulyanovsk": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Moscow",
-      fromMs: 695779200000,
-      toMs: 1459033200000,
+      start: 695779200000,
+      end: 1459033200000,
     ),
-    MetazoneRange(metazoneId: "Samara", fromMs: 1459033200000, toMs: null),
+    MetazoneRange(metazoneId: "Samara", start: 1459033200000, end: null),
   ],
   "Europe/Vaduz": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Vatican": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Vienna": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Vilnius": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Moscow", fromMs: null, toMs: 606870000000),
+    MetazoneRange(metazoneId: "Moscow", start: null, end: 606870000000),
     MetazoneRange(
       metazoneId: "Europe_Eastern",
-      fromMs: 606870000000,
-      toMs: 891133200000,
+      start: 606870000000,
+      end: 891133200000,
     ),
     MetazoneRange(
       metazoneId: "Europe_Central",
-      fromMs: 891133200000,
-      toMs: 941331600000,
+      start: 891133200000,
+      end: 941331600000,
     ),
-    MetazoneRange(
-      metazoneId: "Europe_Eastern",
-      fromMs: 941331600000,
-      toMs: null,
-    ),
+    MetazoneRange(metazoneId: "Europe_Eastern", start: 941331600000, end: null),
   ],
   "Europe/Volgograd": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Volgograd", fromMs: null, toMs: 1609020000000),
-    MetazoneRange(metazoneId: "Moscow", fromMs: 1609020000000, toMs: null),
+    MetazoneRange(metazoneId: "Volgograd", start: null, end: 1609020000000),
+    MetazoneRange(metazoneId: "Moscow", start: 1609020000000, end: null),
   ],
   "Europe/Warsaw": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Zagreb": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Europe/Zurich": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Europe_Central", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Europe_Central", start: null, end: null),
   ],
   "Indian/Antananarivo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Indian/Chagos": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Indian_Ocean", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Indian_Ocean", start: null, end: null),
   ],
   "Indian/Christmas": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Christmas", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Christmas", start: null, end: null),
   ],
   "Indian/Cocos": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Cocos", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Cocos", start: null, end: null),
   ],
   "Indian/Comoro": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Indian/Kerguelen": <MetazoneRange>[
-    MetazoneRange(metazoneId: "French_Southern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "French_Southern", start: null, end: null),
   ],
   "Indian/Mahe": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Seychelles", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Seychelles", start: null, end: null),
   ],
   "Indian/Maldives": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Maldives", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Maldives", start: null, end: null),
   ],
   "Indian/Mauritius": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Mauritius", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Mauritius", start: null, end: null),
   ],
   "Indian/Mayotte": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Africa_Eastern", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Africa_Eastern", start: null, end: null),
   ],
   "Indian/Reunion": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Reunion", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Reunion", start: null, end: null),
   ],
   "Pacific/Apia": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Apia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Apia", start: null, end: null),
   ],
   "Pacific/Auckland": <MetazoneRange>[
-    MetazoneRange(metazoneId: "New_Zealand", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "New_Zealand", start: null, end: null),
   ],
   "Pacific/Bougainville": <MetazoneRange>[
     MetazoneRange(
       metazoneId: "Papua_New_Guinea",
-      fromMs: null,
-      toMs: 1419696000000,
+      start: null,
+      end: 1419696000000,
     ),
   ],
   "Pacific/Chatham": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Chatham", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Chatham", start: null, end: null),
   ],
   "Pacific/Easter": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Easter", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Easter", start: null, end: null),
   ],
   "Pacific/Efate": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Vanuatu", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Vanuatu", start: null, end: null),
   ],
   "Pacific/Enderbury": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Phoenix_Islands", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Phoenix_Islands", start: null, end: null),
   ],
   "Pacific/Fakaofo": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Tokelau", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Tokelau", start: null, end: null),
   ],
   "Pacific/Fiji": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Fiji", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Fiji", start: null, end: null),
   ],
   "Pacific/Funafuti": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Tuvalu", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Tuvalu", start: null, end: null),
   ],
   "Pacific/Galapagos": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Ecuador", fromMs: null, toMs: 504939600000),
-    MetazoneRange(metazoneId: "Galapagos", fromMs: 504939600000, toMs: null),
+    MetazoneRange(metazoneId: "Ecuador", start: null, end: 504939600000),
+    MetazoneRange(metazoneId: "Galapagos", start: 504939600000, end: null),
   ],
   "Pacific/Gambier": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Gambier", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Gambier", start: null, end: null),
   ],
   "Pacific/Guadalcanal": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Solomon", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Solomon", start: null, end: null),
   ],
   "Pacific/Guam": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Guam", fromMs: null, toMs: 977493600000),
-    MetazoneRange(metazoneId: "Chamorro", fromMs: 977493600000, toMs: null),
+    MetazoneRange(metazoneId: "Guam", start: null, end: 977493600000),
+    MetazoneRange(metazoneId: "Chamorro", start: 977493600000, end: null),
   ],
   "Pacific/Honolulu": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Hawaii", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Hawaii", start: null, end: null),
   ],
   "Pacific/Kiritimati": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Line_Islands", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Line_Islands", start: null, end: null),
   ],
   "Pacific/Kosrae": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Kosrae", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Kosrae", start: null, end: null),
   ],
   "Pacific/Kwajalein": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Kwajalein", fromMs: null, toMs: 745934400000),
+    MetazoneRange(metazoneId: "Kwajalein", start: null, end: 745934400000),
     MetazoneRange(
       metazoneId: "Marshall_Islands",
-      fromMs: 745934400000,
-      toMs: null,
+      start: 745934400000,
+      end: null,
     ),
   ],
   "Pacific/Majuro": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Marshall_Islands", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Marshall_Islands", start: null, end: null),
   ],
   "Pacific/Marquesas": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Marquesas", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Marquesas", start: null, end: null),
   ],
   "Pacific/Midway": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Bering", fromMs: null, toMs: 436363200000),
-    MetazoneRange(metazoneId: "Samoa", fromMs: 436363200000, toMs: null),
+    MetazoneRange(metazoneId: "Bering", start: null, end: 436363200000),
+    MetazoneRange(metazoneId: "Samoa", start: 436363200000, end: null),
   ],
   "Pacific/Nauru": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Nauru", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Nauru", start: null, end: null),
   ],
   "Pacific/Niue": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Niue", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Niue", start: null, end: null),
   ],
   "Pacific/Norfolk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Norfolk", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Norfolk", start: null, end: null),
   ],
   "Pacific/Noumea": <MetazoneRange>[
-    MetazoneRange(metazoneId: "New_Caledonia", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "New_Caledonia", start: null, end: null),
   ],
   "Pacific/Pago_Pago": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Bering", fromMs: null, toMs: 436363200000),
-    MetazoneRange(metazoneId: "Samoa", fromMs: 436363200000, toMs: null),
+    MetazoneRange(metazoneId: "Bering", start: null, end: 436363200000),
+    MetazoneRange(metazoneId: "Samoa", start: 436363200000, end: null),
   ],
   "Pacific/Palau": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Palau", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Palau", start: null, end: null),
   ],
   "Pacific/Pitcairn": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Pitcairn", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Pitcairn", start: null, end: null),
   ],
   "Pacific/Ponape": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Ponape", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Ponape", start: null, end: null),
   ],
   "Pacific/Port_Moresby": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Papua_New_Guinea", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Papua_New_Guinea", start: null, end: null),
   ],
   "Pacific/Rarotonga": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Cook", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Cook", start: null, end: null),
   ],
   "Pacific/Saipan": <MetazoneRange>[
-    MetazoneRange(
-      metazoneId: "North_Mariana",
-      fromMs: null,
-      toMs: 977493600000,
-    ),
-    MetazoneRange(metazoneId: "Chamorro", fromMs: 977493600000, toMs: null),
+    MetazoneRange(metazoneId: "North_Mariana", start: null, end: 977493600000),
+    MetazoneRange(metazoneId: "Chamorro", start: 977493600000, end: null),
   ],
   "Pacific/Tahiti": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Tahiti", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Tahiti", start: null, end: null),
   ],
   "Pacific/Tarawa": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Gilbert_Islands", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Gilbert_Islands", start: null, end: null),
   ],
   "Pacific/Tongatapu": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Tonga", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Tonga", start: null, end: null),
   ],
   "Pacific/Truk": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Truk", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Truk", start: null, end: null),
   ],
   "Pacific/Wake": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Wake", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Wake", start: null, end: null),
   ],
   "Pacific/Wallis": <MetazoneRange>[
-    MetazoneRange(metazoneId: "Wallis", fromMs: null, toMs: null),
+    MetazoneRange(metazoneId: "Wallis", start: null, end: null),
   ],
 };

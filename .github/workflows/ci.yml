@@ -26,7 +26,10 @@ jobs:
       # analyzer reports its shelf_router import as unresolvable.
       - run: dart pub get --directory example/server
       - run: dart analyze --fatal-infos
-      - run: dart format --output=none --set-exit-if-changed .
+      # Formatter output drifts across SDK versions (3.10 vs 3.13). Check it
+      # once, on the declared floor, so the two matrix cells cannot disagree.
+      - if: matrix.sdk == '3.10.0'
+        run: dart format --output=none --set-exit-if-changed .
       # Tests needing the 170 MB source GeoJSON skip themselves when it is
       # absent, so CI runs without the download. The full oracle comparison is
       # the maintainer's job before a data refresh lands.

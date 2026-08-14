@@ -1,13 +1,6 @@
-// Bootstrap golden fixtures — the only ground truth that does not come from
-// timezone-boundary-builder. The reference oracle is validated here first;
-// only then does it authorize the wider fixtures and differential tests.
-//
-// Written by hand from geography knowledge, then checked against Python
-// `timezonefinder` (see test/fixtures/README.md). Identifiers confirmed in
-// tzbb `timezone-names.json`. Major city centres only — borders, enclaves,
-// antimeridian, and overlaps belong in golden_points.dart / overlap_pins.dart.
-//
-// Do not add a pair by recording what an implementation returned.
+// Bootstrap goldens: external ground truth (not tzbb). Validate the oracle
+// here before wider fixtures. City centres only; see test/fixtures/README.md.
+// Do not record what an implementation returned.
 
 import 'golden_point.dart';
 

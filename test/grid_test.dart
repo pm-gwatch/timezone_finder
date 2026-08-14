@@ -1,13 +1,5 @@
-// The shortcut grid must never drop a polygon.
-//
-// The grid is a filter, not an answer: it narrows 1,184 polygons to a handful
-// and point-in-polygon decides among those. That is only sound if the handful
-// always contains every polygon that could have won. A grid that returns a
-// wrong-but-plausible answer is far worse than one that is slow, and nothing
-// else in the suite would notice — the oracle does not use the grid.
-//
-// So these tests compare a grid-filtered lookup against the oracle directly,
-// over the fixtures and over a large random sample.
+// Grid must not drop a polygon. It only filters; PiP decides. Oracle has no
+// grid, so compare grid-filtered lookup to the oracle.
 
 @Timeout(Duration(minutes: 10))
 library;
@@ -15,16 +7,16 @@ library;
 import 'dart:math';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/quantization.dart';
+import 'package:timezone_finder/src/index/quantization.dart';
 
 import '../tool/src/fetch.dart';
 import '../tool/src/geometry.dart';
 import '../tool/src/grid.dart';
 import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/golden_points.dart';
-import 'reference/reference_finder.dart';
+import 'reference/reference_location_finder.dart';
 
-/// The selected resolution.
+/// Grid cell size: 1° (1e6 quantized units).
 const _chosenCellSize = 1000000;
 
 void main() {
@@ -39,11 +31,11 @@ void main() {
               '  dart run tool/fetch_data.dart\n'
               '(downloads ~51 MB into .dart_tool/, which is gitignored)',
     () {
-      late ReferenceTimeZoneFinder oracle;
+      late ReferenceLocationFinder oracle;
       late BuiltGrid grid;
 
       setUpAll(() async {
-        oracle = await ReferenceTimeZoneFinder.load(cached);
+        oracle = await ReferenceLocationFinder.load(cached);
         grid = buildGrid(const GridSpec(_chosenCellSize), <PolygonBox>[
           for (var i = 0; i < oracle.polygons.length; i++)
             (

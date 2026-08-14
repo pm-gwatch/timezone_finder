@@ -6,7 +6,7 @@ library;
 
 import 'dart:typed_data';
 
-import 'package:timezone_finder/src/varint.dart';
+import 'package:timezone_finder/src/index/varint.dart';
 
 import 'geometry.dart';
 

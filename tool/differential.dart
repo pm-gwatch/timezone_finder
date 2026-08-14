@@ -15,10 +15,10 @@ library;
 import 'dart:io';
 
 import '../test/fixtures/overlap_pins.dart';
-import '../test/reference/reference_finder.dart';
-import 'package:timezone_finder/src/finder.dart';
+import '../test/reference/reference_location_finder.dart';
+import 'package:timezone_finder/src/api/location_finder.dart';
 
-import 'package:timezone_finder/src/data/boundaries.dart' as bundled;
+import 'package:timezone_finder/src/generated/boundaries.dart' as bundled;
 
 import 'release/boundaries_unsimplified.dart' as unsimplified;
 
@@ -47,7 +47,7 @@ Future<void> main(List<String> args) async {
   }
 
   stdout.writeln('Loading reference oracle …');
-  final oracle = await ReferenceTimeZoneFinder.load(cached);
+  final oracle = await ReferenceLocationFinder.load(cached);
   final runtime = finderOverIndex(
     index == 'bundled' ? bundled.loadContainer : unsimplified.loadContainer,
   );
