@@ -1,21 +1,11 @@
-// What simplification costs.
-//
-// The simplified boundaries are *measured against* the ground-truth fixtures,
-// not gated by them. At roughly 110 m, disagreeing near a border is the
-// design working, and a disagreement here is data rather than a failure.
-//
-// What is worth pinning is the shape of that cost: that it loads, that it
-// agrees away from borders, that the enclaves and small islands most at risk
-// survived, and that the rate has not silently drifted.
-//
-// Needs no boundary GeoJSON: the bundled index ships, and the unsimplified
-// baseline is committed under tool/release/.
+// Simplification cost vs fixtures (~110 m). Near-border disagreement is
+// expected. No GeoJSON: bundled + tool/release/ baseline.
 
 @Timeout(Duration(minutes: 10))
 library;
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/finder.dart';
+import 'package:timezone_finder/src/api/location_finder.dart';
 
 import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
@@ -25,7 +15,7 @@ import 'fixtures/overlap_pins.dart';
 
 void main() {
   group('bundled boundaries', () {
-    final bundledFinder = TimeZoneFinder();
+    final bundledFinder = LocationFinder();
     final baselineFinder = finderOverIndex(unsimplified.loadContainer);
 
     test('works with no configuration', () {
@@ -36,8 +26,8 @@ void main() {
       );
       expect(bundledFinder.findLocationName(-140, 0), isNull);
       expect(
-        bundledFinder.ianaDatabaseVersion,
-        baselineFinder.ianaDatabaseVersion,
+        bundledFinder.boundaryDataVersion,
+        baselineFinder.boundaryDataVersion,
       );
     });
 

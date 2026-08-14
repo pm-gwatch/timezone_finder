@@ -1,7 +1,6 @@
-/// Embedded boundary loader for web — chunks are never linked here.
+/// Web boundary loader — chunks are never linked here.
 ///
-/// Call [installBoundaries] from `package:timezone_finder/browser.dart` (or
-/// hand bytes to the shared install path) before any lookup.
+/// On web, install boundaries first (`package:timezone_finder/browser.dart`).
 library;
 
 import 'dart:typed_data';

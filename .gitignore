@@ -14,3 +14,6 @@ pubspec.lock
 
 # Working notes and draft plans at repo root (not package docs)
 /docs/
+
+# Files and directories created by dart doc.
+doc/api/

@@ -1,14 +1,5 @@
-// The data actually shipped.
-//
-// Everything until now tested a container packed in memory. These tests use
-// what a consumer gets — the base64 chunks under `lib/src/data/`, decoded
-// through the default constructor.
-//
-// Most of this needs no boundary data at all, which is the point: once the
-// index is bundled, the fixtures can be checked on a fresh clone with no 51 MB
-// download. The one test that does need the cache is the round-trip check
-// against a freshly packed container, since that is the only thing proving the
-// emit and decode steps did not corrupt anything.
+// Shipped chunks under lib/src/generated/. Most tests need no 51 MB cache;
+// round-trip against a freshly packed container does.
 
 @Timeout(Duration(minutes: 10))
 library;
@@ -17,9 +8,11 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/boundaries_bin.dart';
-import 'package:timezone_finder/src/data/boundaries.dart' as bundled_data;
-import 'package:timezone_finder/src/finder.dart';
+import 'package:timezone_finder/src/generated/boundaries_bin.dart';
+import 'package:timezone_finder/src/generated/boundaries.dart' as bundled_data;
+import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/index/boundary_store.dart'
+    show indexDecodeCount;
 
 import '../tool/release/boundaries_unsimplified.dart' as unsimplified_data;
 
@@ -30,11 +23,11 @@ import '../tool/src/fetch.dart';
 import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/golden_points.dart';
 import 'fixtures/overlap_pins.dart';
-import 'reference/reference_finder.dart';
+import 'reference/reference_location_finder.dart';
 
 void main() {
   group('bundled data', () {
-    final finder = TimeZoneFinder();
+    final finder = LocationFinder();
 
     test('the default constructor needs no configuration', () {
       expect(finder.findLocationName(2.3522, 48.8566), 'Europe/Paris');
@@ -57,13 +50,14 @@ void main() {
     });
 
     test('the docs that hardcode the .bin filename name the current one', () {
-      // A boundary release renames the file, and these two spell it out in
-      // full: browser.dart because a `flutter: assets:` entry is YAML with no
-      // constant to reach for, the README for the same reason. Nothing
-      // regenerates them, so without this they go stale silently and an app
-      // following them fails at the asset lookup, not at compile time.
+      // A boundary release renames the file. The README spells it out because
+      // a `flutter: assets:` entry is YAML with no constant to reach for.
+      // `browser.dart` interpolates `boundariesBinName` and is not listed.
+      // Nothing regenerates the README, so without this it goes stale
+      // silently and an app following it fails at the asset lookup, not at
+      // compile time.
       final mention = RegExp(r'boundaries_[0-9a-z]+\.bin');
-      for (final path in const <String>['lib/browser.dart', 'README.md']) {
+      for (final path in const <String>['README.md']) {
         final named = mention
             .allMatches(File(path).readAsStringSync())
             .map((match) => match[0]!)
@@ -84,7 +78,7 @@ void main() {
     });
 
     test('reports the release it was generated from', () {
-      expect(finder.ianaDatabaseVersion, defaultRelease);
+      expect(finder.boundaryDataVersion, defaultRelease);
       expect(finder.availableLocationNames.length, 419);
       expect(
         finder.availableLocationNames,
@@ -270,7 +264,7 @@ void main() {
       // Deliberate, not incidental. Each finder used to decode its own copy;
       // they now read one. Asserting equal answers would pass either way, so
       // this counts decodes.
-      TimeZoneFinder().findLocationName(
+      LocationFinder().findLocationName(
         2.3522,
         48.8566,
       ); // ensure it is decoded at all
@@ -279,7 +273,7 @@ void main() {
 
       for (var i = 0; i < 5; i++) {
         expect(
-          TimeZoneFinder().findLocationName(2.3522, 48.8566),
+          LocationFinder().findLocationName(2.3522, 48.8566),
           'Europe/Paris',
         );
       }
@@ -291,20 +285,20 @@ void main() {
     });
 
     test('the top-level API reads the same shared index', () async {
-      // findLocation / ensurePreloaded / ianaDatabaseVersion are the public
-      // surface; TimeZoneFinder is not exported. They must resolve through the
+      // findLocation / ensurePreloaded / boundaryDataVersion are the public
+      // surface; LocationFinder is not exported. They must resolve through the
       // one shared index rather than decoding a second, or a server would pay
-      // twice per isolate. availableLocationNames is package-internal but
-      // shares it.
+      // twice per isolate.
       await ensurePreloaded();
       final decodes = indexDecodeCount;
+      final finder = LocationFinder();
 
-      expect(findLocationName(2.3522, 48.8566), 'Europe/Paris');
+      expect(finder.findLocationName(2.3522, 48.8566), 'Europe/Paris');
       expect(findLocation(-140, 0), isNull);
-      expect(availableLocationNames.length, 419);
-      expect(ianaDatabaseVersion, defaultRelease);
+      expect(finder.availableLocationNames.length, 419);
+      expect(boundaryDataVersion, defaultRelease);
       expect(
-        TimeZoneFinder().findLocationName(2.3522, 48.8566),
+        LocationFinder().findLocationName(2.3522, 48.8566),
         'Europe/Paris',
       );
       await ensurePreloaded();
@@ -317,14 +311,12 @@ void main() {
     });
 
     test('ensurePreloaded on one default finder warms every other', () async {
-      // This is why the package needs no initializeTimeZoneBoundaries():
-      // preloading through any default finder decodes the index that every
-      // default finder reads, so there is nothing left for a separate
-      // initializer to do.
-      await TimeZoneFinder().ensurePreloaded();
+      // Any default LocationFinder().ensurePreloaded() warms the shared index
+      // every other default finder reads.
+      await LocationFinder().ensurePreloaded();
       final decodes = indexDecodeCount;
 
-      final other = TimeZoneFinder();
+      final other = LocationFinder();
       expect(other.findLocationName(2.3522, 48.8566), 'Europe/Paris');
       expect(
         indexDecodeCount,
@@ -335,16 +327,16 @@ void main() {
 
     test('sharing an index cannot let one finder corrupt another', () {
       // The property the previous test used to establish by keeping the
-      // finders apart. It has to hold now that they are not: a TimeZoneIndex
+      // finders apart. It has to hold now that they are not: a BoundaryIndex
       // is read-only after construction, and lookups must not disturb it.
-      final a = TimeZoneFinder();
-      final b = TimeZoneFinder();
+      final a = LocationFinder();
+      final b = LocationFinder();
       expect(a.findLocationName(2.3522, 48.8566), 'Europe/Paris');
       expect(b.findLocationName(139.6503, 35.6762), 'Asia/Tokyo');
       expect(a.findLocationName(139.6503, 35.6762), 'Asia/Tokyo');
       expect(b.findLocationName(2.3522, 48.8566), 'Europe/Paris');
       expect(a.availableLocationNames, b.availableLocationNames);
-      expect(a.ianaDatabaseVersion, b.ianaDatabaseVersion);
+      expect(a.boundaryDataVersion, b.boundaryDataVersion);
     });
 
     test('finderOverIndex stays isolated from the bundled index', () {
@@ -363,7 +355,7 @@ void main() {
       // Same coordinate, two different indexes, both answering.
       expect(baseline.findLocationName(2.3522, 48.8566), 'Europe/Paris');
       expect(
-        TimeZoneFinder().findLocationName(2.3522, 48.8566),
+        LocationFinder().findLocationName(2.3522, 48.8566),
         'Europe/Paris',
       );
     });
@@ -380,7 +372,7 @@ void main() {
         // The only check that the emit → base64 → decode round trip is
         // lossless. If it were not, every other test here would still pass
         // while the shipped answers quietly drifted from the source data.
-        final oracle = await ReferenceTimeZoneFinder.load(
+        final oracle = await ReferenceLocationFinder.load(
           cachedGeoJsonFile(defaultRelease),
         );
         final fresh = buildIndex(
@@ -407,7 +399,7 @@ void main() {
           fresh.length,
           reason:
               'bundled container is a different size from a fresh pack — '
-              'lib/src/data is stale. Run tool/refresh.dart for a release '
+              'lib/src/generated is stale. Run tool/refresh.dart for a release '
               'bump, or tool/generate_data.dart to re-emit the committed one',
         );
         var firstDifference = -1;
@@ -430,7 +422,7 @@ void main() {
         // Without this stale bundled data would ship silently: every other
         // simplification test compares it against the baseline's answers, which
         // says nothing about whether it was regenerated from current source.
-        final oracle = await ReferenceTimeZoneFinder.load(
+        final oracle = await ReferenceLocationFinder.load(
           cachedGeoJsonFile(defaultRelease),
         );
         final stats = SimplifyStats();

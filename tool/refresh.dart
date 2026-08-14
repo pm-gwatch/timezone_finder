@@ -7,7 +7,7 @@
 ///     dart run tool/refresh.dart --release 2026c --verify   # check only
 ///
 /// Triages the release, runs `tool/generate_data.dart` for the indexes, then
-/// refreshes `lib/src/data/metazone_data.dart` from CLDR and runs the suite.
+/// refreshes `lib/src/generated/metazone_data.dart` from CLDR and runs the suite.
 /// The last two are skipped under `--verify`. The release is a parameter
 /// rather than "latest" so any past one can be reproduced. Generated files are
 /// committed; consumers never run this.
@@ -134,8 +134,8 @@ Future<void> main(List<String> args) async {
 
   await _run('dart', <String>[
     'format',
-    'lib/src/data',
-    'lib/src/boundaries_bin.dart',
+    'lib/src/generated',
+    'lib/src/generated/boundaries_bin.dart',
   ]);
 
   stdout.writeln('\nRefreshing CLDR metazone tables …');
@@ -147,7 +147,10 @@ Future<void> main(List<String> args) async {
     exitCode = 1;
     return;
   }
-  await _run('dart', <String>['format', 'lib/src/data/metazone_data.dart']);
+  await _run('dart', <String>[
+    'format',
+    'lib/src/generated/metazone_data.dart',
+  ]);
 
   if (!skipTests) {
     stdout.writeln(
@@ -165,7 +168,7 @@ Future<void> main(List<String> args) async {
   }
 
   stdout.writeln(
-    '\nDone. This run wrote lib/src/data/, lib/src/boundaries_bin.dart, '
+    '\nDone. This run wrote lib/src/generated/, lib/src/generated/boundaries_bin.dart, '
     'lib/data/ and tool/release/ — review all four before committing, and '
     'record the release in CHANGELOG.md.',
   );

@@ -5,8 +5,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/browser.dart';
-import 'package:timezone_finder/src/finder.dart' show findLocationName;
+import 'package:timezone_finder/src/generated/boundaries_bin.dart';
+import 'package:timezone_finder/src/exceptions.dart';
+import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/index/boundary_store.dart'
+    show installBoundaries;
 
 import '../tool/src/build_index.dart';
 
@@ -46,8 +49,9 @@ void main() {
 
   test('installBoundaries accepts the shipped .bin', () {
     installBoundaries(_shippedBytes());
-    expect(findLocationName(2.3522, 48.8566), 'Europe/Paris');
-    expect(findLocationName(-140.0, 0.0), isNull);
+    final finder = LocationFinder();
+    expect(finder.findLocationName(2.3522, 48.8566), 'Europe/Paris');
+    expect(finder.findLocationName(-140.0, 0.0), isNull);
   });
 
   test('installBoundaries rejects corrupt bytes', () {
@@ -60,41 +64,28 @@ void main() {
   test('second install with the same version is a no-op', () {
     final bytes = _shippedBytes();
     installBoundaries(bytes);
-    final version = ianaDatabaseVersion;
+    final version = boundaryDataVersion;
     installBoundaries(bytes);
-    expect(ianaDatabaseVersion, version);
-    expect(findLocationName(2.3522, 48.8566), 'Europe/Paris');
+    expect(boundaryDataVersion, version);
+    expect(LocationFinder().findLocationName(2.3522, 48.8566), 'Europe/Paris');
   });
 
   test('a different data version replaces the installed index', () {
     installBoundaries(_shippedBytes());
-    expect(ianaDatabaseVersion, isNot('synthetic-0000'));
-    expect(findLocationName(0.5, 0.5), isNull, reason: 'ocean in real data');
+    final finder = LocationFinder();
+    expect(boundaryDataVersion, isNot('synthetic-0000'));
+    expect(
+      finder.findLocationName(0.5, 0.5),
+      isNull,
+      reason: 'ocean in real data',
+    );
 
     installBoundaries(_syntheticContainer('synthetic-0000'));
 
     // Version *and* answers move: a no-op here would leave Paris resolving,
     // which is exactly the bug this distinguishes from the same-version case.
-    expect(ianaDatabaseVersion, 'synthetic-0000');
-    expect(findLocationName(0.5, 0.5), 'Test/Synthetic');
-    expect(findLocationName(2.3522, 48.8566), isNull);
+    expect(boundaryDataVersion, 'synthetic-0000');
+    expect(finder.findLocationName(0.5, 0.5), 'Test/Synthetic');
+    expect(finder.findLocationName(2.3522, 48.8566), isNull);
   });
-
-  test(
-    'initializeBoundaries off web throws, pointing at installBoundaries',
-    () {
-      // fetch_stub.dart: the VM has no dart:js_interop fetch, and the message
-      // has to name the way out or a Flutter-desktop caller is stuck.
-      expect(
-        initializeBoundaries(),
-        throwsA(
-          isA<BoundariesInitException>().having(
-            (e) => e.message,
-            'message',
-            contains('installBoundaries'),
-          ),
-        ),
-      );
-    },
-  );
 }

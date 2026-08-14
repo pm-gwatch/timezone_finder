@@ -1,9 +1,4 @@
-// Tests for polygon area and the overlap precedence rule.
-//
-// These need no boundary data and always run. `comparePrecedence` decides
-// which identifier is returned in the documented overlap regions — mostly
-// disputed territories — so it has to be a genuine total order, not merely
-// one that happens to sort this dataset acceptably.
+// Polygon area and overlap precedence. No boundary data.
 
 import 'dart:typed_data';
 

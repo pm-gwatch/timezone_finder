@@ -9,7 +9,7 @@ library;
 
 import 'dart:math';
 
-import '../../test/reference/reference_finder.dart';
+import '../../test/reference/reference_location_finder.dart';
 
 /// What one sampler found.
 class SamplerStats {
@@ -75,7 +75,7 @@ class DifferentialReport {
 /// available check that the runtime's first-hit path and the oracle's
 /// collect-then-sort path implement the same precedence rule.
 DifferentialReport runDifferential({
-  required ReferenceTimeZoneFinder oracle,
+  required ReferenceLocationFinder oracle,
   required String? Function(double longitude, double latitude) subject,
   required int points,
   required int seed,
@@ -141,7 +141,7 @@ DifferentialReport runDifferential({
       entry.disagreements++;
       if (examples.length < 40) {
         // Longitude first, the order both finders take, so an example can be
-        // pasted into findLocation / the package-internal findLocationName.
+        // pasted into findLocation / LocationFinder.findLocationName.
         examples.add(
           '[$name] (${point.lon}, ${point.lat}): '
           'runtime ${actual ?? 'null'}, oracle ${expected ?? 'null'}',

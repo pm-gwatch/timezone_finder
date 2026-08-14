@@ -17,12 +17,12 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone_finder/timezone_finder.dart';
 
-/// Departure date at Zurich (local calendar day for the board).
-final _boardDay = DateTime(2026, 9, 9);
+/// Board clock: civil date and wall time, treated as Zurich local.
+final _boardDay = DateTime(2026, 9, 9, 9, 5);
 
 const _port = 8080;
 
-/// Airport reference points (longitude, latitude) for [findLocation].
+/// ZRH (lon, lat).
 const _zurichLngLat = (8.5492, 47.4582);
 const _destinations =
     <
@@ -94,14 +94,16 @@ void main() async {
       ),
   ]..sort((a, b) => a.takeoff.compareTo(b.takeoff));
 
-  // Noon on the board day — Zurich's offset for the displayed calendar date.
+  // Zurich offset at the board clock (not midnight: that night may be a DST
+  // transition).
   final originUtcOffset = tz.TZDateTime(
     origin,
     _boardDay.year,
     _boardDay.month,
     _boardDay.day,
-    12,
-  ).utcOffset;
+    _boardDay.hour,
+    _boardDay.minute,
+  ).utcOffsetLabel;
 
   final router = Router()
     ..get(
@@ -149,7 +151,7 @@ class _FlightRow {
   }) {
     final arrival = findLocation(destLng, destLat);
     if (arrival == null) {
-      throw StateError('No timezone polygon for $city ($iata)');
+      throw StateError('No time zone polygon for $city ($iata)');
     }
 
     final takeoff = tz.TZDateTime(
@@ -160,9 +162,8 @@ class _FlightRow {
       takeoffHour,
       takeoffMinute,
     );
-    // One instant, read on the destination's clock. `convertTo` never moves
-    // the moment — it only changes which zone reports it.
-    final landing = takeoff.add(duration).convertTo(arrival);
+    // Same instant, destination clock.
+    final landing = takeoff.add(duration).toLocation(arrival);
 
     return _FlightRow(
       flight: flight,
@@ -195,8 +196,8 @@ class _FlightRow {
   /// Destination-local clock; appends `(Day ±n)` when the calendar day differs
   /// from takeoff's (Zurich-local) day.
   String get landingLabel {
-    final takeoffDay = DateTime(takeoff.year, takeoff.month, takeoff.day);
-    final landingDay = DateTime(landing.year, landing.month, landing.day);
+    final takeoffDay = DateTime.utc(takeoff.year, takeoff.month, takeoff.day);
+    final landingDay = DateTime.utc(landing.year, landing.month, landing.day);
     final dayDelta = landingDay.difference(takeoffDay).inDays;
     final time = _formatTime(landing);
     if (dayDelta == 0) return time;
@@ -204,16 +205,32 @@ class _FlightRow {
     return '$time (Day $signed)';
   }
 
-  /// The destination's UTC offset at the landing instant, e.g. `UTC+08`.
-  ///
-  /// Shown under the landing time because the clock alone does not say which
-  /// zone produced it — and the offset is what changes with the season.
-  String get landingOffsetLabel => landing.utcOffset;
+  /// Destination UTC offset at landing, e.g. `UTC+08`.
+  String get landingOffsetLabel => landing.utcOffsetLabel;
 }
 
 String _formatTime(tz.TZDateTime t) =>
     '${t.hour.toString().padLeft(2, '0')}:'
     '${t.minute.toString().padLeft(2, '0')}';
+
+String _formatBoardDate(DateTime d) {
+  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${weekdays[d.weekday - 1]} ${d.day} ${months[d.month - 1]} ${d.year}';
+}
 
 String _esc(String s) => s
     .replaceAll('&', '&amp;')
@@ -237,6 +254,11 @@ String _renderBoard(List<_FlightRow> rows, {required String originUtcOffset}) {
         </tr>''',
       )
       .join();
+
+  final boardTime =
+      '${_boardDay.hour.toString().padLeft(2, '0')}:'
+      '${_boardDay.minute.toString().padLeft(2, '0')}';
+  final boardDate = _formatBoardDate(_boardDay);
 
   return '''
 <!DOCTYPE html>
@@ -265,9 +287,11 @@ String _renderBoard(List<_FlightRow> rows, {required String originUtcOffset}) {
       display: flex;
       justify-content: center;
       padding: 2.5rem 1.25rem;
+      overflow-x: auto;
     }
     .board {
-      width: min(52rem, 100%);
+      flex: 0 0 auto;
+      width: max(52rem, max-content);
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 2px;
@@ -275,28 +299,46 @@ String _renderBoard(List<_FlightRow> rows, {required String originUtcOffset}) {
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
     }
     header {
-      display: flex;
+      display: grid;
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto;
       justify-content: space-between;
-      align-items: flex-start;
-      gap: 1rem;
+      align-items: baseline;
+      column-gap: 1rem;
+      row-gap: 0.2rem;
       margin-bottom: 1.25rem;
       padding-bottom: 0.85rem;
       border-bottom: 1px solid var(--line);
     }
     h1 {
+      grid-column: 1;
+      grid-row: 1;
       margin: 0;
+      padding: 0;
       font-size: 1.15rem;
       font-weight: 600;
       letter-spacing: 0.02em;
+      line-height: 1.25;
+      white-space: nowrap;
     }
     .clock {
-      text-align: end;
+      display: contents;
     }
-    .clock .time {
+    .clock .date-time {
+      grid-column: 2;
+      grid-row: 1;
       margin: 0;
+      margin-inline-start: 2.5rem;
       font-variant-numeric: tabular-nums;
-      font-size: 0.95rem;
+      font-size: 1.15rem;
+      line-height: 1.25;
       white-space: nowrap;
+    }
+    .clock .offset {
+      grid-column: 2;
+      grid-row: 2;
+      margin: 0;
+      text-align: end;
     }
     table {
       width: 100%;
@@ -333,9 +375,12 @@ String _renderBoard(List<_FlightRow> rows, {required String originUtcOffset}) {
     }
     footer {
       margin-top: 1.25rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--line);
       font-size: 0.7rem;
       color: var(--muted);
     }
+    footer p { margin: 0; }
     a { color: var(--ink); }
   </style>
 </head>
@@ -344,7 +389,7 @@ String _renderBoard(List<_FlightRow> rows, {required String originUtcOffset}) {
     <header>
       <h1>Zurich Airport (ZRH) — Departures</h1>
       <div class="clock">
-        <p class="mono time">09:05</p>
+        <p class="mono date-time">${_esc(boardDate)} - ${_esc(boardTime)}</p>
         <p class="offset">${_esc(originUtcOffset)}</p>
       </div>
     </header>
@@ -355,13 +400,20 @@ String _renderBoard(List<_FlightRow> rows, {required String originUtcOffset}) {
           <th>Destination</th>
           <th>Takeoff</th>
           <th>Landing</th>
-          <th>Duration</th>
+          <th>Flight Duration</th>
         </tr>
       </thead>
       <tbody>
 $bodyRows
       </tbody>
     </table>
+    <footer>
+      <p>Example built with the
+        <a href="https://pub.dev/packages/timezone_finder">timezone_finder</a>
+        and
+        <a href="https://pub.dev/packages/timezone">timezone</a>
+        packages.</p>
+    </footer>
   </main>
 </body>
 </html>

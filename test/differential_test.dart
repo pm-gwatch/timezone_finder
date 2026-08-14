@@ -1,28 +1,18 @@
-// Differential testing, CI-sized.
-//
-// The full gate is 10 million points and takes about half an hour, because the
-// oracle scans every polygon linearly. That lives in `tool/differential.dart`
-// and is run on demand. This is the sample small enough to run on every
-// change while still exercising every sampler.
-//
-// The samplers are weighted toward boundaries rather than spread uniformly:
-// uniform sampling is mostly ocean and re-tests empty cells. `hole` in
-// particular carries far more weight than holes' share of the geometry,
-// because a negative control that disabled the hole test entirely went
-// undetected across 20,000 points until a dedicated sampler existed.
+// CI-sized differential (full 10M gate is tool/differential.dart).
+// Samplers bias to boundaries/holes; uniform sampling is mostly ocean.
 
 @Timeout(Duration(minutes: 15))
 library;
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/finder.dart';
+import 'package:timezone_finder/src/api/location_finder.dart';
 
 import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
 import '../tool/src/differential.dart';
 import '../tool/src/fetch.dart';
 import 'fixtures/overlap_pins.dart';
-import 'reference/reference_finder.dart';
+import 'reference/reference_location_finder.dart';
 
 /// Enough to give every sampler thousands of points without slowing the suite
 /// to a crawl. The release gate is the 10M run in `tool/`.
@@ -43,7 +33,7 @@ void main() {
       late DifferentialReport report;
 
       setUpAll(() async {
-        final oracle = await ReferenceTimeZoneFinder.load(cached);
+        final oracle = await ReferenceLocationFinder.load(cached);
         final runtime = finderOverIndex(unsimplified.loadContainer);
         report = runDifferential(
           oracle: oracle,

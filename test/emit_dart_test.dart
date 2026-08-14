@@ -1,12 +1,5 @@
-// The Dart-source emitter.
-//
-// `bundled_data_test` proves the *shipped* files decode back to the right
-// bytes, but only for one container at one chunk size. The guard that makes
-// per-chunk decoding possible — chunk boundaries falling on four-character
-// base64 groups — was never exercised at all, and it is the kind of constraint
-// that is silently satisfied until someone changes a number.
-//
-// Needs no boundary data: a small synthetic container is enough.
+// Dart-source emitter. Chunk boundaries on 4-char base64 groups. Synthetic
+// container; no boundary data.
 
 import 'dart:convert';
 import 'dart:io';

@@ -1,14 +1,14 @@
 /// Assembles the shipped index container.
 ///
-/// Build-time counterpart to the reader in `lib/src/index.dart`; the layout is
+/// Build-time counterpart to the reader in `lib/src/index/boundary_index.dart`; the layout is
 /// documented there.
 library;
 
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:timezone_finder/src/index.dart';
-import 'package:timezone_finder/src/varint.dart';
+import 'package:timezone_finder/src/index/boundary_index.dart';
+import 'package:timezone_finder/src/index/varint.dart';
 
 import 'grid.dart';
 
@@ -36,6 +36,20 @@ int pipSideBound(int dx, int dy) => 360000000 * dy + dy * dx;
 /// Without this gate, a future tzbb release could silently emit rings whose
 /// dart2js lookups disagree with the VM. Call before writing coordinates.
 void assertPipDart2jsSafe(Iterable<Int32List> rings) {
+  final maxBound = maxPipSideBound(rings);
+  if (maxBound >= pipDart2jsLimit) {
+    throw StateError(
+      'PIP sound |side| bound $maxBound reaches or exceeds 2^53 '
+      '($pipDart2jsLimit); dart2js cannot represent edge tests exactly',
+    );
+  }
+}
+
+/// Max sound `|side|` bound across every edge in [rings].
+///
+/// Bound used by the dart2js safety gate: for a straddling ray,
+/// `|side| ≤ 360e6·|dy| + |dy|·|dx|`. Must stay strictly below 2⁵³.
+int maxPipSideBound(Iterable<Int32List> rings) {
   var maxBound = 0;
   for (final ring in rings) {
     final n = ring.length ~/ 2;
@@ -47,12 +61,7 @@ void assertPipDart2jsSafe(Iterable<Int32List> rings) {
       if (bound > maxBound) maxBound = bound;
     }
   }
-  if (maxBound >= pipDart2jsLimit) {
-    throw StateError(
-      'PIP sound |side| bound $maxBound reaches or exceeds 2^53 '
-      '($pipDart2jsLimit); dart2js cannot represent edge tests exactly',
-    );
-  }
+  return maxBound;
 }
 
 /// Packs [polygons] into a container the runtime reader accepts.

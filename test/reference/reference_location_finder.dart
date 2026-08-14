@@ -1,20 +1,14 @@
-/// Correctness oracle: parse the GeoJSON, keep every polygon, test them all.
-///
-/// No spatial index and no encoding — slow (~1,184 polygons per lookup), needs
-/// ~170 MB of source data, and never ships. It is the authority the real
-/// index is validated against; short enough to review line by line.
-///
-/// Trust it only after `bootstrapGoldens` passes. It quantizes with the same
-/// [quantize] as the index, so it cannot catch quantization bugs — that is
-/// what `quantization_test` is for (including negatives and half-unit edges).
+/// Oracle: every polygon, no index. Slow; never ships. Trust only after
+/// `bootstrapGoldens`. Same [quantize] as the index — quantization_test
+/// catches quantization bugs.
 library;
 
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:timezone_finder/src/point_in_polygon.dart';
-import 'package:timezone_finder/src/quantization.dart';
+import 'package:timezone_finder/src/index/point_in_polygon.dart';
+import 'package:timezone_finder/src/index/quantization.dart';
 
 import '../../tool/src/geometry.dart';
 
@@ -66,9 +60,8 @@ class ReferencePolygon {
   }
 }
 
-/// The oracle.
-class ReferenceTimeZoneFinder {
-  ReferenceTimeZoneFinder._(this.polygons, this.zones);
+class ReferenceLocationFinder {
+  ReferenceLocationFinder._(this.polygons, this.zones);
 
   /// Every polygon in the dataset, in source order.
   final List<ReferencePolygon> polygons;
@@ -80,7 +73,7 @@ class ReferenceTimeZoneFinder {
   ///
   /// Decodes as a stream so the ~170 MB of source is never materialised as a
   /// single Dart string, which would cost ~340 MB on its own.
-  static Future<ReferenceTimeZoneFinder> load(File geoJson) async {
+  static Future<ReferenceLocationFinder> load(File geoJson) async {
     final decoded = await geoJson
         .openRead()
         .transform(utf8.decoder)
@@ -123,21 +116,14 @@ class ReferenceTimeZoneFinder {
       }
     }
 
-    return ReferenceTimeZoneFinder._(polygons, zones.toList()..sort());
+    return ReferenceLocationFinder._(polygons, zones.toList()..sort());
   }
 
-  /// Returns the identifier containing ([latitude], [longitude]), or `null`
-  /// when the coordinate is not inside any land polygon.
+  /// IANA id containing ([longitude], [latitude]), or `null`.
   ///
-  /// Where polygons overlap — 25 pairs are documented upstream, mostly
-  /// disputed territories — applies the overlap tiebreak: the
-  /// smallest containing polygon by planar area, then lexicographic
-  /// identifier.
-  ///
-  /// Unlike the real index, which sorts candidates and returns the first hit,
-  /// this collects every containing polygon before choosing. Same answer, but
-  /// hand-checkable, and it makes [zonesContaining] free.
-  /// Argument order matches the public API: longitude first, then latitude.
+  /// Overlaps: smallest planar area, then lexicographic id. Unlike the index
+  /// (first pre-sorted hit), this collects all hits then chooses — same
+  /// answer; [zonesContaining] is free.
   String? findLocationName(double longitude, double latitude) {
     _validate(longitude, latitude);
     final hits = _containing(longitude, latitude);

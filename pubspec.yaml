@@ -2,8 +2,8 @@ name: timezone_finder
 description: >-
   Makes package:timezone easier to use — turn a place on Earth into the
   Location it sits in, convert a TZDateTime from one Location to another, and
-  read English metazone labels.
-version: 0.1.0
+  read English time zone labels.
+version: 0.2.0
 repository: https://github.com/pm-gwatch/timezone_finder
 issue_tracker: https://github.com/pm-gwatch/timezone_finder/issues
 
@@ -14,7 +14,7 @@ topics:
 
 # Generated data can trip pub's secret scanner; not real credentials.
 false_secrets:
-  - /lib/src/data/**
+  - /lib/src/generated/**
 
 environment:
   sdk: ^3.10.0

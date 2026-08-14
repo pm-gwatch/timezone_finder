@@ -1,16 +1,12 @@
-// The package:timezone bridge: findLocation, toLocation, convertTo,
-// utcOffsetDifference.
-//
-// Initialized from `latest_all` here, which is the variant the package
-// documents. The consequences of choosing `latest` instead are covered in
-// tzdata_test.dart, which needs a differently initialized process.
-//
-// Needs no boundary GeoJSON — the index is bundled.
+// Location / TZDateTime helpers: findLocation, GeoJsonLocation.findLocation,
+// toLocation, offsetDifference. Uses latest_all (latest is tzdata_test.dart,
+// separate process). No GeoJSON download; index is bundled.
 
 import 'package:test/test.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart';
-import 'package:timezone_finder/src/finder.dart' show availableLocationNames;
+import 'package:timezone_finder/src/api/location_finder.dart'
+    show LocationFinder;
 import 'package:timezone_finder/timezone_finder.dart';
 
 /// A minimal RFC 7946 Feature. `properties` is omitted deliberately: the
@@ -82,7 +78,7 @@ void main() {
       // tzbb identifier can arrive before the other side has it, and this is
       // where that should be reported — not in a user's application.
       final missing = <String>[];
-      for (final name in availableLocationNames) {
+      for (final name in LocationFinder().availableLocationNames) {
         try {
           getLocation(name);
         } on LocationNotFoundException {
@@ -94,22 +90,22 @@ void main() {
         isEmpty,
         reason:
             'package:timezone (tzdata) no longer carries every identifier in '
-            'boundary release $ianaDatabaseVersion: '
+            'boundary release $boundaryDataVersion: '
             '${missing.join(', ')}',
       );
     });
   });
 
-  group('String.toLocation', () {
+  group('String.findLocation', () {
     test('resolves a GeoJSON Feature', () {
-      expect(feature(2.3522, 48.8566).toLocation()!.name, 'Europe/Paris');
+      expect(feature(2.3522, 48.8566).findLocation()!.name, 'Europe/Paris');
     });
 
     test('reads real geocoder answers unchanged', () {
       // The shape these two services actually return. A change at either end
       // fails here rather than in someone's application.
-      expect(nominatimHeathrow.toLocation()!.name, 'Europe/London');
-      expect(photonMumbai.toLocation()!.name, 'Asia/Kolkata');
+      expect(nominatimHeathrow.findLocation()!.name, 'Europe/London');
+      expect(photonMumbai.findLocation()!.name, 'Asia/Kolkata');
     });
 
     test('ignores altitude in a 3D position', () {
@@ -118,7 +114,7 @@ void main() {
       const withAltitude =
           '{"type": "Feature", "geometry": {"type": "Point", '
           '"coordinates": [2.3522, 48.8566, 35.0]}}';
-      expect(withAltitude.toLocation()!.name, 'Europe/Paris');
+      expect(withAltitude.findLocation()!.name, 'Europe/Paris');
     });
 
     test('does not require properties, though RFC 7946 lists it', () {
@@ -126,13 +122,13 @@ void main() {
       // an ignored member would be gratuitous — and would force every
       // hand-written example to carry `"properties": null`.
       expect(
-        feature(151.2093, -33.8688).toLocation()!.name,
+        feature(151.2093, -33.8688).findLocation()!.name,
         'Australia/Sydney',
       );
       const withProperties =
           '{"type": "Feature", "properties": {"name": "Sydney"}, '
           '"geometry": {"type": "Point", "coordinates": [151.2093, -33.8688]}}';
-      expect(withProperties.toLocation()!.name, 'Australia/Sydney');
+      expect(withProperties.findLocation()!.name, 'Australia/Sydney');
     });
 
     test('accepts a bare Point geometry as well as a Feature', () {
@@ -141,8 +137,11 @@ void main() {
       // metadata this package ignores, so refusing the Point itself would be
       // arbitrary.
       const point = '{"type": "Point", "coordinates": [2.3522, 48.8566]}';
-      expect(point.toLocation()!.name, 'Europe/Paris');
-      expect(point.toLocation(), same(feature(2.3522, 48.8566).toLocation()));
+      expect(point.findLocation()!.name, 'Europe/Paris');
+      expect(
+        point.findLocation(),
+        same(feature(2.3522, 48.8566).findLocation()),
+      );
     });
 
     test('a bare Point takes the same contract as a Feature', () {
@@ -152,14 +151,14 @@ void main() {
       const offEarth = '{"type": "Point", "coordinates": [0.0, 91.0]}';
       const shortPosition = '{"type": "Point", "coordinates": [2.3522]}';
 
-      expect(ocean.toLocation(), isNull);
-      expect(withAltitude.toLocation()!.name, 'Europe/Paris');
-      expect(() => offEarth.toLocation(), throwsArgumentError);
-      expect(() => shortPosition.toLocation(), throwsFormatException);
+      expect(ocean.findLocation(), isNull);
+      expect(withAltitude.findLocation()!.name, 'Europe/Paris');
+      expect(() => offEarth.findLocation(), throwsArgumentError);
+      expect(() => shortPosition.findLocation(), throwsFormatException);
     });
 
     test('returns null for a point no zone covers', () {
-      expect(feature(-140, 0).toLocation(), isNull);
+      expect(feature(-140, 0).findLocation(), isNull);
     });
 
     test('rejects a FeatureCollection, which is several places', () {
@@ -168,12 +167,12 @@ void main() {
       const collection =
           '{"type": "FeatureCollection", "features": [$photonMumbai]}';
       expect(
-        () => collection.toLocation(),
+        () => collection.findLocation(),
         throwsA(
           isA<FormatException>().having(
             (e) => e.message,
             'message',
-            contains('FeatureCollection'),
+            allOf(contains('FeatureCollection'), contains('several places')),
           ),
         ),
       );
@@ -210,7 +209,7 @@ void main() {
       };
       cases.forEach((label, text) {
         expect(
-          () => text.toLocation(),
+          () => text.findLocation(),
           throwsFormatException,
           reason: 'accepted: $label',
         );
@@ -218,17 +217,20 @@ void main() {
     });
 
     test('throws ArgumentError when the position is not on Earth', () {
-      expect(() => feature(0, 91).toLocation(), throwsArgumentError);
-      expect(() => feature(181, 0).toLocation(), throwsArgumentError);
+      expect(() => feature(0, 91).findLocation(), throwsArgumentError);
+      expect(() => feature(181, 0).findLocation(), throwsArgumentError);
     });
 
     test('a non-finite coordinate cannot survive JSON at all', () {
       // JSON has no NaN or Infinity literal, so these never reach the range
       // check — they fail while being decoded. Worth pinning: it means
       // ArgumentError here only ever means "out of range".
-      expect(() => feature(0, double.nan).toLocation(), throwsFormatException);
       expect(
-        () => feature(double.infinity, 0).toLocation(),
+        () => feature(0, double.nan).findLocation(),
+        throwsFormatException,
+      );
+      expect(
+        () => feature(double.infinity, 0).findLocation(),
         throwsFormatException,
       );
     });
@@ -236,30 +238,30 @@ void main() {
     test('separates "not a Feature" from "no zone here"', () {
       // The distinction the whole contract rests on: a malformed document
       // must not look like the middle of the Pacific.
-      expect(() => 'oops'.toLocation(), throwsFormatException);
-      expect(feature(-140, 0).toLocation(), isNull);
+      expect(() => 'oops'.findLocation(), throwsFormatException);
+      expect(feature(-140, 0).findLocation(), isNull);
     });
 
     test('a hand-reversed position resolves elsewhere, silently', () {
       // The hazard this parsing exists to remove. It now survives only in
       // documents written by hand — a geocoder always emits [lon, lat].
-      expect(feature(2.3522, 48.8566).toLocation()!.name, 'Europe/Paris');
+      expect(feature(2.3522, 48.8566).findLocation()!.name, 'Europe/Paris');
       expect(
-        feature(48.8566, 2.3522).toLocation()?.name,
+        feature(48.8566, 2.3522).findLocation()?.name,
         isNot('Europe/Paris'),
       );
     });
   });
 
-  group('TZDateTime.convertTo', () {
+  group('TZDateTime.toLocation', () {
     test('keeps the instant and changes the wall clock', () {
       final takeOff = TZDateTime(paris, 2026, 8, 23, 10, 15);
-      final there = takeOff.convertTo(newYork);
+      final there = takeOff.toLocation(newYork);
 
       expect(
         there.millisecondsSinceEpoch,
         takeOff.millisecondsSinceEpoch,
-        reason: 'convertTo must not move the moment',
+        reason: 'toLocation must not move the moment',
       );
       expect(there.location, same(newYork));
       expect(there.hour, 4); // 10:15 CEST is 04:15 EDT
@@ -268,43 +270,43 @@ void main() {
 
     test('crosses the date line where the zones require it', () {
       final evening = TZDateTime(paris, 2026, 8, 23, 23, 30);
-      expect(evening.convertTo(tokyo).day, 24);
-      expect(evening.convertTo(newYork).day, 23);
+      expect(evening.toLocation(tokyo).day, 24);
+      expect(evening.toLocation(newYork).day, 23);
     });
 
     test('is a no-op onto its own location', () {
       final start = TZDateTime(paris, 2026, 8, 23, 17, 30);
-      expect(start.convertTo(paris), start);
+      expect(start.toLocation(paris), start);
     });
 
     test('tracks daylight saving rather than a fixed offset', () {
       // The reason a Location is not an offset: the same pair of zones is
       // 6 hours apart in August and 6 hours apart in January only because
       // both happen to shift. New York alone moves by an hour.
-      final summer = TZDateTime(paris, 2026, 8, 23, 12).convertTo(newYork);
-      final winter = TZDateTime(paris, 2026, 1, 23, 12).convertTo(newYork);
+      final summer = TZDateTime(paris, 2026, 8, 23, 12).toLocation(newYork);
+      final winter = TZDateTime(paris, 2026, 1, 23, 12).toLocation(newYork);
       expect(summer.timeZoneOffset, const Duration(hours: -4));
       expect(winter.timeZoneOffset, const Duration(hours: -5));
     });
   });
 
-  group('TZDateTime.utcOffsetDifference', () {
+  group('TZDateTime.offsetDifference', () {
     test('positive when the other location is ahead', () {
       final call = TZDateTime(paris, 2026, 8, 3, 15);
-      expect(call.utcOffsetDifference(tokyo), const Duration(hours: 7));
+      expect(call.offsetDifference(tokyo), const Duration(hours: 7));
     });
 
     test('preserves sub-hour offsets', () {
       final call = TZDateTime(paris, 2026, 8, 1, 12);
       expect(
-        call.utcOffsetDifference(kathmandu),
+        call.offsetDifference(kathmandu),
         const Duration(hours: 3, minutes: 45),
       );
     });
 
     test('preserves gaps larger than a day', () {
       final call = TZDateTime(niue, 2026, 8, 1, 12);
-      expect(call.utcOffsetDifference(kiritimati), const Duration(hours: 25));
+      expect(call.offsetDifference(kiritimati), const Duration(hours: 25));
     });
 
     test('changes exactly at a DST transition', () {
@@ -313,48 +315,48 @@ void main() {
         paris,
       );
       final after = TZDateTime.from(DateTime.utc(2026, 3, 29, 1), paris);
-      expect(before.utcOffsetDifference(tokyo), const Duration(hours: 8));
-      expect(after.utcOffsetDifference(tokyo), const Duration(hours: 7));
+      expect(before.offsetDifference(tokyo), const Duration(hours: 8));
+      expect(after.offsetDifference(tokyo), const Duration(hours: 7));
     });
 
     test('is zero for the same location', () {
       final call = TZDateTime(paris, 2026, 8, 3, 15);
-      expect(call.utcOffsetDifference(paris), Duration.zero);
+      expect(call.offsetDifference(paris), Duration.zero);
     });
 
     test('is the negation of the reverse pair', () {
       final call = TZDateTime(paris, 2026, 8, 3, 15);
       expect(
-        call.utcOffsetDifference(newYork),
-        -call.convertTo(newYork).utcOffsetDifference(paris),
+        call.offsetDifference(newYork),
+        -call.toLocation(newYork).offsetDifference(paris),
       );
       // Both sides must read the same instant. Noon in Niue and noon in
       // Kiritimati are 25 hours apart, so comparing those two would test the
       // stability of the pair rather than the sign convention.
       final noon = TZDateTime(niue, 2026, 8, 1, 12);
       expect(
-        noon.utcOffsetDifference(kiritimati),
-        -noon.convertTo(kiritimati).utcOffsetDifference(niue),
+        noon.offsetDifference(kiritimati),
+        -noon.toLocation(kiritimati).offsetDifference(niue),
       );
     });
   });
 
-  // There is no Location.utcOffsetDifference: a clock gap is a fact about an
+  // There is no Location.offsetDifference: a clock gap is a fact about an
   // instant, and TZDateTime is the receiver that carries one. Holding two
-  // places and no moment, ask TZDateTime.now(a).utcOffsetDifference(b).
+  // places and no moment, ask TZDateTime.now(a).offsetDifference(b).
 
   test('a geocoder answer reaches a civil time end to end', () {
     // The path the package exists to make short: two geocoded places, one
     // instant, each rendered where it belongs.
-    final charlesDeGaulle = feature(2.5479, 49.0097).toLocation()!;
-    final jfk = feature(-73.7781, 40.6413).toLocation()!;
+    final charlesDeGaulle = feature(2.5479, 49.0097).findLocation()!;
+    final jfk = feature(-73.7781, 40.6413).findLocation()!;
 
     final takeOff = TZDateTime(charlesDeGaulle, 2026, 8, 23, 10, 15);
     final landing = takeOff.add(const Duration(hours: 8, minutes: 20));
 
     expect(charlesDeGaulle.name, 'Europe/Paris');
     expect(jfk.name, 'America/New_York');
-    expect(landing.convertTo(jfk).hour, 12);
-    expect(landing.convertTo(jfk).day, 23);
+    expect(landing.toLocation(jfk).hour, 12);
+    expect(landing.toLocation(jfk).day, 23);
   });
 }

@@ -1,138 +1,156 @@
-// Contract tests for Location / TZDateTime metazone getters.
+// Contract tests for Location / TZDateTime English zone-name getters.
 
 import 'package:test/test.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart';
-import 'package:timezone_finder/src/finder.dart' show availableLocationNames;
-import 'package:timezone_finder/src/metazone.dart';
-import 'package:timezone_finder/src/data/metazone_data.dart';
+import 'package:timezone_finder/src/api/location_finder.dart'
+    show LocationFinder;
+import 'package:timezone_finder/src/api/timezone_extensions.dart';
+import 'package:timezone_finder/src/generated/metazone_data.dart';
 
 void main() {
   setUpAll(tzdata.initializeTimeZones);
 
-  group('Location.metazoneName', () {
+  group('Location.timeZoneGenericName', () {
     test('Europe/Zurich → Central European Time', () {
       expect(
-        getLocation('Europe/Zurich').metazoneName,
+        getLocation('Europe/Zurich').timeZoneGenericName,
         'Central European Time',
       );
     });
 
     test('America/Santiago → Chile Time', () {
-      expect(getLocation('America/Santiago').metazoneName, 'Chile Time');
+      expect(getLocation('America/Santiago').timeZoneGenericName, 'Chile Time');
     });
 
-    test('Europe/London → Greenwich Mean Time (merged generic)', () {
-      expect(getLocation('Europe/London').metazoneName, 'Greenwich Mean Time');
+    test('Europe/London → Greenwich Mean Time (GMT metazone standard)', () {
+      expect(
+        getLocation('Europe/London').timeZoneGenericName,
+        'Greenwich Mean Time',
+      );
     });
 
     test('Europe/Jersey → Greenwich Mean Time all year', () {
-      expect(getLocation('Europe/Jersey').metazoneName, 'Greenwich Mean Time');
+      expect(
+        getLocation('Europe/Jersey').timeZoneGenericName,
+        'Greenwich Mean Time',
+      );
     });
 
     test('Etc/UTC → Coordinated Universal Time (zone-level only)', () {
-      expect(getLocation('Etc/UTC').metazoneName, 'Coordinated Universal Time');
+      expect(
+        getLocation('Etc/UTC').timeZoneGenericName,
+        'Coordinated Universal Time',
+      );
     });
 
     test('Asia/Kolkata joins via BCP-47 to India Standard Time', () {
-      expect(getLocation('Asia/Kolkata').metazoneName, 'India Standard Time');
+      // India has no CLDR generic and no daylight name, so standard is the
+      // season-neutral label.
+      expect(
+        getLocation('Asia/Kolkata').timeZoneGenericName,
+        'India Standard Time',
+      );
     });
 
     test('Europe/Kyiv joins via BCP-47 to Eastern European Time', () {
-      expect(getLocation('Europe/Kyiv').metazoneName, 'Eastern European Time');
+      expect(
+        getLocation('Europe/Kyiv').timeZoneGenericName,
+        'Eastern European Time',
+      );
     });
 
     test('Asia/Amman now → null (no current metazone)', () {
-      expect(getLocation('Asia/Amman').metazoneName, isNull);
+      expect(getLocation('Asia/Amman').timeZoneGenericName, isNull);
     });
 
     test('Africa/Casablanca now → null', () {
-      expect(getLocation('Africa/Casablanca').metazoneName, isNull);
+      expect(getLocation('Africa/Casablanca').timeZoneGenericName, isNull);
     });
 
     test('Asia/Urumqi now → null (unnamed metazone in en-001)', () {
-      expect(getLocation('Asia/Urumqi').metazoneName, isNull);
+      expect(getLocation('Asia/Urumqi').timeZoneGenericName, isNull);
     });
   });
 
-  // There is no Location.metazoneAbbreviation: tzdb has no season-neutral
-  // abbreviation to offer, so the question is only answerable at an instant.
-  // Its coverage lives in the TZDateTime.metazoneAbbreviation group below.
-
-  group('TZDateTime.metazoneName', () {
+  group('TZDateTime.timeZoneLongName', () {
     test('Zurich January → Central European Standard Time', () {
       final z = TZDateTime(getLocation('Europe/Zurich'), 2026, 1, 15, 12);
-      expect(z.metazoneName, 'Central European Standard Time');
+      expect(z.timeZoneLongName, 'Central European Standard Time');
     });
 
     test('Zurich July → Central European Summer Time', () {
       final z = TZDateTime(getLocation('Europe/Zurich'), 2026, 7, 15, 12);
-      expect(z.metazoneName, 'Central European Summer Time');
+      expect(z.timeZoneLongName, 'Central European Summer Time');
     });
 
     test('London January → Greenwich Mean Time', () {
       final z = TZDateTime(getLocation('Europe/London'), 2026, 1, 15, 12);
-      expect(z.metazoneName, 'Greenwich Mean Time');
+      expect(z.timeZoneLongName, 'Greenwich Mean Time');
     });
 
     test('London July → British Summer Time', () {
       final z = TZDateTime(getLocation('Europe/London'), 2026, 7, 15, 12);
-      expect(z.metazoneName, 'British Summer Time');
+      expect(z.timeZoneLongName, 'British Summer Time');
     });
 
     test('Dublin July → Irish Standard Time', () {
       final z = TZDateTime(getLocation('Europe/Dublin'), 2026, 7, 15, 12);
-      expect(z.metazoneName, 'Irish Standard Time');
+      expect(z.timeZoneLongName, 'Irish Standard Time');
     });
 
     test('Jersey July → null (DST, no daylight string)', () {
       final z = TZDateTime(getLocation('Europe/Jersey'), 2026, 7, 15, 12);
       expect(z.timeZone.isDst, isTrue);
-      expect(z.metazoneName, isNull);
+      expect(z.timeZoneLongName, isNull);
     });
 
     test('Troll July → null', () {
       final z = TZDateTime(getLocation('Antarctica/Troll'), 2026, 7, 15, 12);
-      expect(z.metazoneName, isNull);
+      expect(z.timeZoneLongName, isNull);
     });
 
     test('Kyiv January / July Eastern European Standard / Summer', () {
       final jan = TZDateTime(getLocation('Europe/Kyiv'), 2026, 1, 15, 12);
       final jul = TZDateTime(getLocation('Europe/Kyiv'), 2026, 7, 15, 12);
-      expect(jan.metazoneName, 'Eastern European Standard Time');
-      expect(jul.metazoneName, 'Eastern European Summer Time');
+      expect(jan.timeZoneLongName, 'Eastern European Standard Time');
+      expect(jul.timeZoneLongName, 'Eastern European Summer Time');
     });
 
     test('Amman 2021 still had Eastern European names', () {
       final jan = TZDateTime(getLocation('Asia/Amman'), 2021, 1, 15, 12);
       final jul = TZDateTime(getLocation('Asia/Amman'), 2021, 7, 15, 12);
-      expect(jan.metazoneName, 'Eastern European Standard Time');
-      expect(jul.metazoneName, 'Eastern European Summer Time');
+      expect(jan.timeZoneLongName, 'Eastern European Standard Time');
+      expect(jul.timeZoneLongName, 'Eastern European Summer Time');
     });
   });
 
-  group('TZDateTime.metazoneAbbreviation', () {
-    test('Zurich July → CEST', () {
+  group('TZDateTime.utcOffsetLabel', () {
+    test('Zurich July → UTC+02 (not CEST)', () {
       final z = TZDateTime(getLocation('Europe/Zurich'), 2026, 7, 15, 12);
-      expect(z.metazoneAbbreviation, 'CEST');
+      expect(z.timeZoneName, 'CEST');
+      expect(z.utcOffsetLabel, 'UTC+02');
+    });
+
+    test('matches formatUtcOffset(timeZoneOffset)', () {
+      final z = TZDateTime(getLocation('Asia/Kolkata'), 2026, 9, 9, 12);
+      expect(z.utcOffsetLabel, formatUtcOffset(z.timeZoneOffset));
+      expect(z.utcOffsetLabel, 'UTC+05:30');
     });
 
     test('Santiago January → UTC-03, July → UTC-04', () {
       final jan = TZDateTime(getLocation('America/Santiago'), 2026, 1, 15, 12);
       final jul = TZDateTime(getLocation('America/Santiago'), 2026, 7, 15, 12);
-      expect(jan.metazoneAbbreviation, 'UTC-03');
-      expect(jul.metazoneAbbreviation, 'UTC-04');
+      expect(jan.utcOffsetLabel, 'UTC-03');
+      expect(jul.utcOffsetLabel, 'UTC-04');
     });
 
     test('Azores July → UTC', () {
       final z = TZDateTime(getLocation('Atlantic/Azores'), 2026, 7, 15, 12);
-      expect(z.metazoneAbbreviation, 'UTC');
+      expect(z.utcOffsetLabel, 'UTC');
     });
 
-    // The abbreviation comes from tzdb, so a zone CLDR has no metazone for
-    // still has one. These three are the zones where gating the abbreviation
-    // on CLDR membership showed up as a missing answer.
-    test('answers for zones with no CLDR metazone', () {
+    test('answers for zones with no CLDR long name', () {
       final casablanca = TZDateTime(
         getLocation('Africa/Casablanca'),
         2026,
@@ -143,40 +161,26 @@ void main() {
       final amman = TZDateTime(getLocation('Asia/Amman'), 2026, 7, 15, 12);
       final utc = TZDateTime(getLocation('Etc/UTC'), 2026, 7, 15, 12);
 
-      expect(casablanca.metazoneName, isNull);
-      expect(casablanca.metazoneAbbreviation, 'UTC+01');
-      expect(amman.metazoneName, isNull);
-      expect(amman.metazoneAbbreviation, 'UTC+03');
-      expect(utc.metazoneAbbreviation, 'UTC');
-    });
-  });
-
-  group('TZDateTime.utcOffset', () {
-    test('Zurich July → UTC+02 (not CEST)', () {
-      final z = TZDateTime(getLocation('Europe/Zurich'), 2026, 7, 15, 12);
-      expect(z.metazoneAbbreviation, 'CEST');
-      expect(z.utcOffset, 'UTC+02');
-    });
-
-    test('matches formatUtcOffset(timeZone.offset)', () {
-      final z = TZDateTime(getLocation('Asia/Kolkata'), 2026, 9, 9, 12);
-      expect(z.utcOffset, formatUtcOffset(z.timeZone.offset));
-      expect(z.utcOffset, 'UTC+05:30');
+      expect(casablanca.timeZoneLongName, isNull);
+      expect(casablanca.utcOffsetLabel, 'UTC+01');
+      expect(amman.timeZoneLongName, isNull);
+      expect(amman.utcOffsetLabel, 'UTC+03');
+      expect(utc.utcOffsetLabel, 'UTC');
     });
   });
 
   group('CLDR timestamp parsing', () {
-    test('UTC _from/_to half-open boundaries', () {
+    test('UTC start/end half-open boundaries', () {
       // Europe/Zurich → Europe_Central from 1979-04-01 01:00 UTC onward in
       // modern ranges; pick a known edge from generated data.
       final ranges = zoneMetazoneHistory['Europe/Zurich']!;
       final last = ranges.last;
       expect(last.metazoneId, 'Europe_Central');
-      expect(last.toMs, isNull);
-      if (last.fromMs != null) {
-        expect(metazoneIdAt('Europe/Zurich', last.fromMs!), 'Europe_Central');
+      expect(last.end, isNull);
+      if (last.start != null) {
+        expect(metazoneIdAt('Europe/Zurich', last.start!), 'Europe_Central');
         expect(
-          metazoneIdAt('Europe/Zurich', last.fromMs! - 1),
+          metazoneIdAt('Europe/Zurich', last.start! - 1),
           isNot(equals('Europe_Central')),
         );
       }
@@ -197,26 +201,46 @@ void main() {
         'Pacific/Bougainville',
       };
       final actualNull = <String>[];
-      for (final id in availableLocationNames) {
-        final name = getLocation(id).metazoneName;
+      for (final id in LocationFinder().availableLocationNames) {
+        final name = getLocation(id).timeZoneGenericName;
         if (name == null) actualNull.add(id);
       }
       expect(actualNull.toSet(), expectedNull);
     });
 
-    test('DST half without daylight string → null on TZDateTime', () {
-      const islands = [
-        'Europe/Jersey',
+    test('TZDateTime long name null only for known CLDR gaps', () {
+      // January matches the Location allow-list. July adds the four zones
+      // that observe DST without a CLDR daylight string.
+      const expectedJanuary = {
+        'Africa/Casablanca',
+        'Africa/El_Aaiun',
+        'America/Coyhaique',
+        'America/Punta_Arenas',
+        'Antarctica/Palmer',
+        'Asia/Amman',
+        'Asia/Damascus',
+        'Asia/Urumqi',
+        'Pacific/Bougainville',
+      };
+      const expectedJuly = {
+        ...expectedJanuary,
+        'Antarctica/Troll',
         'Europe/Guernsey',
         'Europe/Isle_of_Man',
-        'Antarctica/Troll',
-      ];
-      for (final id in islands) {
-        final jul = TZDateTime(getLocation(id), 2026, 7, 15, 12);
-        if (jul.timeZone.isDst) {
-          expect(jul.metazoneName, isNull, reason: id);
+        'Europe/Jersey',
+      };
+
+      Set<String> nullAt(int month) {
+        final actual = <String>{};
+        for (final id in LocationFinder().availableLocationNames) {
+          final t = TZDateTime(getLocation(id), 2026, month, 15, 12);
+          if (t.timeZoneLongName == null) actual.add(id);
         }
+        return actual;
       }
+
+      expect(nullAt(1), expectedJanuary);
+      expect(nullAt(7), expectedJuly);
     });
   });
 
@@ -262,25 +286,30 @@ void main() {
     });
   });
 
-  group('utcOffset on real zones with awkward offsets', () {
+  group('utcOffsetLabel on real zones with awkward offsets', () {
     // The formatter is package-internal; these pin the same behaviour through
     // the public getter, on zones that actually have these offsets.
     test('America/St_Johns is a negative half hour', () {
       final stJohns = getLocation('America/St_Johns');
-      expect(TZDateTime(stJohns, 2026, 1, 15).utcOffset, 'UTC-03:30');
-      expect(TZDateTime(stJohns, 2026, 7, 15).utcOffset, 'UTC-02:30');
+      expect(TZDateTime(stJohns, 2026, 1, 15).utcOffsetLabel, 'UTC-03:30');
+      expect(TZDateTime(stJohns, 2026, 7, 15).utcOffsetLabel, 'UTC-02:30');
     });
 
     test('Asia/Kathmandu is a quarter hour', () {
       expect(
-        TZDateTime(getLocation('Asia/Kathmandu'), 2026, 7, 15).utcOffset,
+        TZDateTime(getLocation('Asia/Kathmandu'), 2026, 7, 15).utcOffsetLabel,
         'UTC+05:45',
       );
     });
 
     test('Pacific/Kiritimati is past twelve', () {
       expect(
-        TZDateTime(getLocation('Pacific/Kiritimati'), 2026, 7, 15).utcOffset,
+        TZDateTime(
+          getLocation('Pacific/Kiritimati'),
+          2026,
+          7,
+          15,
+        ).utcOffsetLabel,
         'UTC+14',
       );
     });

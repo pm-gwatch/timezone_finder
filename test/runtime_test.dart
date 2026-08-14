@@ -1,14 +1,5 @@
-// The runtime, against a container built from the real dataset.
-//
-// The bundled data is generated separately, so the index here is packed in
-// memory from the oracle. That is the point of making the byte source
-// injectable: the format and the lookup get exercised against all 7.6M real
-// vertices before any generated source exists.
-//
-// The overlap pins matter most. The oracle collects every containing polygon
-// and sorts; the runtime walks a list the builder pre-sorted and returns the
-// first hit. Two different code paths reaching the same rule, and this is
-// where they first have to agree.
+// Runtime vs a container packed from the oracle (all vertices). Overlap pins:
+// oracle collects+sorts; runtime returns first pre-sorted hit.
 
 @Timeout(Duration(minutes: 10))
 library;
@@ -18,9 +9,9 @@ import 'dart:typed_data';
 import 'dart:math';
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/index.dart';
-import 'package:timezone_finder/src/quantization.dart';
-import 'package:timezone_finder/src/finder.dart';
+import 'package:timezone_finder/src/index/boundary_index.dart';
+import 'package:timezone_finder/src/index/quantization.dart';
+import 'package:timezone_finder/src/api/location_finder.dart';
 
 import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
@@ -29,7 +20,7 @@ import '../tool/src/fetch.dart';
 import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/golden_points.dart';
 import 'fixtures/overlap_pins.dart';
-import 'reference/reference_finder.dart';
+import 'reference/reference_location_finder.dart';
 
 void main() {
   final cached = cachedGeoJsonFile(defaultRelease);
@@ -43,12 +34,12 @@ void main() {
               '  dart run tool/fetch_data.dart\n'
               '(downloads ~51 MB into .dart_tool/, which is gitignored)',
     () {
-      late ReferenceTimeZoneFinder oracle;
+      late ReferenceLocationFinder oracle;
       late Uint8List packed;
-      late TimeZoneFinder finder;
+      late LocationFinder finder;
 
       setUpAll(() async {
-        oracle = await ReferenceTimeZoneFinder.load(cached);
+        oracle = await ReferenceLocationFinder.load(cached);
         packed = buildIndex(
           dataVersion: defaultRelease,
           cellSize: 1000000,
@@ -70,7 +61,7 @@ void main() {
       });
 
       test('reports the dataset it was built from', () {
-        expect(finder.ianaDatabaseVersion, defaultRelease);
+        expect(finder.boundaryDataVersion, defaultRelease);
         expect(finder.availableLocationNames.length, 419);
         expect(
           finder.availableLocationNames,
@@ -182,27 +173,26 @@ void main() {
       });
 
       test('rejects a container it cannot trust', () {
-        // Aimed at TimeZoneIndex rather than the finder: format validation is
-        // the index's job, and the finder no longer takes arbitrary bytes —
-        // the two factory constructors are the only ways to build one.
+        // Format validation is BoundaryIndex's job. Only LocationFinder() and
+        // finderOverIndex build a finder; bytes go through fromBytes.
         expect(
-          () => TimeZoneIndex.fromBytes(Uint8List(4)),
+          () => BoundaryIndex.fromBytes(Uint8List(4)),
           throwsA(isA<IndexFormatException>()),
           reason: 'buffer shorter than the header',
         );
         expect(
           () =>
-              TimeZoneIndex.fromBytes(Uint8List.fromList(packed)..[0] ^= 0xff),
+              BoundaryIndex.fromBytes(Uint8List.fromList(packed)..[0] ^= 0xff),
           throwsA(isA<IndexFormatException>()),
           reason: 'bad magic',
         );
         expect(
-          () => TimeZoneIndex.fromBytes(Uint8List.fromList(packed)..[4] = 99),
+          () => BoundaryIndex.fromBytes(Uint8List.fromList(packed)..[4] = 99),
           throwsA(isA<IndexFormatException>()),
           reason: 'unknown format version',
         );
         expect(
-          () => TimeZoneIndex.fromBytes(Uint8List.sublistView(packed, 0, 200)),
+          () => BoundaryIndex.fromBytes(Uint8List.sublistView(packed, 0, 200)),
           throwsA(isA<IndexFormatException>()),
           reason: 'truncated',
         );
@@ -213,7 +203,7 @@ void main() {
         // against it: a container packed here in memory must resolve the
         // fixtures the same way. Byte-identity is asserted separately in
         // bundled_data_test; this is the behavioural counterpart.
-        final fresh = TimeZoneIndex.fromBytes(packed);
+        final fresh = BoundaryIndex.fromBytes(packed);
         for (final point in <GoldenPoint>[
           ...bootstrapGoldens.take(40),
           ...goldenPoints.take(40),

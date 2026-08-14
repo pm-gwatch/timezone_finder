@@ -8,7 +8,7 @@ committed. Run commands from the package root.
 | Upstream | Example | What this repo does |
 | --- | --- | --- |
 | **IANA tzdb** | `2026a` → `2026b` | **Nothing in generators.** Offsets / DST / letter abbreviations come from `package:timezone` in the consuming app. A tzdb release matters here only once TZBB ships boundaries built against it (and when you bump the `timezone` dependency for tests / docs). |
-| **timezone-boundary-builder (TZBB)** | `2026c` → `2027a` | Regenerates every shipped boundary artifact. Tags are named after the tzdb version they target — that is why `ianaDatabaseVersion` reads e.g. `2026c`. |
+| **timezone-boundary-builder (TZBB)** | `2026c` → `2027a` | Regenerates every shipped boundary artifact. Tags are named after the tzdb version they target — that is why `boundaryDataVersion` reads e.g. `2026c`. |
 | **Unicode CLDR** | `48` → `49` | Regenerates English metazone display names only. No boundary data changes. |
 
 TZBB tags are **not** IANA transition rules. Keep using `latest_all` in apps and docs.
@@ -63,9 +63,9 @@ dart run tool/refresh.dart --release <new-tag>
 That triages, runs `tool/generate_data.dart` for both index tiers, refreshes
 the CLDR metazone tables, formats, and runs the suite. It writes:
 
-- `lib/src/data/` — the bundled index as base64 Dart chunks, and
+- `lib/src/generated/` — the bundled index as base64 Dart chunks, and
   `metazone_data.dart`
-- `lib/src/boundaries_bin.dart` — `boundariesBinName` (and related constants)
+- `lib/src/generated/boundaries_bin.dart` — `boundariesBinName` (and related constants)
 - `lib/data/boundaries_<tag>.bin` — the web asset
 - `tool/release/` — the unsimplified baseline and `timezone-names.json`
 
@@ -113,13 +113,13 @@ overwrite.
 | `test/browser_parity_test.dart` | Literal version string and zone count |
 | `test/bundled_data_test.dart` | Zone count, in several places |
 | `test/runtime_test.dart` | Unsimplified container size budget |
-| `lib/browser.dart` + `README.md` | The literal `.bin` filename in Flutter asset instructions |
+| `README.md` | The literal `.bin` filename in Flutter asset instructions |
 | `test/fixtures/overlap_pins.dart` | If a disputed-territory tiebreak moved — regenerate raw material with `dart run tool/probe_overlaps.dart` and update pins by hand |
 | `test/fixtures/golden_points.dart` | If a border moved under a golden point |
 
-A test scans `lib/browser.dart` and `README.md` and fails if either still names
-a stale `.bin`. The pubspec snippet in `browser.dart` has to be a literal
-because it is YAML with no constant to reach for.
+A test scans `README.md` and fails if it still names a stale `.bin`. The
+pubspec snippet has to be a literal because it is YAML with no constant to
+reach for. `browser.dart` interpolates `boundariesBinName`.
 
 Do **not** "fix" a golden by recording what the new data returned. The
 bootstrap fixtures exist precisely to be independent of the data under test.
@@ -158,12 +158,12 @@ The version that came down is recorded in the generated `cldrVersion` constant.
 
 ```bash
 dart run tool/generate_metazone_data.dart
-dart format lib/src/data/metazone_data.dart
-dart test test/metazone_test.dart
+dart format lib/src/generated/metazone_data.dart
+dart test test/zone_names_test.dart
 ```
 
 It reads `tool/release/timezone-names.json` for the identifier set (committed
-in every checkout). Output is `lib/src/data/metazone_data.dart` only — typically
+in every checkout). Output is `lib/src/generated/metazone_data.dart` only — typically
 a **patch** bump.
 
 Or fold CLDR into a full refresh against the **current** TZBB tag:
@@ -179,7 +179,7 @@ English name drifts from `_knownNullMetazoneNameNow`:
 
 | Message | Meaning | Fix |
 | --- | --- | --- |
-| `null metazoneName at now, not on allow-list` | CLDR dropped a name this package relied on | Confirm it is genuinely unnamed upstream, then add the id to the allow-list |
+| `null timeZoneGenericName at now, not on allow-list` | CLDR dropped a name this package relied on | Confirm it is genuinely unnamed upstream, then add the id to the allow-list |
 | `allow-listed ids now have a name (remove from allow-list)` | CLDR filled a gap | Remove the id from the allow-list |
 
 Either way the run exits 1 and writes nothing.

@@ -167,7 +167,7 @@ void emitBinaryData({required File file, required Uint8List container}) {
   file.writeAsBytesSync(container);
 }
 
-/// Writes `lib/src/boundaries_bin.dart` naming the shipped `.bin` asset.
+/// Writes `lib/src/generated/boundaries_bin.dart` naming the shipped `.bin` asset.
 void emitBoundariesBinMeta({
   required File file,
   required String dataVersion,
@@ -175,17 +175,35 @@ void emitBoundariesBinMeta({
 }) {
   final name = 'boundaries_$dataVersion.bin';
   final source = StringBuffer()
-    ..writeln(_dataLicenceHeader)
+    ..writeln('// GENERATED FILE — DO NOT EDIT.')
+    ..writeln('//')
+    ..writeln(
+      '// Produced by tool/generate_data.dart. Metadata for the packed '
+      '`.bin` under',
+    )
+    ..writeln(
+      '// `lib/data/` (filename, byte length, default URL) — not the '
+      'boundary',
+    )
+    ..writeln(
+      '// geometry itself. See LICENSE-DATA for the ODbL notice that covers '
+      'the',
+    )
+    ..writeln('// shipped index.')
+    ..writeln()
     ..writeln(
       '/// Filename and default URL for the packed web index under '
       '`lib/data/`.',
     )
     ..writeln('///')
     ..writeln(
-      '/// Kept separate from the base64 chunks so web builds can name the '
-      'asset',
+      '/// Its own library (alongside the base64 chunks under '
+      '`lib/src/generated/`)',
     )
-    ..writeln('/// without linking megabytes of Dart source.')
+    ..writeln(
+      '/// so web builds can name the asset without linking megabytes of '
+      'Dart source.',
+    )
     ..writeln('library;')
     ..writeln()
     ..writeln(

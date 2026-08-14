@@ -1,14 +1,5 @@
-// Validate the reference oracle against the bootstrap goldens.
-//
-// This is the gate the whole test strategy rests on. The oracle is the
-// authority for the wider golden set and for differential testing, but it
-// cannot be validated against fixtures derived from itself. These 66 pairs are external ground truth; the oracle earns its
-// authority by passing them, and not before.
-//
-// The oracle needs ~170 MB of tzbb GeoJSON, which is far too large to commit.
-// When it is absent these tests skip rather than fail, so a fresh checkout
-// still has a green suite and so an auditor without the bandwidth to pull
-// 51 MB is not blocked.
+// Validate the oracle on bootstrapGoldens (66 external pairs) before it
+// authorizes anything else. Skips if tzbb GeoJSON is not cached.
 
 @Timeout(Duration(minutes: 10))
 library;
@@ -20,7 +11,7 @@ import 'package:test/test.dart';
 import '../tool/src/fetch.dart';
 import '../tool/src/geometry.dart';
 import 'fixtures/bootstrap_goldens.dart';
-import 'reference/reference_finder.dart';
+import 'reference/reference_location_finder.dart';
 
 void main() {
   final cached = cachedGeoJsonFile(defaultRelease);
@@ -34,10 +25,10 @@ void main() {
               '  dart run tool/fetch_data.dart\n'
               '(downloads ~51 MB into .dart_tool/, which is gitignored)',
     () {
-      late ReferenceTimeZoneFinder oracle;
+      late ReferenceLocationFinder oracle;
 
       setUpAll(() async {
-        oracle = await ReferenceTimeZoneFinder.load(cached);
+        oracle = await ReferenceLocationFinder.load(cached);
       });
 
       test('parses the expected shape of the dataset', () {

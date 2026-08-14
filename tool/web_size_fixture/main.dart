@@ -11,5 +11,5 @@ void main() {
   // StateError until installBoundaries runs; that is expected here.
   print(findLocation);
   print(ensurePreloaded);
-  print(ianaDatabaseVersion);
+  print(boundaryDataVersion);
 }

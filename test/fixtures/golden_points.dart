@@ -1,15 +1,7 @@
-// Extended golden fixtures: borders, enclaves, small islands, Antarctic
-// stations, the antimeridian, and open ocean.
-//
-// Every expectation is external ground truth — written by hand, then verified
-// (see test/fixtures/README.md). A disagreement means investigate; never
-// adopt the implementation's answer.
-//
-// Two noted exceptions (coordinate provenance weaker than the others):
-// 'Unclaimed Antarctic sector, 10°W' and 'Dover Strait, mid-channel'. Do not
-// add a third without the same note.
-//
-// Zone overlaps (no adjudicable ground truth) live in `overlap_pins.dart`.
+// Harder goldens: borders, enclaves, islands, antimeridian, ocean.
+// External ground truth (see test/fixtures/README.md); never adopt the
+// implementation. Weaker provenance: 'Unclaimed Antarctic sector, 10°W',
+// 'Dover Strait, mid-channel'. Overlaps → overlap_pins.dart.
 library;
 
 import 'golden_point.dart';

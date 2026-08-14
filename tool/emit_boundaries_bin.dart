@@ -9,7 +9,7 @@ library;
 
 import 'dart:io';
 
-import 'package:timezone_finder/src/data/boundaries.dart' as bundled;
+import 'package:timezone_finder/src/generated/boundaries.dart' as bundled;
 
 import 'src/emit_dart.dart';
 
@@ -19,12 +19,12 @@ void main() {
   final binFile = File('lib/data/boundaries_$version.bin');
   emitBinaryData(file: binFile, container: container);
   emitBoundariesBinMeta(
-    file: File('lib/src/boundaries_bin.dart'),
+    file: File('lib/src/generated/boundaries_bin.dart'),
     dataVersion: version,
     containerLength: container.length,
   );
   stdout.writeln(
     'Wrote ${binFile.path} (${container.length} bytes) and '
-    'lib/src/boundaries_bin.dart',
+    'lib/src/generated/boundaries_bin.dart',
   );
 }
