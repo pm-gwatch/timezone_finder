@@ -410,8 +410,8 @@ void main() {
           bundledBytes.length,
           fresh.length,
           reason:
-              'bundled container is a different size from a fresh pack — '
-              'lib/src/generated is stale. Run tool/refresh.dart for a release '
+              'unsimplified container is a different size from a fresh pack '
+              '— tool/release/ is stale. Run tool/refresh.dart for a release '
               'bump, or tool/generate_data.dart to re-emit the committed one',
         );
         var firstDifference = -1;
@@ -425,7 +425,7 @@ void main() {
           firstDifference,
           -1,
           reason:
-              'bundled bytes differ at offset '
+              'tool/release/ bytes differ at offset '
               '$firstDifference',
         );
       });

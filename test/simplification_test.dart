@@ -204,7 +204,7 @@ void main() {
           pin.longitude,
           pin.latitude,
         );
-        if (answer == null) continue;
+        expect(answer, isNotNull, reason: '${pin.description}: no answer');
         expect(
           pin.contenders,
           contains(answer),

@@ -152,8 +152,8 @@ void main() {
 
       test('precedence is deterministic and total', () {
         // Every polygon must order consistently against every other, or the
-        // overlap rule is not a rule. Spot-check a sample rather than all
-        // 1,184 x 1,184 pairs.
+        // overlap rule is not a rule. Spot-check a sample rather than every
+        // pair of the ~1,200 polygons.
         final sample = oracle.polygons.take(120).toList();
         for (final a in sample) {
           expect(comparePolygons(a, a), 0, reason: 'not reflexive');

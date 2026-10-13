@@ -13,18 +13,19 @@ it looks:
 
 ## `golden_points.dart` — milestone 3
 
-199 fixtures extending the bootstrap set into borders, enclaves, islands,
+207 fixtures extending the bootstrap set into borders, enclaves, islands,
 Antarctic stations, the antimeridian, and open ocean. Combined with the
-bootstrap set: **265 fixtures across 237 distinct zones**.
+bootstrap set: **273 fixtures across 238 distinct zones**. Category counts
+below cover both files.
 
 | Category | Count |
 | --- | --- |
 | city | 181 |
 | island | 30 |
-| border | 19 |
+| border | 26 |
 | antarctic | 10 |
 | enclave | 8 |
-| ocean | 8 |
+| ocean | 9 |
 | antimeridian | 9 |
 
 ### Verification log — 2026-07-28
@@ -38,6 +39,11 @@ Same discipline as the bootstrap set: written by hand first, verified after.
 | Identifier exists (2026-10-13) | tzbb `2026e` `timezone-names.json`, identical to `2026c` | **all present** |
 | Coordinate → zone | `timezonefinder` 8.2.5 (authoritative) | **265/265** |
 | Coordinate → zone | `tzf` via `tzfpy` 1.3.2 (advisory) | **257/257** of the non-null fixtures |
+
+Both coordinate checks predate the last 8 fixtures (7 border points and
+`Adriatic Sea, between Dubrovnik and Bari`). Those are verified only by the
+oracle tests, which read the same tzbb data; re-run the script below to give
+them the same external check.
 
 **Verification weighting is inverted from the bootstrap set.** There, both
 tools were equal peers because every point was deep inland. Here, border
@@ -73,6 +79,21 @@ rather than both disagreeing with you, is the signature of a fixture that has
 no external answer.** A sweep of all fixtures against the oracle confirmed
 Ürümqi was the only one affected; `dart run tool/probe_overlaps.dart
 --check-fixtures` re-runs that sweep, and a test enforces it permanently.
+
+### The one provenance exception
+
+`Unclaimed Antarctic sector, 10°W` → `Etc/UTC` is the only fixture in
+`golden_points.dart` whose *coordinate* came from the dataset rather than from
+independent knowledge. (The bootstrap set has no such exception: every point
+is a city centre.) The region has no named station to anchor to, and `Etc/UTC`
+is the one identifier of the 419 that is absent from tzdb's `zone.tab` — which
+makes it easy to mistake for an artifact and filter out. It is a real
+six-vertex land polygon, and both external implementations return `Etc/UTC`
+there.
+
+Without it, a zone the package can genuinely return would never be tested. It
+is included with the weaker provenance stated in its note, rather than either
+omitted or quietly filed as if it were like the rest.
 
 ---
 
@@ -202,19 +223,6 @@ for n, lat, lon, z in pairs:
     if a != z or b != z:
         print(f'DISAGREE {n}: expected {z}, tzf {a}, timezonefinder {b}')
 ```
-
-### The one provenance exception
-
-`Unclaimed Antarctic sector, 10°W` → `Etc/UTC` is the only fixture here whose
-*coordinate* came from the dataset rather than from independent knowledge. The
-region has no named station to anchor to, and `Etc/UTC` is the one identifier
-of the 419 that is absent from tzdb's `zone.tab` — which makes it easy to
-mistake for an artifact and filter out. It is a real six-vertex land polygon,
-and both external implementations return `Etc/UTC` there.
-
-Without it, a zone the package can genuinely return would never be tested. It
-is included with the weaker provenance stated in its note, rather than either
-omitted or quietly filed as if it were like the rest.
 
 ### Scope — what is deliberately absent
 

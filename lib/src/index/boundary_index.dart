@@ -137,6 +137,10 @@ class BoundaryIndex {
 
       final ringCount = _varint(bytes, cursor);
       cursor = ringCount.next;
+      // Every polygon has an outer ring; lookup reads offsets[0].
+      if (ringCount.value == 0) {
+        throw IndexFormatException('polygon $i has no rings');
+      }
       final offsets = Int32List(ringCount.value);
       for (var r = 0; r < ringCount.value; r++) {
         final delta = _varint(bytes, cursor);

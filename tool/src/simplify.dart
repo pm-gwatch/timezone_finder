@@ -22,8 +22,9 @@ class SimplifyStats {
   /// dropped. Each is a small island that the bundled data cannot answer for.
   int polygonsDropped = 0;
 
-  /// Holes that collapsed and were dropped. Each is an enclave that the
-  /// bundled data folds into its surrounding zone.
+  /// Holes that collapsed and were dropped: lakes and coastal notches as well
+  /// as enclaves. An enclave's own polygon is separate and, being smaller,
+  /// still wins the tiebreak, so dropping its hole does not change answers.
   int holesDropped = 0;
 
   double get vertexRetention => verticesIn == 0 ? 0 : verticesOut / verticesIn;

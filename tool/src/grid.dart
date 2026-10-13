@@ -1,5 +1,5 @@
 /// The shortcut grid: a uniform lat/lon raster that narrows a lookup from
-/// 1,184 polygons to a handful before any geometry is tested.
+/// every polygon (~1,200) to a handful before any geometry is tested.
 ///
 /// Build-time only — the runtime reads the serialized form.
 library;
@@ -86,8 +86,10 @@ class BuiltGrid {
   /// establish and is deferred until the measurements justify it.
   final Int32List cells;
 
-  /// Candidate lists, each `varint(count)` then ascending polygon ids as
-  /// varint deltas. Identical lists are stored once.
+  /// Candidate lists, each `varint(count)` then polygon ids as zigzag varint
+  /// deltas, **in overlap-tiebreak order**, not ascending. The runtime returns
+  /// the first containing polygon, so this order decides disputed answers.
+  /// Identical lists are stored once.
   final Uint8List pool;
 
   final int emptyCells;
@@ -208,8 +210,8 @@ void _writeList(BytesBuilder out, List<int> ids) {
   for (var i = 0; i < ids.length; i++) {
     ring[i * 2] = ids[i];
   }
-  // Reuses the coordinate codec: a candidate list is a run of ascending
-  // integers, which delta+varint handles exactly as well as coordinates. The
+  // Reuses the coordinate codec: its zigzag deltas encode a candidate list in
+  // tiebreak order (ids not ascending) as compactly as coordinates. The
   // unused y slots cost one byte each; measured against a bespoke encoder the
   // difference is not worth a second format to maintain.
   writeRing(out, ring);

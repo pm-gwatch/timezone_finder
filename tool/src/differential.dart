@@ -103,8 +103,8 @@ DifferentialReport runDifferential({
     'seam': () => _nearSeam(random),
     'uniform': () => _uniform(random),
   };
-  // 'hole' carries real weight despite holes being only 64,489 of 7.6M
-  // vertices. Sampling proportionally would almost never enter one: a negative
+  // 'hole' carries real weight despite holes being under 1% of vertices
+  // (65,225 of 7,747,361 in 2026e). Sampling proportionally would almost never enter one: a negative
   // control that disabled the hole test entirely went undetected across 20,000
   // points until this sampler existed.
   final weights = <String, int>{

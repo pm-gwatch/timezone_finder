@@ -70,6 +70,21 @@ void main() {
     expect(LocationFinder().findLocationName(2.3522, 48.8566), 'Europe/Paris');
   });
 
+  test('different bytes under the same version are discarded', () {
+    // The test above would pass whether the second install replaced or kept
+    // the index, since the bytes were identical. Here they differ, so only a
+    // discard leaves the real answers in place.
+    installBoundaries(_shippedBytes());
+    final finder = LocationFinder();
+    final version = boundaryDataVersion;
+
+    installBoundaries(_syntheticContainer(version));
+
+    expect(boundaryDataVersion, version);
+    expect(finder.findLocationName(2.3522, 48.8566), 'Europe/Paris');
+    expect(finder.findLocationName(0.5, 0.5), isNull, reason: 'still real');
+  });
+
   test('a different data version replaces the installed index', () {
     installBoundaries(_shippedBytes());
     final finder = LocationFinder();

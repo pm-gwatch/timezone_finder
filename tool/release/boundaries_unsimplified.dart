@@ -69,7 +69,7 @@ const int containerLength = 28503727;
 ///
 /// Each chunk decodes straight into its place in the output.
 /// Joining them into one string first would be simpler to
-/// write and would cost an extra ~37 MB of peak memory for an
+/// write and would cost an extra ~38.0 MB of peak memory for an
 /// intermediate discarded immediately. Chunk boundaries fall
 /// on four-character base64 groups so this is possible.
 Uint8List loadContainer() {

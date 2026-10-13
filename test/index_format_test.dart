@@ -110,6 +110,21 @@ void main() {
       );
     });
 
+    test('a polygon with no rings', () {
+      // Polygon section: count=1, zoneId=0, four 4-byte box varints (±2e6
+      // zigzagged), then ringCount=1. Zero rings would make every lookup
+      // that reaches it read offsets[0] and throw RangeError.
+      final corrupt = Uint8List.fromList(_syntheticContainer());
+      final ringCount = _headerField(corrupt, IndexHeader.polygons) + 18;
+      expect(corrupt[ringCount], 1, reason: 'expected a one-ring polygon');
+      corrupt[ringCount] = 0;
+
+      expect(
+        () => BoundaryIndex.fromBytes(corrupt),
+        throwsA(isA<IndexFormatException>()),
+      );
+    });
+
     test('a grid pool that starts before the cells it follows', () {
       final bytes = bundled.loadContainer();
       final cells = _headerField(bytes, IndexHeader.gridCells);
