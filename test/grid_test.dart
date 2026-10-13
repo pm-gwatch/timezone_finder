@@ -72,6 +72,34 @@ void main() {
         return best?.zone;
       }
 
+      test('stores every candidate list in tiebreak order', () {
+        // gridFind above re-sorts the hits itself, so it would pass on lists
+        // in any order. The runtime does not: it returns the first containing
+        // polygon. Lock the stored order directly.
+        final spec = grid.spec;
+        var checked = 0;
+        for (var row = 0; row < spec.rows; row++) {
+          for (var column = 0; column < spec.columns; column++) {
+            final ids = grid.candidatesAt(
+              -180000000 + column * spec.cellSize,
+              -90000000 + row * spec.cellSize,
+            );
+            for (var i = 1; i < ids.length; i++) {
+              final a = oracle.polygons[ids[i - 1]];
+              final b = oracle.polygons[ids[i]];
+              final byRule = comparePrecedence(a.area, a.zone, b.area, b.zone);
+              expect(
+                byRule < 0 || (byRule == 0 && ids[i - 1] < ids[i]),
+                isTrue,
+                reason: 'cell ($row, $column): ${a.zone} before ${b.zone}',
+              );
+            }
+            if (ids.length > 1) checked++;
+          }
+        }
+        expect(checked, greaterThan(1000), reason: 'few multi-polygon cells');
+      });
+
       test('agrees with the oracle on every ground-truth fixture', () {
         final failures = <String>[];
         for (final point in <GoldenPoint>[
@@ -100,10 +128,10 @@ void main() {
       });
 
       test('agrees with the oracle on 50,000 random points', () {
-        // Uniform over the globe, so most land here.  Ocean points matter too:
-        // a grid that wrongly marked a cell empty would return null where the
-        // oracle finds a zone, and only a sample this size reliably lands in
-        // the thin coastal cells where that would show.
+        // Uniform over the globe, so mostly ocean (~38% land), and ocean points
+        // matter: a grid that wrongly marked a cell empty would return null
+        // where the oracle finds a zone, and only a sample this size reliably
+        // lands in the thin coastal cells where that would show.
         final random = Random(20260728);
         var checked = 0;
         var land = 0;
@@ -194,7 +222,7 @@ void main() {
       test('the serialized grid is far smaller than the coordinate blob', () {
         // The original estimate was 1–3 MB for the grid. Measured, the raw cell
         // array at this resolution is ~275 KB, so the index total is
-        // essentially the 27.8 MB of coordinates.
+        // essentially the coordinates (28.19 MB in 2026e).
         expect(grid.serializedBytes, lessThan(1000000));
       });
     },

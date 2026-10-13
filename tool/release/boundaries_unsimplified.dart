@@ -11,7 +11,7 @@
 // Open Database License. Boundaries built by Timezone Boundary Builder
 // (https://github.com/evansiroky/timezone-boundary-builder).
 
-/// The packed index for tzbb 2026c, reassembled from 36 chunks.
+/// The packed index for tzbb 2026e, reassembled from 37 chunks.
 library;
 
 import 'dart:convert';
@@ -53,12 +53,13 @@ import 'boundaries_unsimplified_032.dart' as c32;
 import 'boundaries_unsimplified_033.dart' as c33;
 import 'boundaries_unsimplified_034.dart' as c34;
 import 'boundaries_unsimplified_035.dart' as c35;
+import 'boundaries_unsimplified_036.dart' as c36;
 
 /// The tzbb release this data was built from.
-const String dataVersion = '2026c';
+const String dataVersion = '2026e';
 
 /// Size of the packed container, in bytes.
-const int containerLength = 28152685;
+const int containerLength = 28503727;
 
 /// Decoded container bytes.
 ///
@@ -68,7 +69,7 @@ const int containerLength = 28152685;
 ///
 /// Each chunk decodes straight into its place in the output.
 /// Joining them into one string first would be simpler to
-/// write and would cost an extra ~37 MB of peak memory for an
+/// write and would cost an extra ~38.0 MB of peak memory for an
 /// intermediate discarded immediately. Chunk boundaries fall
 /// on four-character base64 groups so this is possible.
 Uint8List loadContainer() {
@@ -111,6 +112,7 @@ Uint8List loadContainer() {
     c33.chunk,
     c34.chunk,
     c35.chunk,
+    c36.chunk,
   ]) {
     final bytes = base64.decode(chunk);
     container.setRange(offset, offset + bytes.length, bytes);

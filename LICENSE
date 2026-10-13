@@ -27,5 +27,3 @@ NOTE ON BUNDLED DATA
 This MIT licence covers the source code of this package only.
 
 The bundled time zone boundary index is licensed separately — see LICENSE-DATA.
-
-English metazone display strings are licensed separately — see LICENSE-CLDR.

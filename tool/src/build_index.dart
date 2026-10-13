@@ -158,8 +158,9 @@ Uint8List buildIndex({
     grid.cells.offsetInBytes,
     grid.cells.lengthInBytes,
   );
-  // The cell array is read back as an Int32List view, which requires a
-  // four-byte aligned start. Pad rather than let the reader copy 259 KB.
+  // Four-byte aligned so a reader could view the cells in place. This one
+  // copies (`_viewCells`), but the padding is part of the format: dropping it
+  // changes the bytes of every container.
   final cellPadding = (4 - cursor % 4) % 4;
   cursor += cellPadding;
   final cellsAt = cursor;

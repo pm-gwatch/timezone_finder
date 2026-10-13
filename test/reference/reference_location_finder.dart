@@ -135,8 +135,8 @@ class ReferenceLocationFinder {
   /// Every distinct identifier whose polygons contain the point, ordered by
   /// the same precedence [findLocationName] applies.
   ///
-  /// A diagnostic for probing the documented overlap regions. This is **not**
-  /// the `findAll()` public API, which is deferred.
+  /// A diagnostic for probing the documented overlap regions. There is no
+  /// public `findAll()`; the package returns one identifier per point.
   ///
   /// Argument order matches the public API: longitude first, then latitude.
   List<String> zonesContaining(double longitude, double latitude) {

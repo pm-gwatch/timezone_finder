@@ -1,6 +1,6 @@
 /// Generates — or verifies — the indexes as base64 Dart source.
 ///
-///     dart run tool/generate_data.dart [--release 2026c] [--tolerance 1000]
+///     dart run tool/generate_data.dart [--release 2026e] [--tolerance 1000]
 ///         [--chunk-kb 1024] [--emit bundled|unsimplified|both] [--verify]
 ///
 /// The bundled index goes to `lib/src/generated/` and ships; the unsimplified
@@ -8,8 +8,8 @@
 /// compares them against what is committed, writing nothing.
 ///
 /// Maintainers run this; consumers never do. `tool/refresh.dart` wraps it with
-/// the release triage, the CLDR refresh and the test suite — use that for a
-/// release bump, and this directly to re-emit at a release already committed.
+/// the release triage and the test suite — use that for a release bump, and
+/// this directly to re-emit at a release already committed.
 library;
 
 import 'dart:convert';
@@ -164,7 +164,9 @@ Future<void> main(List<String> args) async {
   }
   _writeCommittedNames(release, oracle.zones);
 
-  stdout.writeln('\nNow run: dart format lib/src/generated && dart analyze');
+  stdout.writeln(
+    '\nNow run: dart format lib/src/generated tool/release && dart analyze',
+  );
 }
 
 void _emitTier(_Tier tier, {required String release, required int chunkKb}) {
@@ -184,7 +186,7 @@ void _emitTier(_Tier tier, {required String release, required int chunkKb}) {
   // Only the bundled tier has a web asset; the unsimplified baseline is a
   // measurement input and never leaves the repository.
   if (tier.name == 'boundaries') {
-    final binFile = File('lib/data/boundaries_$release.bin');
+    final binFile = File('lib/data/$boundariesBinFileName');
     emitBinaryData(file: binFile, container: tier.container);
     emitBoundariesBinMeta(
       file: File('lib/src/generated/boundaries_bin.dart'),

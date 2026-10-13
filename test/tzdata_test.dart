@@ -4,8 +4,7 @@
 import 'package:test/test.dart';
 import 'package:timezone/data/latest.dart' as incomplete_tzdata;
 import 'package:timezone/timezone.dart';
-import 'package:timezone_finder/src/api/location_finder.dart'
-    show LocationFinder;
+import 'package:timezone_finder/src/location_finder.dart' show LocationFinder;
 import 'package:timezone_finder/timezone_finder.dart';
 
 void main() {
@@ -33,19 +32,6 @@ void main() {
 
     // A point with no zone needs no database, so it still answers.
     expect(findLocation(-140, 0), isNull);
-
-    // String.findLocation reports the same cause rather than a parse failure: the
-    // Feature is well-formed, the database simply is not there yet.
-    const paris =
-        '{"type": "Feature", "geometry": '
-        '{"type": "Point", "coordinates": [2.3522, 48.8566]}}';
-    const midPacific =
-        '{"type": "Feature", "geometry": '
-        '{"type": "Point", "coordinates": [-140.0, 0.0]}}';
-    expect(paris.findLocation, throwsStateError);
-
-    // Except where no zone covers the point: no database is consulted.
-    expect(midPacific.findLocation(), isNull);
   });
 
   test('names the cause when the tzdata variant omits the identifier', () {

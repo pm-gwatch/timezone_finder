@@ -5,9 +5,9 @@ import 'dart:typed_data';
 
 import 'package:timezone/timezone.dart';
 
-import '../index/boundary_index.dart';
-import '../index/boundary_store.dart';
-import '../index/quantization.dart';
+import 'index/boundary_index.dart';
+import 'index/boundary_store.dart';
+import 'index/quantization.dart';
 
 typedef _IndexSource = BoundaryIndex Function();
 
@@ -33,7 +33,7 @@ Location? findLocation(double longitude, double latitude) =>
 /// lazy. Harmless if called again. On web, requires `installBoundaries` first.
 Future<void> ensurePreloaded() => _defaultFinder.ensurePreloaded();
 
-/// Timezone-boundary-builder release for these borders (e.g. `'2026c'`).
+/// Timezone-boundary-builder release for these borders (e.g. `'2026e'`).
 /// Independent of the tzdb version behind `package:timezone`. Reading this
 /// decodes the index; on web that requires `installBoundaries` first.
 String get boundaryDataVersion => _defaultFinder.boundaryDataVersion;
@@ -94,8 +94,9 @@ class LocationFinder {
       return getLocation(identifier);
     } on LocationNotFoundException {
       // Not a boundary miss: `latest` omits 106 of this package's 419 ids
-      // (it keeps 313). `latest_all` has every id. Named in the error
-      // because VM imports `latest` on purpose, while browsers default to it.
+      // (it keeps 313). `latest_all` has every id. Both platforms are named
+      // because the VM loads `latest` only when imported, while
+      // initializeTimeZone() in a browser fetches it by default.
       throw StateError(
         'The boundary data resolved this coordinate to $identifier, but the '
         'initialized time zone database has no such location — it omits the '

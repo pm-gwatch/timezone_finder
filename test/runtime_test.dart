@@ -11,7 +11,7 @@ import 'dart:math';
 import 'package:test/test.dart';
 import 'package:timezone_finder/src/index/boundary_index.dart';
 import 'package:timezone_finder/src/index/quantization.dart';
-import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/location_finder.dart';
 
 import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
@@ -226,7 +226,7 @@ void main() {
           inInclusiveRange(27.5, 29.0),
           reason:
               'container is ${megabytes.toStringAsFixed(2)} MB; '
-              'budgets ~28.16 MB',
+              '2026e measured 28.50 MB',
         );
       });
     },

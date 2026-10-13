@@ -10,7 +10,7 @@ import 'dart:math';
 import 'package:test/test.dart';
 import 'package:timezone_finder/src/generated/boundaries_bin.dart';
 import 'package:timezone_finder/src/generated/boundaries.dart' as bundled_data;
-import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/location_finder.dart';
 import 'package:timezone_finder/src/index/boundary_store.dart'
     show indexDecodeCount;
 
@@ -49,14 +49,26 @@ void main() {
       expect(fromBin, fromChunks);
     });
 
+    test('the .bin path is stable across releases; the URL is not', () {
+      // Apps declare the path as a Flutter asset, so it must not change with
+      // a boundary update — that would break them in a patch release. The
+      // default URL carries the release so browsers do not reuse a cached
+      // copy, which would fail the length check after an update.
+      expect(boundariesBinName, 'boundaries.bin');
+      expect(
+        boundariesDefaultUrl,
+        'packages/timezone_finder/data/boundaries.bin'
+        '?v=${bundled_data.dataVersion}',
+      );
+    });
+
     test('the docs that hardcode the .bin filename name the current one', () {
-      // A boundary release renames the file. The README spells it out because
-      // a `flutter: assets:` entry is YAML with no constant to reach for.
-      // `browser.dart` interpolates `boundariesBinName` and is not listed.
-      // Nothing regenerates the README, so without this it goes stale
-      // silently and an app following it fails at the asset lookup, not at
-      // compile time.
-      final mention = RegExp(r'boundaries_[0-9a-z]+\.bin');
+      // The README spells it out because a `flutter: assets:` entry is YAML
+      // with no constant to reach for. `browser.dart` interpolates
+      // `boundariesBinName` and is not listed. Nothing regenerates the
+      // README, so this catches a stale or versioned name before an app
+      // following it fails at the asset lookup.
+      final mention = RegExp(r'boundaries(_[0-9a-z]+)?\.bin');
       for (final path in const <String>['README.md']) {
         final named = mention
             .allMatches(File(path).readAsStringSync())
@@ -103,7 +115,7 @@ void main() {
     test('resolves every overlap to one of its contenders, stably', () {
       // `selected` records what the tiebreak returns on the unsimplified
       // geometry. The rule orders by polygon area, and simplification changes
-      // areas, so the shipped data can pick the other contender — 1 of 22
+      // areas, so the shipped data can pick the other contender — 1 of 23
       // pins does, at the Bolivia–Brazil border. What must hold is that the
       // answer is always one of the two zones that genuinely cover the point,
       // and that it does not vary between calls.
@@ -398,8 +410,8 @@ void main() {
           bundledBytes.length,
           fresh.length,
           reason:
-              'bundled container is a different size from a fresh pack — '
-              'lib/src/generated is stale. Run tool/refresh.dart for a release '
+              'unsimplified container is a different size from a fresh pack '
+              '— tool/release/ is stale. Run tool/refresh.dart for a release '
               'bump, or tool/generate_data.dart to re-emit the committed one',
         );
         var firstDifference = -1;
@@ -413,7 +425,7 @@ void main() {
           firstDifference,
           -1,
           reason:
-              'bundled bytes differ at offset '
+              'tool/release/ bytes differ at offset '
               '$firstDifference',
         );
       });

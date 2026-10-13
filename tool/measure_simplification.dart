@@ -11,7 +11,7 @@ library;
 
 import 'dart:io';
 
-import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/location_finder.dart';
 
 import 'release/boundaries_unsimplified.dart' as unsimplified;
 

@@ -7,9 +7,9 @@
 /// `.bin` via [installBoundaries] instead, so those targets never link the
 /// chunks.
 ///
-/// The chunking is a **compiler** concern, not a memory one. A single ~37 MB
-/// string literal is hostile to the analyzer and to AOT; several smaller ones
-/// are not. At load the chunks are concatenated back into one buffer, so the
+/// The chunking is a **compiler** concern, not a memory one. One string
+/// literal of tens of megabytes (the unsimplified tier) is hostile to the
+/// analyzer and to AOT; several smaller ones are not. At load the chunks are concatenated back into one buffer, so the
 /// reader's absolute offsets work unchanged and nothing has to cope with a
 /// varint straddling a boundary.
 library;
@@ -132,7 +132,10 @@ EmitResult emitDartData({
     ..writeln('///')
     ..writeln('/// Each chunk decodes straight into its place in the output.')
     ..writeln('/// Joining them into one string first would be simpler to')
-    ..writeln('/// write and would cost an extra ~37 MB of peak memory for an')
+    ..writeln(
+      '/// write and would cost an extra ~${_base64Megabytes(container.length)} '
+      'MB of peak memory for an',
+    )
     ..writeln('/// intermediate discarded immediately. Chunk boundaries fall')
     ..writeln('/// on four-character base64 groups so this is possible.')
     ..writeln('Uint8List loadContainer() {')
@@ -167,13 +170,17 @@ void emitBinaryData({required File file, required Uint8List container}) {
   file.writeAsBytesSync(container);
 }
 
+/// The web asset's filename under `lib/data/`. Fixed across releases, so a
+/// Flutter `assets:` entry never goes stale; the release travels in the
+/// default URL's `?v=` instead.
+const String boundariesBinFileName = 'boundaries.bin';
+
 /// Writes `lib/src/generated/boundaries_bin.dart` naming the shipped `.bin` asset.
 void emitBoundariesBinMeta({
   required File file,
   required String dataVersion,
   required int containerLength,
 }) {
-  final name = 'boundaries_$dataVersion.bin';
   final source = StringBuffer()
     ..writeln('// GENERATED FILE — DO NOT EDIT.')
     ..writeln('//')
@@ -209,14 +216,24 @@ void emitBoundariesBinMeta({
     ..writeln(
       '/// Packed index filename under `package:timezone_finder/data/`.',
     )
-    ..writeln("const String boundariesBinName = '$name';")
+    ..writeln("const String boundariesBinName = '$boundariesBinFileName';")
     ..writeln()
     ..writeln('/// Size of [boundariesBinName], in bytes.')
     ..writeln('const int boundariesBinLength = $containerLength;')
     ..writeln()
-    ..writeln('/// Default URL for [initializeBoundaries] in browsers.')
+    ..writeln(
+      '/// Default URL for [initializeBoundaries] in browsers. The `?v=`',
+    )
+    ..writeln('/// names the release so a cached copy from an older one is not')
+    ..writeln('/// reused.')
     ..writeln('const String boundariesDefaultUrl =')
-    ..writeln("    'packages/timezone_finder/data/\$boundariesBinName';");
+    ..writeln(
+      "    'packages/timezone_finder/data/\$boundariesBinName?v=$dataVersion';",
+    );
   file.parent.createSync(recursive: true);
   file.writeAsStringSync(source.toString());
 }
+
+/// Size of [bytes] bytes as base64, in MB to one decimal.
+String _base64Megabytes(int bytes) =>
+    (4 * ((bytes + 2) ~/ 3) / 1e6).toStringAsFixed(1);

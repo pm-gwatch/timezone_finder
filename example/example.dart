@@ -2,7 +2,7 @@
 //
 // Shows the whole pipeline this package is built for:
 //
-//   place name → geocoder → GeoJSON Feature → IANA zone → civil time
+//   place name → geocoder → coordinates → IANA zone → civil time
 
 import 'dart:convert';
 import 'dart:io';
@@ -12,7 +12,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart';
 import 'package:timezone_finder/timezone_finder.dart';
 
-typedef Place = ({String name, String feature});
+typedef Place = ({String name, double longitude, double latitude});
 
 typedef TimeSlot = ({
   String city,
@@ -47,10 +47,10 @@ Future<Place> advancedSearchWithNominatim(
   ),
 );
 
-/// Fetches [uri] and returns the first GeoJSON feature.
+/// Fetches [uri] and returns the first hit's name and Point coordinates.
 ///
-/// Nominatim returns a FeatureCollection; [GeoJsonLocation.findLocation] wants
-/// one Feature. Hospital name comes from `properties.name`.
+/// Nominatim search returns a FeatureCollection even with `limit=1`. This
+/// example takes `features.first`. Hospital name comes from `properties.name`.
 Future<Place> _geocode(Uri uri) async {
   final client = HttpClient();
   try {
@@ -58,7 +58,7 @@ Future<Place> _geocode(Uri uri) async {
     // Nominatim rejects stock library User-Agents.
     request.headers.set(
       HttpHeaders.userAgentHeader,
-      'timezone_finder/example/0.2.0 (https://github.com/pm-gwatch/timezone_finder)',
+      'timezone_finder/example/1.0.0 (https://github.com/pm-gwatch/timezone_finder)',
     );
     final response = await request.close();
     final text = await response.transform(utf8.decoder).join();
@@ -79,11 +79,14 @@ Future<Place> _geocode(Uri uri) async {
 
     final feature = features.first as Map<String, dynamic>;
     final properties = feature['properties'] as Map<String, dynamic>;
+    final geometry = feature['geometry'] as Map<String, dynamic>;
+    final coordinates = geometry['coordinates'] as List<dynamic>;
     // Display-only: Nominatim structured search sometimes omits the name.
     final name = properties['name'];
     return (
       name: name is String && name.isNotEmpty ? name : uri.host,
-      feature: jsonEncode(feature),
+      longitude: (coordinates[0] as num).toDouble(),
+      latitude: (coordinates[1] as num).toDouble(),
     );
   } finally {
     client.close();
@@ -100,12 +103,12 @@ TimeSlot _schedule(
   TZDateTime start,
   Duration length,
 ) {
-  final location = place.feature.findLocation();
+  final location = findLocation(place.longitude, place.latitude);
   if (location == null) {
     throw StateError('No land time zone for $city (${place.name})');
   }
-  final localStartTime = start.toLocation(location);
-  final localEndTime = start.add(length).toLocation(location);
+  final localStartTime = TZDateTime.from(start, location);
+  final localEndTime = localStartTime.add(length);
   return (
     city: city,
     localStartTime: localStartTime,
@@ -114,22 +117,15 @@ TimeSlot _schedule(
 }
 
 void _printConfCallTable(List<TimeSlot> rows) {
-  final header = <String>[
-    'City',
-    'Start (local)',
-    'End (local)',
-    'Zone',
-    'Offset',
-  ];
+  final header = <String>['City', 'Start (local)', 'End (local)', 'Zone'];
   final body = <List<String>>[
     for (final row in rows)
       <String>[
         row.city,
         _civil(row.localStartTime),
         _civil(row.localEndTime),
-        // Africa/Casablanca has had no English CLDR name since 2018-10-28.
-        row.localStartTime.timeZoneLongName ?? '',
-        row.localStartTime.utcOffsetLabel,
+        // tzdb abbreviation; some zones only have a numeric one, e.g. +01.
+        row.localStartTime.timeZoneName,
       ],
   ];
   final table = <List<String>>[header, ...body];
@@ -204,5 +200,5 @@ Future<void> main() async {
   ];
 
   _printConfCallTable(confCall);
-  print('TZBB boundary release: $boundaryDataVersion, CLDR: $cldrVersion');
+  print('TZBB boundary release: $boundaryDataVersion');
 }

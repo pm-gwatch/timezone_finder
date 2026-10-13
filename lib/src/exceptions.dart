@@ -1,5 +1,5 @@
-/// Shared public exceptions. Lives outside `api/` and `index/` so those
-/// folders do not import each other.
+/// Public exceptions, exported from `browser.dart`. Outside `index/` so the
+/// web entry point can throw them without reaching into the reader.
 library;
 
 /// Thrown when a container cannot be trusted.

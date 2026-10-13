@@ -5,7 +5,7 @@
 library;
 
 import 'package:test/test.dart';
-import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/location_finder.dart';
 
 import '../tool/release/boundaries_unsimplified.dart' as unsimplified;
 
@@ -31,9 +31,9 @@ void main() {
       );
     });
 
-    test('carries fewer zones, because some polygons cannot survive', () {
-      // 33 polygons and 27 holes collapse below three vertices at this
-      // tolerance and are dropped. A zone disappears only if every one of its
+    test('carries no more zones than the baseline', () {
+      // On 2026e, 65 polygons and 59 holes collapse below three vertices at
+      // this tolerance and are dropped. A zone disappears only if every one of its
       // polygons went, so the count barely moves — but it can move.
       expect(
         bundledFinder.availableLocationNames.length,
@@ -49,7 +49,7 @@ void main() {
     test(
       'agrees with the unsimplified baseline on every ground-truth fixture',
       () {
-        // Measured, not assumed: at 110 m all 265 currently agree. A failure
+        // Measured, not assumed: at 110 m all 273 currently agree. A failure
         // here is a finding to investigate and re-publish the rate for, not a
         // fixture to "fix" — the fixtures are ground truth for the unsimplified baseline.
         final differing = <String>[];
@@ -138,7 +138,7 @@ void main() {
       // The Amazonas line between Tabatinga and Porto Acre (Brazilian Federal
       // Law 12,876/2013) is exactly that. The contrast is measured, not
       // assumed: probing 22 m either side of an arbitrary land border, the
-      // two disagree 20.8% of the time (2000 probes worldwide). Here they
+      // two disagree 20.8% of the time (2000 probes worldwide, 2026c). Here they
       // must not disagree at all, down to 5.5 m.
       var probed = 0;
       for (var latitude = -4.5; latitude >= -9.5; latitude -= 0.25) {
@@ -204,7 +204,7 @@ void main() {
           pin.longitude,
           pin.latitude,
         );
-        if (answer == null) continue;
+        expect(answer, isNotNull, reason: '${pin.description}: no answer');
         expect(
           pin.contenders,
           contains(answer),

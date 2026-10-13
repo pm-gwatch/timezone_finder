@@ -27,9 +27,11 @@ import '../test/fixtures/golden_points.dart';
 import '../test/reference/reference_location_finder.dart';
 import 'src/fetch.dart';
 
+// The pinned release, not master: the list changes between releases (2026e
+// added a pair), and the probe must match the geometry it samples.
 const _overlapsUrl =
     'https://raw.githubusercontent.com/evansiroky/timezone-boundary-builder/'
-    'master/expectedZoneOverlaps.json';
+    '$defaultRelease/expectedZoneOverlaps.json';
 
 /// Default sampling density per axis. Override with `--steps N`.
 const int _defaultGridSteps = 24;

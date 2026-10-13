@@ -13,18 +13,19 @@ it looks:
 
 ## `golden_points.dart` — milestone 3
 
-199 fixtures extending the bootstrap set into borders, enclaves, islands,
+207 fixtures extending the bootstrap set into borders, enclaves, islands,
 Antarctic stations, the antimeridian, and open ocean. Combined with the
-bootstrap set: **265 fixtures across 237 distinct zones**.
+bootstrap set: **273 fixtures across 238 distinct zones**. Category counts
+below cover both files.
 
 | Category | Count |
 | --- | --- |
 | city | 181 |
 | island | 30 |
-| border | 19 |
+| border | 26 |
 | antarctic | 10 |
 | enclave | 8 |
-| ocean | 8 |
+| ocean | 9 |
 | antimeridian | 9 |
 
 ### Verification log — 2026-07-28
@@ -34,8 +35,15 @@ Same discipline as the bootstrap set: written by hand first, verified after.
 | Check | Method | Result |
 | --- | --- | --- |
 | Identifier exists | tzbb `2026c` `timezone-names.json` | **all present** |
+| Identifier exists (2026-10-05) | tzbb `2026d` `timezone-names.json`, identical to `2026c` | **all present** |
+| Identifier exists (2026-10-13) | tzbb `2026e` `timezone-names.json`, identical to `2026c` | **all present** |
 | Coordinate → zone | `timezonefinder` 8.2.5 (authoritative) | **265/265** |
 | Coordinate → zone | `tzf` via `tzfpy` 1.3.2 (advisory) | **257/257** of the non-null fixtures |
+
+Both coordinate checks predate the last 8 fixtures (7 border points and
+`Adriatic Sea, between Dubrovnik and Bari`). Those are verified only by the
+oracle tests, which read the same tzbb data; re-run the script below to give
+them the same external check.
 
 **Verification weighting is inverted from the bootstrap set.** There, both
 tools were equal peers because every point was deep inland. Here, border
@@ -72,20 +80,44 @@ no external answer.** A sweep of all fixtures against the oracle confirmed
 Ürümqi was the only one affected; `dart run tool/probe_overlaps.dart
 --check-fixtures` re-runs that sweep, and a test enforces it permanently.
 
+### The one provenance exception
+
+`Unclaimed Antarctic sector, 10°W` → `Etc/UTC` is the only fixture in
+`golden_points.dart` whose *coordinate* came from the dataset rather than from
+independent knowledge. (The bootstrap set has no such exception: every point
+is a city centre.) The region has no named station to anchor to, and `Etc/UTC`
+is the one identifier of the 419 that is absent from tzdb's `zone.tab` — which
+makes it easy to mistake for an artifact and filter out. It is a real
+six-vertex land polygon, and both external implementations return `Etc/UTC`
+there.
+
+Without it, a zone the package can genuinely return would never be tested. It
+is included with the weaker provenance stated in its note, rather than either
+omitted or quietly filed as if it were like the rest.
+
 ---
 
 ## `overlap_pins.dart` — milestone 3
 
-21 of the 25 documented overlap pairs, pinned. Read the file header before
-touching it: these record what an arbitrary tiebreak returns in mostly
-disputed territories, and are not claims about sovereignty.
+22 of the 26 documented overlap pairs, pinned (tzbb 2026e added
+`Europe/Madrid`–`Europe/Paris`, pinned at the Cerbère–Portbou coast on
+2026-10-13). Read the file header before touching it: these record what an
+arbitrary tiebreak returns in mostly disputed territories, and are not claims
+about sovereignty.
 
 The other four pairs (`Asia/Ho_Chi_Minh`–`Asia/Manila`,
 `Asia/Ho_Chi_Minh`–`Asia/Shanghai`, `Asia/Kolkata`–`Asia/Shanghai`,
 `Asia/Manila`–`Asia/Shanghai`) do not overlap anywhere in the 2026c land-only
-geometry at sampling densities up to 200×200. They cannot be pinned because
-the situation does not arise. See plan §9.4 — grid sampling cannot prove
-absence, so this is "not found", not "does not exist".
+geometry at sampling densities up to 200×200, nor in 2026d or 2026e at
+96×96. They cannot be pinned because the situation does not arise. See plan
+§9.4 — grid sampling cannot prove absence, so this is "not found", not "does
+not exist".
+
+Sampling misses in the other direction too: on 2026d and 2026e,
+`probe_overlaps` reports `Asia/Pyongyang`–`Asia/Shanghai` as not found even at
+96×96, yet the Tumen estuary pin is still covered by both zones. The oracle check in
+`golden_points_test.dart` is authoritative; do not drop a pin on the probe's
+word.
 
 ---
 
@@ -117,6 +149,8 @@ oracle — not this file — becomes the authority.
 | Check | Method | Result |
 | --- | --- | --- |
 | Identifier exists | Membership in the 419 entries of tzbb `2026c` `timezone-names.json` | **66/66 present** |
+| Identifier exists (2026-10-05) | tzbb `2026d` `timezone-names.json`, identical to `2026c` | **66/66 present** |
+| Identifier exists (2026-10-13) | tzbb `2026e` `timezone-names.json`, identical to `2026c` | **66/66 present** |
 | Coordinate → zone (1) | Python `timezonefinder` 8.2.5, `timezone_at_land()` | **66/66 agree, 0 disagreements** |
 | Coordinate → zone (2) | `tzf` via `tzfpy` 1.3.2, `get_tz()` | **66/66 agree, 0 disagreements** |
 | Duplicate coordinates | Exact match on (lat, lon) | none |
@@ -166,7 +200,7 @@ python3 -m venv /tmp/tzcheck && /tmp/tzcheck/bin/pip install timezonefinder tzfp
 ```
 
 ```bash
-curl -sLO https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026c/timezone-names.json
+curl -sLO https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026e/timezone-names.json
 ```
 
 ```python
@@ -190,19 +224,6 @@ for n, lat, lon, z in pairs:
         print(f'DISAGREE {n}: expected {z}, tzf {a}, timezonefinder {b}')
 ```
 
-### The one provenance exception
-
-`Unclaimed Antarctic sector, 10°W` → `Etc/UTC` is the only fixture here whose
-*coordinate* came from the dataset rather than from independent knowledge. The
-region has no named station to anchor to, and `Etc/UTC` is the one identifier
-of the 419 that is absent from tzdb's `zone.tab` — which makes it easy to
-mistake for an artifact and filter out. It is a real six-vertex land polygon,
-and both external implementations return `Etc/UTC` there.
-
-Without it, a zone the package can genuinely return would never be tested. It
-is included with the weaker provenance stated in its note, rather than either
-omitted or quietly filed as if it were like the rest.
-
 ### Scope — what is deliberately absent
 
 This set is chosen to be **beyond doubt, not interesting**. Major city centres,
@@ -213,7 +234,7 @@ here, because a bootstrap set that argues with itself is useless:
 
 - near-border pairs (Basel/Saint-Louis, the China/Nepal border, Arizona/Navajo)
 - the 5 antimeridian-split zones
-- all 25 documented overlap pairs
+- every documented overlap pair
 - enclaves and hole cases (Lesotho, Vatican City)
 - small-island and Antarctic zones
 

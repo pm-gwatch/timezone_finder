@@ -16,7 +16,7 @@ import 'dart:io';
 
 import '../test/fixtures/overlap_pins.dart';
 import '../test/reference/reference_location_finder.dart';
-import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/location_finder.dart';
 
 import 'package:timezone_finder/src/generated/boundaries.dart' as bundled;
 

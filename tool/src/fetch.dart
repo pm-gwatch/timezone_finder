@@ -14,7 +14,7 @@ import 'package:archive/archive_io.dart';
 import 'package:http/http.dart' as http;
 
 /// The tzbb release this package currently targets.
-const String defaultRelease = '2026c';
+const String defaultRelease = '2026e';
 
 /// The land-only, full-fidelity release asset. See the README for why this
 /// variant rather than `with-oceans` or the `1970`/`now` merges.

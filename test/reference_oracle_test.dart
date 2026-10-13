@@ -32,7 +32,7 @@ void main() {
       });
 
       test('parses the expected shape of the dataset', () {
-        // Measured independently from tzbb 2026c before the oracle existed.
+        // Measured independently from tzbb 2026e before the oracle existed.
         // Asserting all five totals — not just the two cheap ones — means a
         // parse that silently drops rings or vertices fails CI rather than
         // quietly weakening every downstream guarantee.
@@ -52,10 +52,10 @@ void main() {
         }
 
         expect(oracle.zones.length, 419, reason: 'zones');
-        expect(oracle.polygons.length, 1184, reason: 'polygons');
-        expect(rings, 1456, reason: 'rings');
-        expect(holes, 272, reason: 'holes');
-        expect(vertices, 7649092, reason: 'vertices');
+        expect(oracle.polygons.length, 1220, reason: 'polygons');
+        expect(rings, 1530, reason: 'rings');
+        expect(holes, 310, reason: 'holes');
+        expect(vertices, 7747361, reason: 'vertices');
       });
 
       test('agrees with every bootstrap golden', () {
@@ -124,9 +124,9 @@ void main() {
         // ringDoubledArea accumulates in int64. That is safe only while the
         // running sum stays inside the 64-bit range, which is a property of
         // the data, not of the code — so it is checked against the data rather
-        // than argued for. Measured on 2026c the peak is 5.12e15, about 1801x
-        // inside the limit, but a future release with wider rings could
-        // approach it and the failure would otherwise be silent.
+        // than argued for. Measured on 2026c to 2026e the peak is 5.12e15,
+        // about 1801x inside the limit, but a future release with wider rings
+        // could approach it and the failure would otherwise be silent.
         //
         // Comparing against an exact BigInt sum detects overflow directly: an
         // int64 that wrapped would not match.
@@ -142,7 +142,7 @@ void main() {
             }
           }
         }
-        expect(checked, 1456, reason: 'ring count changed');
+        expect(checked, 1530, reason: 'ring count changed');
         expect(
           mismatches.take(5),
           isEmpty,
@@ -152,8 +152,8 @@ void main() {
 
       test('precedence is deterministic and total', () {
         // Every polygon must order consistently against every other, or the
-        // overlap rule is not a rule. Spot-check a sample rather than all
-        // 1,184 x 1,184 pairs.
+        // overlap rule is not a rule. Spot-check a sample rather than every
+        // pair of the ~1,200 polygons.
         final sample = oracle.polygons.take(120).toList();
         for (final a in sample) {
           expect(comparePolygons(a, a), 0, reason: 'not reflexive');
