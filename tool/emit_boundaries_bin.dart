@@ -1,4 +1,4 @@
-/// One-shot: write `lib/data/boundaries_<ver>.bin` from the embedded chunks.
+/// One-shot: write `lib/data/boundaries.bin` from the embedded chunks.
 ///
 ///     dart run tool/emit_boundaries_bin.dart
 ///
@@ -16,7 +16,7 @@ import 'src/emit_dart.dart';
 void main() {
   final container = bundled.loadContainer();
   final version = bundled.dataVersion;
-  final binFile = File('lib/data/boundaries_$version.bin');
+  final binFile = File('lib/data/$boundariesBinFileName');
   emitBinaryData(file: binFile, container: container);
   emitBoundariesBinMeta(
     file: File('lib/src/generated/boundaries_bin.dart'),

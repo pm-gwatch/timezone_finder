@@ -58,7 +58,7 @@ Future<Place> _geocode(Uri uri) async {
     // Nominatim rejects stock library User-Agents.
     request.headers.set(
       HttpHeaders.userAgentHeader,
-      'timezone_finder/example/0.3.0 (https://github.com/pm-gwatch/timezone_finder)',
+      'timezone_finder/example/1.0.0 (https://github.com/pm-gwatch/timezone_finder)',
     );
     final response = await request.close();
     final text = await response.transform(utf8.decoder).join();

@@ -167,13 +167,17 @@ void emitBinaryData({required File file, required Uint8List container}) {
   file.writeAsBytesSync(container);
 }
 
+/// The web asset's filename under `lib/data/`. Fixed across releases, so a
+/// Flutter `assets:` entry never goes stale; the release travels in the
+/// default URL's `?v=` instead.
+const String boundariesBinFileName = 'boundaries.bin';
+
 /// Writes `lib/src/generated/boundaries_bin.dart` naming the shipped `.bin` asset.
 void emitBoundariesBinMeta({
   required File file,
   required String dataVersion,
   required int containerLength,
 }) {
-  final name = 'boundaries_$dataVersion.bin';
   final source = StringBuffer()
     ..writeln('// GENERATED FILE — DO NOT EDIT.')
     ..writeln('//')
@@ -209,14 +213,20 @@ void emitBoundariesBinMeta({
     ..writeln(
       '/// Packed index filename under `package:timezone_finder/data/`.',
     )
-    ..writeln("const String boundariesBinName = '$name';")
+    ..writeln("const String boundariesBinName = '$boundariesBinFileName';")
     ..writeln()
     ..writeln('/// Size of [boundariesBinName], in bytes.')
     ..writeln('const int boundariesBinLength = $containerLength;')
     ..writeln()
-    ..writeln('/// Default URL for [initializeBoundaries] in browsers.')
+    ..writeln(
+      '/// Default URL for [initializeBoundaries] in browsers. The `?v=`',
+    )
+    ..writeln('/// names the release so a cached copy from an older one is not')
+    ..writeln('/// reused.')
     ..writeln('const String boundariesDefaultUrl =')
-    ..writeln("    'packages/timezone_finder/data/\$boundariesBinName';");
+    ..writeln(
+      "    'packages/timezone_finder/data/\$boundariesBinName?v=$dataVersion';",
+    );
   file.parent.createSync(recursive: true);
   file.writeAsStringSync(source.toString());
 }

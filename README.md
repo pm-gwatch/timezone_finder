@@ -2,14 +2,14 @@
 
 An add-on for [`package:timezone`](https://pub.dev/packages/timezone). It turns a point on Earth into a `Location`.
 
-### Split in 0.3.0
+### Split in 1.0.0
 
-Through [0.2.0](https://pub.dev/packages/timezone_finder/versions/0.2.0), this package also converted a `TZDateTime` to another `Location` and gave English time zone names. From 0.3.0 those features live in [`timezone_extensions`](https://pub.dev/packages/timezone_extensions), and `timezone_finder` only finds the `Location`. If you used them, add both packages:
+Through [0.2.0](https://pub.dev/packages/timezone_finder/versions/0.2.0), this package also converted a `TZDateTime` to another `Location` and gave English time zone names. From 1.0.0 those features live in [`timezone_extensions`](https://pub.dev/packages/timezone_extensions), and `timezone_finder` only finds the `Location`. If you used them, add both packages:
 
 ```yaml
 dependencies:
   timezone_extensions: ^0.1.0
-  timezone_finder: ^0.3.0
+  timezone_finder: ^1.0.0
 ```
 
 Then `import 'package:timezone_extensions/timezone_extensions.dart';`. The names are unchanged: `toLocation`, `offsetDifference`, `timeZoneGenericName`, `timeZoneLongName`, `utcOffsetLabel` and `cldrVersion`.
@@ -52,7 +52,7 @@ On a server, `await ensurePreloaded()` at isolate startup if you do not want the
 	- `package:timezone_finder/browser.dart`
 - Start the code with
 	- `await tz.initializeTimeZone('packages/timezone/data/latest_all.tzf')`, not `latest.tzf` (default)
-	- `await initializeBoundaries()` fetches the `.bin` from `packages/timezone_finder/data/boundaries_2026e.bin` without any asset pipeline. Pass a URL to self-host.
+	- `await initializeBoundaries()` fetches the `.bin` from `packages/timezone_finder/data/boundaries.bin` without any asset pipeline. Pass a URL to self-host.
 
 ```dart
 import 'package:timezone/browser.dart' as tz;
@@ -73,10 +73,10 @@ Future<void> main() async {
 ```yaml
 flutter:
   assets:
-    - packages/timezone_finder/data/boundaries_2026e.bin
+    - packages/timezone_finder/data/boundaries.bin
 ```
 
-The `timezone_finder` package does not declare the `.bin` as a Flutter asset, so Android and iOS builds — which use the embedded index — do not carry 4 MB they never read.
+The path stays the same across boundary updates, so this entry never needs changing. The `timezone_finder` package does not declare the `.bin` as a Flutter asset, so Android and iOS builds — which use the embedded index — do not carry 4 MB they never read.
 
 - Import
 	- `package:timezone/browser.dart`
@@ -97,7 +97,7 @@ Future<void> main() async {
   await tz.initializeTimeZone('packages/timezone/data/latest_all.tzf');
 
   final data = await rootBundle.load(
-    'packages/timezone_finder/data/boundaries_2026e.bin',
+    'packages/timezone_finder/data/boundaries.bin',
   );
   installBoundaries(data.buffer.asUint8List());
 

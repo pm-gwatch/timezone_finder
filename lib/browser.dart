@@ -21,8 +21,9 @@
 /// }
 /// ```
 ///
-/// Flutter web: declare [boundariesDefaultUrl] under `flutter: assets:` in
-/// **your** pubspec, then `installBoundaries` from `rootBundle`. Self-host
+/// Flutter web: declare `packages/timezone_finder/data/boundaries.bin` under
+/// `flutter: assets:` in **your** pubspec, then `installBoundaries` from
+/// `rootBundle`. The path is the same for every boundary release. Self-host
 /// with `initializeBoundaries('https://cdn.example.com/$boundariesBinName')`.
 library;
 

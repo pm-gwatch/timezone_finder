@@ -2,7 +2,7 @@ name: timezone_finder
 description: >-
   Makes package:timezone easier to use — turn a place on Earth into the
   Location it sits in.
-version: 0.3.0
+version: 1.0.0
 repository: https://github.com/pm-gwatch/timezone_finder
 issue_tracker: https://github.com/pm-gwatch/timezone_finder/issues
 
@@ -19,7 +19,7 @@ environment:
   sdk: ^3.10.0
 
 dependencies:
-  timezone: ">=0.11.1 <1.0.0"
+  timezone: ^0.11.2
   web: ^1.1.1
 
 dev_dependencies:

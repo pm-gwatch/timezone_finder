@@ -65,7 +65,8 @@ and runs the suite. It writes:
 
 - `lib/src/generated/` — the bundled index as base64 Dart chunks
 - `lib/src/generated/boundaries_bin.dart` — `boundariesBinName` (and related constants)
-- `lib/data/boundaries_<tag>.bin` — the web asset
+- `lib/data/boundaries.bin` — the web asset, overwritten in place (the
+  release goes into `boundariesDefaultUrl` as `?v=<tag>`)
 - `tool/release/` — the unsimplified baseline and `timezone-names.json`
 
 Add `--no-tests` to iterate faster, but do not commit on the strength of a run
@@ -91,17 +92,7 @@ multiple is the early warning that a future TZBB geometry change will hard-fail
 the pack — better known now than mid-bump. `refresh.dart` does not run this
 tool, so it is a manual step.
 
-### 5. Delete the previous `.bin`
-
-```bash
-rm lib/data/boundaries_<old-tag>.bin
-```
-
-Nothing does this for you. Emit writes the new filename and leaves the old
-file in place, so the package would publish both — about 4 MB of dead weight.
-(Stale *chunk* files are cleaned automatically; the `.bin` is not.)
-
-### 6. Fix what the suite flags
+### 5. Fix what the suite flags
 
 These are hand-maintained and will fail loudly. That is the design — each one
 is a fact a human should confirm rather than a number a script should
@@ -114,23 +105,23 @@ overwrite.
 | `test/reference_oracle_test.dart` | Zone, polygon, ring, hole and vertex totals — count them independently of the oracle (e.g. a few lines of Python over `combined.json`), never from its output |
 | `test/encoding_test.dart` | Ring and vertex totals, and the coordinate-blob size window — re-measure independently and re-centre |
 | `test/runtime_test.dart` | Unsimplified container size budget |
-| `README.md` | The literal `.bin` filename in Flutter asset instructions |
 | `test/fixtures/overlap_pins.dart` | If a disputed-territory tiebreak moved — regenerate raw material with `dart run tool/probe_overlaps.dart` and update pins by hand. The probe samples, so it can miss a thin overlap that still exists; `golden_points_test.dart` is authoritative |
 | `test/fixtures/golden_points.dart` | If a border moved under a golden point |
 
-A test scans `README.md` and fails if it still names a stale `.bin`. The
-pubspec snippet has to be a literal because it is YAML with no constant to
-reach for. `browser.dart` interpolates `boundariesBinName`.
+The `.bin` keeps one name across releases, so the README's Flutter `assets:`
+snippet needs no edit; a test fails if it ever names anything but
+`boundaries.bin`.
 
 Do **not** "fix" a golden by recording what the new data returned. The
 bootstrap fixtures exist precisely to be independent of the data under test.
 
-### 7. Finish
+### 6. Finish
 
-Bump `version:` in `pubspec.yaml` per the triage verdict from step 1, and add a
-`CHANGELOG.md` entry naming the TZBB release.
+Bump `version:` in `pubspec.yaml` per the triage verdict from step 1 —
+**patch** when the identifier set is unchanged, **minor** when it moved — and
+add a `CHANGELOG.md` entry naming the TZBB release.
 
-### 8. Confirm reproducibility
+### 7. Confirm reproducibility
 
 ```bash
 dart run tool/refresh.dart --verify

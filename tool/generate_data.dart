@@ -186,7 +186,7 @@ void _emitTier(_Tier tier, {required String release, required int chunkKb}) {
   // Only the bundled tier has a web asset; the unsimplified baseline is a
   // measurement input and never leaves the repository.
   if (tier.name == 'boundaries') {
-    final binFile = File('lib/data/boundaries_$release.bin');
+    final binFile = File('lib/data/$boundariesBinFileName');
     emitBinaryData(file: binFile, container: tier.container);
     emitBoundariesBinMeta(
       file: File('lib/src/generated/boundaries_bin.dart'),

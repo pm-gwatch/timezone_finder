@@ -49,14 +49,26 @@ void main() {
       expect(fromBin, fromChunks);
     });
 
+    test('the .bin path is stable across releases; the URL is not', () {
+      // Apps declare the path as a Flutter asset, so it must not change with
+      // a boundary update — that would break them in a patch release. The
+      // default URL carries the release so browsers do not reuse a cached
+      // copy, which would fail the length check after an update.
+      expect(boundariesBinName, 'boundaries.bin');
+      expect(
+        boundariesDefaultUrl,
+        'packages/timezone_finder/data/boundaries.bin'
+        '?v=${bundled_data.dataVersion}',
+      );
+    });
+
     test('the docs that hardcode the .bin filename name the current one', () {
-      // A boundary release renames the file. The README spells it out because
-      // a `flutter: assets:` entry is YAML with no constant to reach for.
-      // `browser.dart` interpolates `boundariesBinName` and is not listed.
-      // Nothing regenerates the README, so without this it goes stale
-      // silently and an app following it fails at the asset lookup, not at
-      // compile time.
-      final mention = RegExp(r'boundaries_[0-9a-z]+\.bin');
+      // The README spells it out because a `flutter: assets:` entry is YAML
+      // with no constant to reach for. `browser.dart` interpolates
+      // `boundariesBinName` and is not listed. Nothing regenerates the
+      // README, so this catches a stale or versioned name before an app
+      // following it fails at the asset lookup.
+      final mention = RegExp(r'boundaries(_[0-9a-z]+)?\.bin');
       for (final path in const <String>['README.md']) {
         final named = mention
             .allMatches(File(path).readAsStringSync())
