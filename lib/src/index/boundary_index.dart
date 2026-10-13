@@ -38,10 +38,9 @@ abstract final class IndexHeader {
 
 /// Reads a packed index and resolves quantized coordinates against it.
 ///
-/// The polygon table is parsed eagerly (~1000 records). Ring coordinates are
-/// decoded on first use and memoised. Counts are approximate on purpose:
-/// shipped and unsimplified indexes both move each release.
-/// `polygonCount` is exact.
+/// The polygon table is parsed eagerly (~1,150 records in the shipped index;
+/// [polygonCount] is exact). Ring coordinates are decoded on first use and
+/// memoised.
 class BoundaryIndex {
   BoundaryIndex._({
     required Uint8List bytes,
@@ -122,6 +121,12 @@ class BoundaryIndex {
     for (var i = 0; i < polygonCount.value; i++) {
       final zoneId = _varint(bytes, cursor);
       cursor = zoneId.next;
+      if (zoneId.value >= names.length) {
+        throw IndexFormatException(
+          'polygon $i names zone ${zoneId.value}, but the index has '
+          '${names.length} zones',
+        );
+      }
       zoneIds[i] = zoneId.value;
 
       for (var f = 0; f < 4; f++) {
@@ -142,13 +147,27 @@ class BoundaryIndex {
       ringOffsets.add(offsets);
     }
 
+    final gridCellsOffset = offset(IndexHeader.gridCells);
+    final gridPoolOffset = offset(IndexHeader.gridPool);
+    // Same integer division as the builder's GridSpec, so any legal cell size
+    // matches. Checked here because a short array would make every lookup a
+    // RangeError rather than an IndexFormatException.
+    final cellCount = (360000000 ~/ cellSize) * (180000000 ~/ cellSize);
+    final cellBytes = gridPoolOffset - gridCellsOffset;
+    if (cellCount == 0 || cellBytes != cellCount * 4) {
+      throw IndexFormatException(
+        'grid cell section is $cellBytes bytes; cell size $cellSize needs '
+        '${cellCount * 4}',
+      );
+    }
+
     return BoundaryIndex._(
       bytes: bytes,
       dataVersion: dataVersion.value,
       zoneNames: List<String>.unmodifiable(names),
       cellSize: cellSize,
-      gridCellsOffset: offset(IndexHeader.gridCells),
-      gridPoolOffset: offset(IndexHeader.gridPool),
+      gridCellsOffset: gridCellsOffset,
+      gridPoolOffset: gridPoolOffset,
       coordinatesOffset: offset(IndexHeader.coordinates),
       polygonZoneIds: zoneIds,
       polygonBoxes: boxes,
@@ -167,7 +186,7 @@ class BoundaryIndex {
   final Map<int, Int32List> _ringCache = <int, Int32List>{};
   late final int _columns;
 
-  /// The tzbb release this index was built from, e.g. `'2026c'`.
+  /// The tzbb release this index was built from, e.g. `'2026e'`.
   final String dataVersion;
 
   /// Every identifier in the dataset, sorted, straight from the container.
@@ -256,15 +275,10 @@ class BoundaryIndex {
 /// The cell array as an [Int32List], copied with explicit little-endian reads.
 ///
 /// A zero-copy view is possible on the VM; we copy via [ByteData] so chunks
-/// and `.bin` share one path across compilers.
+/// and `.bin` share one path across compilers. The factory has already checked
+/// the section length.
 Int32List _viewCells(Uint8List bytes, int cellsOffset, int poolOffset) {
-  final byteLength = poolOffset - cellsOffset;
-  if (byteLength < 0 || byteLength % 4 != 0) {
-    throw IndexFormatException(
-      'grid cell section is $byteLength bytes, not a whole number of int32s',
-    );
-  }
-  final count = byteLength ~/ 4;
+  final count = (poolOffset - cellsOffset) ~/ 4;
   final view = ByteData.sublistView(bytes, cellsOffset, poolOffset);
   final copy = Int32List(count);
   for (var i = 0; i < count; i++) {

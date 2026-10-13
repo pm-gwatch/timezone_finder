@@ -5,8 +5,7 @@ library;
 
 import 'package:test/test.dart';
 import 'package:timezone_finder/browser.dart';
-import 'package:timezone_finder/src/api/location_finder.dart'
-    show LocationFinder;
+import 'package:timezone_finder/src/location_finder.dart' show LocationFinder;
 
 void main() {
   test('a lookup before install throws, naming the fix', () {

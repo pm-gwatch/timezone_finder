@@ -1,4 +1,4 @@
-# Release runbook — tzdb, tzbb, and CLDR
+# Release runbook — tzdb and tzbb
 
 Maintainer guide. App consumers never run these tools — generated files are
 committed. Run commands from the package root.
@@ -8,8 +8,8 @@ committed. Run commands from the package root.
 | Upstream | Example | What this repo does |
 | --- | --- | --- |
 | **IANA tzdb** | `2026a` → `2026b` | **Nothing in generators.** Offsets / DST / letter abbreviations come from `package:timezone` in the consuming app. A tzdb release matters here only once TZBB ships boundaries built against it (and when you bump the `timezone` dependency for tests / docs). |
-| **timezone-boundary-builder (TZBB)** | `2026c` → `2027a` | Regenerates every shipped boundary artifact. Tags are named after the tzdb version they target — that is why `boundaryDataVersion` reads e.g. `2026c`. |
-| **Unicode CLDR** | `48` → `49` | Regenerates English metazone display names only. No boundary data changes. |
+| **timezone-boundary-builder (TZBB)** | `2026e` → `2027a` | Regenerates every shipped boundary artifact. Tags are named after the tzdb version they target — that is why `boundaryDataVersion` reads e.g. `2026e`. |
+| **Unicode CLDR** | `48` → `49` | Not this package. English names live in `timezone_extensions`. |
 
 TZBB tags are **not** IANA transition rules. Keep using `latest_all` in apps and docs.
 
@@ -20,7 +20,7 @@ cached.
 | Upstream | Primary command |
 | --- | --- |
 | **TZBB** | `dart run tool/refresh.dart --release <tag>` |
-| **CLDR** | `dart run tool/generate_metazone_data.dart` (or full refresh) |
+| **CLDR** | In `timezone_extensions`: `dart run tool/generate_metazone_data.dart` |
 | **IANA tzdb** | Bump `package:timezone` — see [New IANA tzdb release](#new-iana-tzdb-release) |
 
 ---
@@ -60,11 +60,10 @@ step.
 dart run tool/refresh.dart --release <new-tag>
 ```
 
-That triages, runs `tool/generate_data.dart` for both index tiers, refreshes
-the CLDR metazone tables, formats, and runs the suite. It writes:
+That triages, runs `tool/generate_data.dart` for both index tiers, formats,
+and runs the suite. It writes:
 
-- `lib/src/generated/` — the bundled index as base64 Dart chunks, and
-  `metazone_data.dart`
+- `lib/src/generated/` — the bundled index as base64 Dart chunks
 - `lib/src/generated/boundaries_bin.dart` — `boundariesBinName` (and related constants)
 - `lib/data/boundaries_<tag>.bin` — the web asset
 - `tool/release/` — the unsimplified baseline and `timezone-names.json`
@@ -110,11 +109,13 @@ overwrite.
 
 | Where | What |
 | --- | --- |
-| `test/browser_parity_test.dart` | Literal version string and zone count |
+| `test/browser_parity_test.dart` | Literal version string and zone count. **Chrome only** — `refresh.dart` runs the VM suite, so also run `dart test -p chrome test/browser_parity_test.dart test/browser_preinstall_test.dart` |
 | `test/bundled_data_test.dart` | Zone count, in several places |
+| `test/reference_oracle_test.dart` | Zone, polygon, ring, hole and vertex totals — count them independently of the oracle (e.g. a few lines of Python over `combined.json`), never from its output |
+| `test/encoding_test.dart` | Ring and vertex totals, and the coordinate-blob size window — re-measure independently and re-centre |
 | `test/runtime_test.dart` | Unsimplified container size budget |
 | `README.md` | The literal `.bin` filename in Flutter asset instructions |
-| `test/fixtures/overlap_pins.dart` | If a disputed-territory tiebreak moved — regenerate raw material with `dart run tool/probe_overlaps.dart` and update pins by hand |
+| `test/fixtures/overlap_pins.dart` | If a disputed-territory tiebreak moved — regenerate raw material with `dart run tool/probe_overlaps.dart` and update pins by hand. The probe samples, so it can miss a thin overlap that still exists; `golden_points_test.dart` is authoritative |
 | `test/fixtures/golden_points.dart` | If a border moved under a golden point |
 
 A test scans `README.md` and fails if it still names a stale `.bin`. The
@@ -150,39 +151,18 @@ dart run tool/fetch_data.dart --release <tag>
 
 ## New CLDR release
 
-Metazone generation always fetches from `unicode-org/cldr-json` **main** (no
-CLDR pin on the CLI). "Upgrading CLDR" is just running the generator again.
-The version that came down is recorded in the generated `cldrVersion` constant.
-
-**CLDR-only** (boundaries unchanged):
+English names live in the sibling `timezone_extensions` package. From that
+package root:
 
 ```bash
 dart run tool/generate_metazone_data.dart
 dart format lib/src/generated/metazone_data.dart
-dart test test/zone_names_test.dart
+dart test
 ```
 
-It reads `tool/release/timezone-names.json` for the identifier set (committed
-in every checkout). Output is `lib/src/generated/metazone_data.dart` only — typically
-a **patch** bump.
-
-Or fold CLDR into a full refresh against the **current** TZBB tag:
-
-```bash
-dart run tool/refresh.dart --release <current-tag>
-```
-
-### The build gate
-
-The generator refuses to write if the set of identifiers with no current
-English name drifts from `_knownNullMetazoneNameNow`:
-
-| Message | Meaning | Fix |
-| --- | --- | --- |
-| `null timeZoneGenericName at now, not on allow-list` | CLDR dropped a name this package relied on | Confirm it is genuinely unnamed upstream, then add the id to the allow-list |
-| `allow-listed ids now have a name (remove from allow-list)` | CLDR filled a gap | Remove the id from the allow-list |
-
-Either way the run exits 1 and writes nothing.
+The version that came down is recorded in `cldrVersion` there. Typically a
+**patch** bump of `timezone_extensions`. This package does not ship those
+names.
 
 ---
 

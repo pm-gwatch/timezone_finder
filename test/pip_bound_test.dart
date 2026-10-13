@@ -32,7 +32,7 @@ void main() {
     });
 
     test('the headroom is reported, so erosion is visible before it bites', () {
-      // Deliberately loose: this is a canary, not a budget. At 2026c the
+      // Deliberately loose: this is a canary, not a budget. At 2026e the
       // margin is only ~1.14x, so a tzbb release with longer edges could
       // cross the limit — and then buildIndex hard-fails rather than shipping
       // something subtly wrong. Run tool/measure_pip_bound.dart for the number.

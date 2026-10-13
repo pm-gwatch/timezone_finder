@@ -10,7 +10,7 @@ import 'dart:math';
 import 'package:test/test.dart';
 import 'package:timezone_finder/src/generated/boundaries_bin.dart';
 import 'package:timezone_finder/src/generated/boundaries.dart' as bundled_data;
-import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/location_finder.dart';
 import 'package:timezone_finder/src/index/boundary_store.dart'
     show indexDecodeCount;
 
@@ -103,7 +103,7 @@ void main() {
     test('resolves every overlap to one of its contenders, stably', () {
       // `selected` records what the tiebreak returns on the unsimplified
       // geometry. The rule orders by polygon area, and simplification changes
-      // areas, so the shipped data can pick the other contender — 1 of 22
+      // areas, so the shipped data can pick the other contender — 1 of 23
       // pins does, at the Bolivia–Brazil border. What must hold is that the
       // answer is always one of the two zones that genuinely cover the point,
       // and that it does not vary between calls.

@@ -1,6 +1,18 @@
 # timezone_finder
 
-An add-on for [`package:timezone`](https://pub.dev/packages/timezone). It turns a point on Earth into a `Location`, adds English time zone names, and converts a `TZDateTime` from one place to another.
+An add-on for [`package:timezone`](https://pub.dev/packages/timezone). It turns a point on Earth into a `Location`.
+
+### Split in 0.3.0
+
+Through [0.2.0](https://pub.dev/packages/timezone_finder/versions/0.2.0), this package also converted a `TZDateTime` to another `Location` and gave English time zone names. From 0.3.0 those features live in [`timezone_extensions`](https://pub.dev/packages/timezone_extensions), and `timezone_finder` only finds the `Location`. If you used them, add both packages:
+
+```yaml
+dependencies:
+  timezone_extensions: ^0.1.0
+  timezone_finder: ^0.3.0
+```
+
+Then `import 'package:timezone_extensions/timezone_extensions.dart';`. The names are unchanged: `toLocation`, `offsetDifference`, `timeZoneGenericName`, `timeZoneLongName`, `utcOffsetLabel` and `cldrVersion`.
 
 ## Initialization
 
@@ -40,7 +52,7 @@ On a server, `await ensurePreloaded()` at isolate startup if you do not want the
 	- `package:timezone_finder/browser.dart`
 - Start the code with
 	- `await tz.initializeTimeZone('packages/timezone/data/latest_all.tzf')`, not `latest.tzf` (default)
-	- `await initializeBoundaries()` fetches the `.bin` from `packages/timezone_finder/data/boundaries_2026c.bin` without any asset pipeline. Pass a URL to self-host.
+	- `await initializeBoundaries()` fetches the `.bin` from `packages/timezone_finder/data/boundaries_2026e.bin` without any asset pipeline. Pass a URL to self-host.
 
 ```dart
 import 'package:timezone/browser.dart' as tz;
@@ -61,7 +73,7 @@ Future<void> main() async {
 ```yaml
 flutter:
   assets:
-    - packages/timezone_finder/data/boundaries_2026c.bin
+    - packages/timezone_finder/data/boundaries_2026e.bin
 ```
 
 The `timezone_finder` package does not declare the `.bin` as a Flutter asset, so Android and iOS builds — which use the embedded index — do not carry 4 MB they never read.
@@ -85,7 +97,7 @@ Future<void> main() async {
   await tz.initializeTimeZone('packages/timezone/data/latest_all.tzf');
 
   final data = await rootBundle.load(
-    'packages/timezone_finder/data/boundaries_2026c.bin',
+    'packages/timezone_finder/data/boundaries_2026e.bin',
   );
   installBoundaries(data.buffer.asUint8List());
 
@@ -103,72 +115,31 @@ After initialization, the surface is small. Argument order is GeoJSON: **longitu
 
 ### 🎯 Find a `Location`
 
-`null` means no land polygon covers the point. Coastal belts extend ~22 km offshore, so a narrow strait often resolves and open ocean does not. Bad coordinates throw `ArgumentError`; malformed GeoJSON throws `FormatException`. Missing tzdata, `latest` instead of `latest_all`, or a web lookup before install throw `StateError`. `null` is never an error.
+`null` means no land polygon covers the point. Coastal belts extend ~22 km offshore, so a narrow strait often resolves and open ocean does not. Bad coordinates throw `ArgumentError`. Missing tzdata, `latest` instead of `latest_all`, or a web lookup before install throw `StateError`. `null` is never an error.
 
 ```dart
 final home = findLocation(-118.6884215, 34.0327862)!; // America/Los_Angeles Location
-
-final hotelJson =
-    '{"type": "Point", "coordinates": [151.2430457, -33.8760146]}';
-final hotel = hotelJson.findLocation()!; // Australia/Sydney Location
+final hotel = findLocation(151.2430457, -33.8760146)!; // Australia/Sydney Location
 ```
 
-Pass **one** Feature or a bare Point, not a geocoder's whole `FeatureCollection`. Nominatim and Photon both return a collection; pick the feature you want, then call `findLocation` on that feature's JSON.
+To convert that `Location` to another clock, or to read its labels, add
+[`timezone_extensions`](https://pub.dev/packages/timezone_extensions).
 
-### 🌐 Get time zone names
-
-A `Location` is a place. A `TZDateTime` is a place **and** a moment.
-
-- `Location.timeZoneGenericName` — CLDR generic, or standard when the zone is not seasonal (`Pacific Time`, `Azerbaijan Time`). `null` for nine zones CLDR leaves unnamed.
-- `TZDateTime.timeZoneLongName` — name at this instant (`Pacific Daylight Time`, `Central European Summer Time`). `null` in a few cases; `timeZoneLongName ?? utcOffsetLabel` is never null.
-- `TZDateTime.utcOffsetLabel` — `UTC-07` / `UTC+04:30` / `UTC`.
-
-> `TZDateTime.timeZoneName` is already on `package:timezone` (tzdb abbreviation: `PDT`, or a numeric form like `-03`).
-
-```dart
-print('${home.name} → ${home.timeZoneGenericName}');
-// America/Los_Angeles → Pacific Time
-
-final call = TZDateTime(home, 2026, 8, 14, 18, 30);
-
-print(call);                  // 2026-08-14 18:30:00.000-0700
-print(call.timeZoneLongName); // Pacific Daylight Time
-print(call.timeZoneName);     // PDT
-print(call.utcOffsetLabel);   // UTC-07
-```
-
-### 🕘🕔 Convert the same instant to another clock
-
-`toLocation` is the `Location` analogue of `toUtc` / `toLocal`. `offsetDifference` is the signed gap between the two offsets at that instant — not travel time, and not `TZDateTime.difference` (elapsed time). Use `.abs()` for a directionless magnitude.
-
-```dart
-final callInSydney = call.toLocation(hotel);
-
-print(callInSydney);                  // 2026-08-15 11:30:00.000+1000
-print(callInSydney.timeZoneLongName); // Australian Eastern Standard Time
-print(callInSydney.timeZoneName);     // AEST
-print(callInSydney.utcOffsetLabel);   // UTC+10
-
-print(call.offsetDifference(hotel));  // 17:00:00.000000 — Sydney is ahead
-```
-
-Shipped data versions: `boundaryDataVersion` (Timezone Boundary Builder release) and `cldrVersion`. They are independent of the tzdb version inside `package:timezone`.
+Shipped data version: `boundaryDataVersion` (Timezone Boundary Builder release). It is independent of the tzdb version inside `package:timezone`.
 
 ## Data used
 
 | Dataset | Source | What it answers |
 | --- | --- | --- |
 | Land polygons | [Timezone Boundary Builder](https://github.com/evansiroky/timezone-boundary-builder) from [OpenStreetMap](https://www.openstreetmap.org) | Which IANA zone contains this longitude/latitude |
-| English names | [Unicode CLDR](https://cldr.unicode.org) | `Pacific Time`, `Central European Summer Time`, … |
 | Zone rules | `package:timezone` (IANA tzdb) | Offsets, DST, abbreviations |
 
-Coordinates come from wherever you already have them — a GPS fix, a map tap, a database column. From an address, [Nominatim](https://nominatim.org/release-docs/latest/api/Search/) and [Photon](https://photon.komoot.io) return GeoJSON that `String.findLocation` reads directly.
+Coordinates come from wherever you already have them — a GPS fix, a map tap, a database column. From an address, [Nominatim](https://nominatim.org/release-docs/latest/api/Search/) and [Photon](https://photon.komoot.io) return a `FeatureCollection`; pick a feature and pass its Point coordinates to `findLocation`.
 
 ## Licenses
 
 - **Code** — MIT ([`LICENSE`](https://github.com/pm-gwatch/timezone_finder/blob/main/LICENSE)).
 - **Boundary data** — ODbL v1.0 ([`LICENSE-DATA`](https://github.com/pm-gwatch/timezone_finder/blob/main/LICENSE-DATA)). Share-alike: if you publicly ship an *adapted* database, offer that adapted database under ODbL too.
-- **CLDR English names** — Unicode License v3 ([`LICENSE-CLDR`](https://github.com/pm-gwatch/timezone_finder/blob/main/LICENSE-CLDR)).
 
 If you redistribute the boundary data (or a work produced from it), include:
 

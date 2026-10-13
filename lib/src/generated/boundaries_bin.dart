@@ -12,10 +12,10 @@
 library;
 
 /// Packed index filename under `package:timezone_finder/data/`.
-const String boundariesBinName = 'boundaries_2026c.bin';
+const String boundariesBinName = 'boundaries_2026e.bin';
 
 /// Size of [boundariesBinName], in bytes.
-const int boundariesBinLength = 4202630;
+const int boundariesBinLength = 4215145;
 
 /// Default URL for [initializeBoundaries] in browsers.
 const String boundariesDefaultUrl =

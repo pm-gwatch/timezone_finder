@@ -34,6 +34,8 @@ Same discipline as the bootstrap set: written by hand first, verified after.
 | Check | Method | Result |
 | --- | --- | --- |
 | Identifier exists | tzbb `2026c` `timezone-names.json` | **all present** |
+| Identifier exists (2026-10-05) | tzbb `2026d` `timezone-names.json`, identical to `2026c` | **all present** |
+| Identifier exists (2026-10-13) | tzbb `2026e` `timezone-names.json`, identical to `2026c` | **all present** |
 | Coordinate → zone | `timezonefinder` 8.2.5 (authoritative) | **265/265** |
 | Coordinate → zone | `tzf` via `tzfpy` 1.3.2 (advisory) | **257/257** of the non-null fixtures |
 
@@ -76,16 +78,25 @@ no external answer.** A sweep of all fixtures against the oracle confirmed
 
 ## `overlap_pins.dart` — milestone 3
 
-21 of the 25 documented overlap pairs, pinned. Read the file header before
-touching it: these record what an arbitrary tiebreak returns in mostly
-disputed territories, and are not claims about sovereignty.
+22 of the 26 documented overlap pairs, pinned (tzbb 2026e added
+`Europe/Madrid`–`Europe/Paris`, pinned at the Cerbère–Portbou coast on
+2026-10-13). Read the file header before touching it: these record what an
+arbitrary tiebreak returns in mostly disputed territories, and are not claims
+about sovereignty.
 
 The other four pairs (`Asia/Ho_Chi_Minh`–`Asia/Manila`,
 `Asia/Ho_Chi_Minh`–`Asia/Shanghai`, `Asia/Kolkata`–`Asia/Shanghai`,
 `Asia/Manila`–`Asia/Shanghai`) do not overlap anywhere in the 2026c land-only
-geometry at sampling densities up to 200×200. They cannot be pinned because
-the situation does not arise. See plan §9.4 — grid sampling cannot prove
-absence, so this is "not found", not "does not exist".
+geometry at sampling densities up to 200×200, nor in 2026d or 2026e at
+96×96. They cannot be pinned because the situation does not arise. See plan
+§9.4 — grid sampling cannot prove absence, so this is "not found", not "does
+not exist".
+
+Sampling misses in the other direction too: on 2026d and 2026e,
+`probe_overlaps` reports `Asia/Pyongyang`–`Asia/Shanghai` as not found even at
+96×96, yet the Tumen estuary pin is still covered by both zones. The oracle check in
+`golden_points_test.dart` is authoritative; do not drop a pin on the probe's
+word.
 
 ---
 
@@ -117,6 +128,8 @@ oracle — not this file — becomes the authority.
 | Check | Method | Result |
 | --- | --- | --- |
 | Identifier exists | Membership in the 419 entries of tzbb `2026c` `timezone-names.json` | **66/66 present** |
+| Identifier exists (2026-10-05) | tzbb `2026d` `timezone-names.json`, identical to `2026c` | **66/66 present** |
+| Identifier exists (2026-10-13) | tzbb `2026e` `timezone-names.json`, identical to `2026c` | **66/66 present** |
 | Coordinate → zone (1) | Python `timezonefinder` 8.2.5, `timezone_at_land()` | **66/66 agree, 0 disagreements** |
 | Coordinate → zone (2) | `tzf` via `tzfpy` 1.3.2, `get_tz()` | **66/66 agree, 0 disagreements** |
 | Duplicate coordinates | Exact match on (lat, lon) | none |
@@ -166,7 +179,7 @@ python3 -m venv /tmp/tzcheck && /tmp/tzcheck/bin/pip install timezonefinder tzfp
 ```
 
 ```bash
-curl -sLO https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026c/timezone-names.json
+curl -sLO https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026e/timezone-names.json
 ```
 
 ```python
@@ -213,7 +226,7 @@ here, because a bootstrap set that argues with itself is useless:
 
 - near-border pairs (Basel/Saint-Louis, the China/Nepal border, Arizona/Navajo)
 - the 5 antimeridian-split zones
-- all 25 documented overlap pairs
+- every documented overlap pair
 - enclaves and hole cases (Lesotho, Vatican City)
 - small-island and Antarctic zones
 

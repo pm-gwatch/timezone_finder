@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,18 +25,26 @@ jobs:
         with:
           sdk: ${{ matrix.sdk }}
       - run: dart pub get
-      # The example server is its own package; without its own pub get the
-      # analyzer reports its shelf_router import as unresolvable.
-      - run: dart pub get --directory example/server
       - run: dart analyze --fatal-infos
-      # Formatter output drifts across SDK versions (3.10 vs 3.13). Check it
-      # once, on the declared floor, so the two matrix cells cannot disagree.
-      - if: matrix.sdk == '3.10.0'
-        run: dart format --output=none --set-exit-if-changed .
       # Tests needing the 170 MB source GeoJSON skip themselves when it is
       # absent, so CI runs without the download. The full oracle comparison is
       # the maintainer's job before a data refresh lands.
       - run: dart test
+
+  # Formatter output drifts across SDK versions (3.10 and 3.13 disagree), so
+  # check it on exactly one: the SDK used locally. Bump this pin together with
+  # the local SDK. Not `stable`, or a new release fails untouched code.
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.13.0'
+      # Without package_config.json the formatter cannot read the package's
+      # language version and falls back to the SDK's.
+      - run: dart pub get
+      - run: dart format --output=none --set-exit-if-changed .
 
   # dart2js integer / bit paths that the VM cannot regress-test (zigzag, etc.).
   # browser_parity needs Chrome + the shipped .bin over packages/; varint and

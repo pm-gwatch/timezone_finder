@@ -27,7 +27,6 @@
 library;
 
 import 'dart:js_interop';
-import 'dart:typed_data';
 
 import 'package:web/web.dart';
 
@@ -52,11 +51,12 @@ Future<void> initializeBoundaries([String url = boundariesDefaultUrl]) async {
     final response = await window.fetch(url.toJS).toDart;
     if (!response.ok) {
       throw BoundariesInitException(
-        'Request failed with status: ${response.status}',
+        'Request for $url failed with status: ${response.status}',
       );
     }
-    final jsBytes = await response.bytes().toDart;
-    final bytes = Uint8List.fromList(jsBytes.toDart);
+    // arrayBuffer(), not bytes(): older Safari and Chrome lack bytes().
+    final buffer = await response.arrayBuffer().toDart;
+    final bytes = buffer.toDart.asUint8List();
     if (bytes.length != boundariesBinLength) {
       throw BoundariesInitException(
         'Fetched ${bytes.length} bytes from $url, expected '

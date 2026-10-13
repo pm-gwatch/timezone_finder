@@ -7,7 +7,7 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:timezone_finder/src/generated/boundaries_bin.dart';
 import 'package:timezone_finder/src/exceptions.dart';
-import 'package:timezone_finder/src/api/location_finder.dart';
+import 'package:timezone_finder/src/location_finder.dart';
 import 'package:timezone_finder/src/index/boundary_store.dart'
     show installBoundaries;
 

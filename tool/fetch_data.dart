@@ -1,6 +1,6 @@
 /// Fetches the timezone-boundary-builder GeoJSON the reference oracle needs.
 ///
-///     dart run tool/fetch_data.dart [--release 2026c]
+///     dart run tool/fetch_data.dart [--release 2026e]
 ///
 /// Downloads ~51 MB and expands it to ~170 MB under `.dart_tool/`, which is
 /// gitignored. Idempotent — re-running with the data already cached does

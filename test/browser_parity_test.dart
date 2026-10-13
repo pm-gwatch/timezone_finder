@@ -8,8 +8,7 @@ import 'package:test/test.dart';
 import 'package:timezone_finder/browser.dart';
 import 'package:timezone_finder/src/generated/boundaries_bin.dart'
     show boundariesBinLength;
-import 'package:timezone_finder/src/api/location_finder.dart'
-    show LocationFinder;
+import 'package:timezone_finder/src/location_finder.dart' show LocationFinder;
 
 import 'fixtures/bootstrap_goldens.dart';
 import 'fixtures/overlap_pins.dart';
@@ -20,7 +19,7 @@ void main() {
   setUpAll(() async {
     await initializeBoundaries();
     finder = LocationFinder();
-    expect(boundaryDataVersion, '2026c');
+    expect(boundaryDataVersion, '2026e');
     expect(finder.availableLocationNames.length, 419);
   });
 

@@ -18,8 +18,8 @@ import 'dart:typed_data';
 /// order matters to [comparePrecedence], which doubling preserves.
 ///
 /// Rings of fewer than three vertices return zero. Accumulates in int64, with
-/// ~1800x headroom on tzbb 2026c; `tool/measure_geometry.dart` re-measures
-/// that margin against a new release.
+/// ~1800x headroom on tzbb 2026c to 2026e; `tool/measure_geometry.dart`
+/// re-measures that margin against a new release.
 int ringDoubledArea(Int32List ring) {
   final n = ring.length ~/ 2;
   if (n < 3) return 0;

@@ -22,13 +22,3 @@ updates:
       interval: monthly
     commit-message:
       prefix: deps
-
-  # The example server is its own package and CI resolves it (`dart pub get
-  # --directory example/server`) so the analyzer can see shelf_router. Nothing
-  # publishes it, but a break there is still a red build.
-  - package-ecosystem: pub
-    directory: /example/server
-    schedule:
-      interval: monthly
-    commit-message:
-      prefix: deps

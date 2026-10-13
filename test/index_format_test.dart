@@ -83,6 +83,33 @@ void main() {
       );
     });
 
+    test('a grid cell section too short for the cell size', () {
+      // Whole int32s, so only the count check catches it. Without it every
+      // lookup indexes past the array and surfaces as a RangeError.
+      final bytes = bundled.loadContainer();
+      final cells = _headerField(bytes, IndexHeader.gridCells);
+      expect(
+        () => BoundaryIndex.fromBytes(
+          _withHeaderField(IndexHeader.gridPool, cells + 4),
+        ),
+        throwsA(isA<IndexFormatException>()),
+      );
+    });
+
+    test('a polygon naming a zone the index does not have', () {
+      // Polygon section starts `count=1, zoneId=0`; 5 is past the one name.
+      final corrupt = Uint8List.fromList(_syntheticContainer());
+      final polygons = _headerField(corrupt, IndexHeader.polygons);
+      expect(corrupt[polygons], 1, reason: 'expected a single polygon');
+      expect(corrupt[polygons + 1], 0, reason: 'expected zone id 0');
+      corrupt[polygons + 1] = 5;
+
+      expect(
+        () => BoundaryIndex.fromBytes(corrupt),
+        throwsA(isA<IndexFormatException>()),
+      );
+    });
+
     test('a grid pool that starts before the cells it follows', () {
       final bytes = bundled.loadContainer();
       final cells = _headerField(bytes, IndexHeader.gridCells);

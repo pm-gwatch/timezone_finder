@@ -65,8 +65,8 @@ void main() {
           }
         }
 
-        expect(rings.length, 1456, reason: 'ring count changed');
-        expect(vertices, 7649092, reason: 'vertex count changed');
+        expect(rings.length, 1530, reason: 'ring count changed');
+        expect(vertices, 7747361, reason: 'vertex count changed');
         expect(
           failures.take(5),
           isEmpty,
@@ -123,16 +123,17 @@ void main() {
         final megabytes = total / 1e6;
         printOnFailure('coordinate blob: ${megabytes.toStringAsFixed(2)} MB');
 
-        // 27.84 MB from the Python prototype, plus ~4 KB of vertex-count
-        // prefixes this format adds. A drift of more than 1% means the two
-        // implementations disagree about the encoding, not merely about
-        // bookkeeping.
+        // Python, from GeoJSON on tzbb 2026e: 28.1944 MB including vertex-count
+        // prefixes (2026c was 27.84, 2026d 28.08).
+        // A drift of more than 1% means the two implementations disagree about
+        // the encoding, not merely about bookkeeping. Each tzbb release moves
+        // this, so re-measure and re-centre on a bump.
         expect(
           megabytes,
-          inInclusiveRange(27.5, 28.2),
+          inInclusiveRange(27.91, 28.48),
           reason:
               'encoded size ${megabytes.toStringAsFixed(2)} MB departs '
-              'from the 27.84 MB the size budget assumes',
+              'from the 28.19 MB measured independently for 2026e',
         );
       });
     },

@@ -1,6 +1,7 @@
 // Overlap pins — NOT ground truth. Documented tiebreak (smallest area, then
 // id), not sovereignty. Do not update a fail to match new output.
-// 21 of 25 pairs; four have no land overlap in 2026c.
+// 22 of 26 pairs (tzbb 2026e added Madrid–Paris); four have no land overlap
+// in 2026c, 2026d or 2026e.
 library;
 
 /// A coordinate covered by two zones, and which one the tiebreak selects.
@@ -48,13 +49,10 @@ const List<OverlapPin> overlapPins = <OverlapPin>[
     'America/Dawson',
     'America/Anchorage',
   ], 'America/Dawson'),
-  OverlapPin(
-    'Southern Patagonia (Argentina–Chile)',
-    -49.54200,
-    -73.54600,
-    ['America/Punta_Arenas', 'America/Argentina/Rio_Gallegos'],
+  OverlapPin('Southern Patagonia (Argentina–Chile)', -49.54200, -73.54600, [
     'America/Punta_Arenas',
-  ),
+    'America/Argentina/Rio_Gallegos',
+  ], 'America/Punta_Arenas'),
   OverlapPin('Bolivia–Brazil border', -10.79600, -65.36700, [
     'America/Porto_Velho',
     'America/La_Paz',
@@ -123,6 +121,10 @@ const List<OverlapPin> overlapPins = <OverlapPin>[
     'Europe/Ljubljana',
     'Europe/Zagreb',
   ], 'Europe/Ljubljana'),
+  OverlapPin('Cerbère–Portbou coast (France–Spain)', 42.43542, 3.17917, [
+    'Europe/Madrid',
+    'Europe/Paris',
+  ], 'Europe/Madrid'),
   OverlapPin('Mont Blanc massif (France–Italy)', 45.84100, 6.84100, [
     'Europe/Rome',
     'Europe/Paris',
