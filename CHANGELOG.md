@@ -1,37 +1,26 @@
 ## 1.0.0
 
-First stable release. Breaking. **The package is split in two.**
+First stable release. Breaking: **the package is split in two.**
 `timezone_finder` now only turns a point into a `Location`. Clock conversion
 and English time zone labels, which shipped here through 0.2.0, moved to the
 new [`timezone_extensions`](https://pub.dev/packages/timezone_extensions)
-package under the same names.
+package under the same names: `TZDateTime.toLocation`,
+`TZDateTime.offsetDifference`, `TZDateTime.timeZoneLongName`,
+`TZDateTime.utcOffsetLabel`, `Location.timeZoneGenericName` and `cldrVersion`.
 
 To keep using them, add `timezone_extensions` to `dependencies` and
-`import 'package:timezone_extensions/timezone_extensions.dart';`. Moved:
-
-- `TZDateTime.toLocation`, `TZDateTime.offsetDifference`
-- `Location.timeZoneGenericName`
-- `TZDateTime.timeZoneLongName`, `TZDateTime.utcOffsetLabel`
-- `cldrVersion`, plus `formatUtcOffset`, which is newly public there
-
-The CLDR tables and `LICENSE-CLDR` moved with them, so this package no longer
-bundles Unicode data.
+`import 'package:timezone_extensions/timezone_extensions.dart';`.
 
 Other changes:
 
 - Removed `String.findLocation` (`GeoJsonLocation`). Nominatim and Photon
   return a `FeatureCollection`; pick a point and call
   `findLocation(longitude, latitude)`.
-- Dropped the Shelf airport-board example. The remaining sample is
-  `example/example.dart`.
-- The web asset is now always `lib/data/boundaries.bin`, so boundary updates
-  no longer rename it. Point your Flutter `assets:` entry at
-  `packages/timezone_finder/data/boundaries.bin` once.
-  `boundariesDefaultUrl` ends in `?v=<release>`, so browsers do not reuse a
-  cached copy after an update.
-- Requires `package:timezone` `^0.11.2` (tzdb 2026e). `findLocation` returns
-  its `Location`, so a breaking `timezone` 0.12 waits for a release of this
-  package instead of reaching apps unannounced.
+- The web asset is now always `boundaries.bin`, so boundary updates no longer
+  rename it: point your Flutter `assets:` entry at
+  `packages/timezone_finder/data/boundaries.bin` once. `boundariesDefaultUrl`
+  adds `?v=<release>` so browsers do not reuse a stale cached copy.
+- Requires `package:timezone` `^0.11.2` (tzdb 2026e).
 - Boundaries refreshed to timezone-boundary-builder 2026e (OSM updates, and
   `Pacific/Easter` limited to Chilean territorial waters). Same 419
   identifiers; only borders moved. `boundaryDataVersion` is now `'2026e'`.
@@ -39,8 +28,9 @@ Other changes:
   one that adds or removes identifiers is a minor release.
 - `initializeBoundaries` reads the response with `arrayBuffer()` instead of
   `Response.bytes()`, so it also works on browsers that lack `bytes()`.
-- A corrupt index with an out-of-range zone id or a short grid now throws
-  `IndexFormatException` when installed, instead of a `RangeError` at lookup.
+- A corrupt index (out-of-range zone id, short grid, polygon without rings)
+  now throws `IndexFormatException` when installed, instead of a `RangeError`
+  at lookup.
 
 ## 0.2.0
 

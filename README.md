@@ -2,17 +2,15 @@
 
 An add-on for [`package:timezone`](https://pub.dev/packages/timezone). It turns a point on Earth into a `Location`.
 
-### Split in 1.0.0
+## Split in 1.0.0
 
-Through [0.2.0](https://pub.dev/packages/timezone_finder/versions/0.2.0), this package also converted a `TZDateTime` to another `Location` and gave English time zone names. From 1.0.0 those features live in [`timezone_extensions`](https://pub.dev/packages/timezone_extensions), and `timezone_finder` only finds the `Location`. If you used them, add both packages:
+Up to [0.2.0](https://pub.dev/packages/timezone_finder/versions/0.2.0), this package also converted a `TZDateTime` to another `Location` and gave English time zone names. Those features moved to [`timezone_extensions`](https://pub.dev/packages/timezone_extensions). If you used them, add both packages:
 
 ```yaml
 dependencies:
   timezone_extensions: ^0.1.0
   timezone_finder: ^1.0.0
 ```
-
-Then `import 'package:timezone_extensions/timezone_extensions.dart';`. The names are unchanged: `toLocation`, `offsetDifference`, `timeZoneGenericName`, `timeZoneLongName`, `utcOffsetLabel` and `cldrVersion`.
 
 ## Initialization
 
@@ -107,7 +105,7 @@ Future<void> main() async {
 }
 ```
 
-`findLocation`, `ensurePreloaded`, and `boundaryDataVersion` throw a `StateError` until the `.bin` is installed. Installing the same data version again still decodes the bytes but does not replace the index; a different version replaces it. `initializeBoundaries` fetch failures throw `BoundariesInitException`; corrupt bytes throw `IndexFormatException`.
+`findLocation`, `ensurePreloaded`, and `boundaryDataVersion` throw a `StateError` until the `.bin` is installed. `initializeBoundaries` fetch failures throw `BoundariesInitException`; corrupt bytes throw `IndexFormatException`.
 
 ## API
 
@@ -121,9 +119,6 @@ After initialization, the surface is small. Argument order is GeoJSON: **longitu
 final home = findLocation(-118.6884215, 34.0327862)!; // America/Los_Angeles Location
 final hotel = findLocation(151.2430457, -33.8760146)!; // Australia/Sydney Location
 ```
-
-To convert that `Location` to another clock, or to read its labels, add
-[`timezone_extensions`](https://pub.dev/packages/timezone_extensions).
 
 Shipped data version: `boundaryDataVersion` (Timezone Boundary Builder release). It is independent of the tzdb version inside `package:timezone`.
 
