@@ -21,10 +21,16 @@
 /// }
 /// ```
 ///
-/// Flutter web: declare `packages/timezone_finder/data/boundaries.bin` under
-/// `flutter: assets:` in **your** pubspec, then `installBoundaries` from
-/// `rootBundle`. The path is the same for every boundary release. Self-host
-/// with `initializeBoundaries('https://cdn.example.com/$boundariesBinName')`.
+/// Flutter web does not serve `packages/` URLs. Declare
+/// `packages/timezone/data/latest_all.tzf` and
+/// `packages/timezone_finder/data/boundaries.bin` under `flutter: assets:`,
+/// load both with `rootBundle`, pass the tzdata bytes to `initializeDatabase`,
+/// and pass the `.bin` to [installBoundaries]. The `.bin` path is the same for
+/// every boundary release. Self-host with
+/// `initializeBoundaries('https://cdn.example.com/$boundariesBinName')`.
+///
+/// The example above is Dart web: the site must serve `packages/`.
+/// `dart compile js` by itself does not.
 library;
 
 import 'dart:js_interop';

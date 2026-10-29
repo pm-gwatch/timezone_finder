@@ -149,9 +149,9 @@ void main() {
     });
 
     test('works at the extremes of the coordinate range', () {
-      // For a straddling edge the cross product is at most 6.48e16.
-      // 1.3e17 is the sum of two term maxima that cannot occur together.
-      // If the real bound overflowed, containment here would be arbitrary.
+      // Pins the edge rule at the extremes of the coordinate space, on the VM.
+      // 6.48e16 fits in a 64-bit int. These rings are not shipped: a dy of
+      // 180e6 fails assertPipDart2jsSafe.
       final world = ring([
         [-180000000, -90000000],
         [180000000, -90000000],

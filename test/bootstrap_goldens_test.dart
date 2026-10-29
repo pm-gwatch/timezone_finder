@@ -40,7 +40,7 @@ void main() {
 
     test('identifiers are well-formed IANA names', () {
       // Area/Location, optionally Area/Region/Location. Letters, digits,
-      // underscores and hyphens only; no trailing or doubled separators.
+      // underscores, hyphens, and plus only; no trailing or doubled separators.
       final pattern = RegExp(
         r'^[A-Za-z][A-Za-z0-9_+-]*'
         r'(?:/[A-Za-z][A-Za-z0-9_+-]*){1,2}$',

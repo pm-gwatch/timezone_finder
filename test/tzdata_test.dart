@@ -1,4 +1,4 @@
-// Own process: uninitialized tzdata, then `latest` (not latest_all).
+// Own isolate: uninitialized tzdata, then `latest` (not latest_all).
 // Relies on declaration order; do not pass a randomizing seed.
 
 import 'package:test/test.dart';

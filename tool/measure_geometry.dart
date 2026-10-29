@@ -18,7 +18,15 @@ import '../test/reference/reference_location_finder.dart';
 import 'src/fetch.dart';
 import 'src/geometry.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  if (args.isNotEmpty) {
+    stderr.writeln(
+      'Usage: dart run tool/measure_geometry.dart\n'
+      'Unknown argument: ${args.first}',
+    );
+    exitCode = 64;
+    return;
+  }
   final cached = cachedGeoJsonFile(defaultRelease);
   if (!cached.existsSync()) {
     stderr.writeln('No cached data. Run: dart run tool/fetch_data.dart');

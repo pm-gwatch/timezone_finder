@@ -48,6 +48,9 @@ void main() {
   tearDown(() => installBoundaries(_shippedBytes()));
 
   test('mutating the buffer after install does not change answers', () {
+    // A same-version install returns early, so start from a different version.
+    // Otherwise this would pass even if the shipped bytes were not copied.
+    installBoundaries(_syntheticContainer('synthetic-0000'));
     final bytes = Uint8List.fromList(_shippedBytes());
     installBoundaries(bytes);
     bytes.fillRange(0, bytes.length, 0);

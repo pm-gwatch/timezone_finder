@@ -39,7 +39,7 @@ Future<Place> searchWithNominatim(String query) => _geocode(
 
 /// Nominatim structured search.
 Future<Place> advancedSearchWithNominatim(
-  Map<String, dynamic> queryComponents,
+  Map<String, String> queryComponents,
 ) => _geocode(
   Uri.parse(
     'https://nominatim.openstreetmap.org/search'

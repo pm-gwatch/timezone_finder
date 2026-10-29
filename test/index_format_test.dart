@@ -45,8 +45,6 @@ Uint8List _syntheticContainer() => buildIndex(
 void main() {
   group('rejects a header that does not describe a container', () {
     test('a cell size that does not divide 180°', () {
-      // Latitude is 180°. A value that divides 360° but not 180° (72000000)
-      // builds a short row axis and clamps the north into the last row.
       expect(
         () =>
             BoundaryIndex.fromBytes(_withHeaderField(IndexHeader.cellSize, 7)),
@@ -55,6 +53,8 @@ void main() {
     });
 
     test('a cell size that divides 360° but not 180°', () {
+      // Latitude is 180°. 72000000 is 72°: it divides 360° and builds a short
+      // row axis, clamping the north into the last row.
       expect(
         () => BoundaryIndex.fromBytes(
           _withHeaderField(IndexHeader.cellSize, 72000000),
@@ -193,6 +193,26 @@ void main() {
       expect(
         () => BoundaryIndex.fromBytes(corrupt),
         throwsA(isA<IndexFormatException>()),
+      );
+    });
+
+    test('a polygon count larger than the bytes left', () {
+      final corrupt = Uint8List.fromList(_syntheticContainer());
+      final at = _headerField(corrupt, IndexHeader.polygons);
+      // Four-byte varint for 268435455 polygons. The buffer is far smaller.
+      corrupt[at] = 0xff;
+      corrupt[at + 1] = 0xff;
+      corrupt[at + 2] = 0xff;
+      corrupt[at + 3] = 0x7f;
+      expect(
+        () => BoundaryIndex.fromBytes(corrupt),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('polygon count'),
+          ),
+        ),
       );
     });
 

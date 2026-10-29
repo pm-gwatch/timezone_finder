@@ -243,16 +243,9 @@ Future<bool> _triageRelease(String release, {required bool verifyOnly}) async {
 Future<List<String>> _fetchNames(Uri url) async {
   final client = HttpClient();
   try {
-    var request = await client.getUrl(url);
-    var response = await request.close();
-    // GitHub redirects release assets to a CDN.
-    var hops = 0;
-    while (response.isRedirect && hops++ < 5) {
-      final location = response.headers.value(HttpHeaders.locationHeader)!;
-      await response.drain<void>();
-      request = await client.getUrl(url.resolve(location));
-      response = await request.close();
-    }
+    // HttpClient follows the GitHub release-asset redirect to the CDN.
+    final request = await client.getUrl(url);
+    final response = await request.close();
     if (response.statusCode != 200) {
       throw HttpException('HTTP ${response.statusCode}');
     }

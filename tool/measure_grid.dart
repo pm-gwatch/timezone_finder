@@ -19,7 +19,15 @@ import 'src/grid.dart';
 /// Cell sizes to compare, in quantized units. 1e6 is one degree.
 const _resolutions = <int>[2000000, 1000000, 500000, 250000, 125000];
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
+  if (args.isNotEmpty) {
+    stderr.writeln(
+      'Usage: dart run tool/measure_grid.dart\n'
+      'Unknown argument: ${args.first}',
+    );
+    exitCode = 64;
+    return;
+  }
   final cached = cachedGeoJsonFile(defaultRelease);
   if (!cached.existsSync()) {
     stderr.writeln('No cached data. Run: dart run tool/fetch_data.dart');

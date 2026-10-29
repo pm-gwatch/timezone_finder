@@ -14,7 +14,7 @@ class IndexFormatException implements Exception {
   String toString() => 'IndexFormatException: $message';
 }
 
-/// Thrown when [initializeBoundaries] cannot obtain a valid `.bin` (HTTP
+/// Thrown when `initializeBoundaries` cannot obtain a valid `.bin` (HTTP
 /// error or wrong size).
 class BoundariesInitException implements Exception {
   BoundariesInitException(this.message);
