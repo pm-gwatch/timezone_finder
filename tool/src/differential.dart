@@ -175,10 +175,11 @@ DifferentialReport runDifferential({
   final scale =
       spread ?? const <int>[0, 1, 2, 10, 100, 5000][random.nextInt(6)];
   final x =
-      ring[vertex * 2] + (scale == 0 ? 0 : random.nextInt(scale * 2) - scale);
+      ring[vertex * 2] +
+      (scale == 0 ? 0 : random.nextInt(scale * 2 + 1) - scale);
   final y =
       ring[vertex * 2 + 1] +
-      (scale == 0 ? 0 : random.nextInt(scale * 2) - scale);
+      (scale == 0 ? 0 : random.nextInt(scale * 2 + 1) - scale);
   return _clamp(x, y);
 }
 
@@ -214,8 +215,8 @@ DifferentialReport runDifferential({
   final vertex = random.nextInt(hole.length ~/ 2);
   final spread = <int>[1, 2, 10, 100, 1000][random.nextInt(5)];
   return _clamp(
-    hole[vertex * 2] + random.nextInt(spread * 2) - spread,
-    hole[vertex * 2 + 1] + random.nextInt(spread * 2) - spread,
+    hole[vertex * 2] + random.nextInt(spread * 2 + 1) - spread,
+    hole[vertex * 2 + 1] + random.nextInt(spread * 2 + 1) - spread,
   );
 }
 
@@ -228,8 +229,8 @@ DifferentialReport runDifferential({
   final seed = seeds[random.nextInt(seeds.length)];
   final spread = (spreadDegrees * 1000000).round();
   return _clamp(
-    (seed.lon * 1000000).round() + random.nextInt(spread * 2) - spread,
-    (seed.lat * 1000000).round() + random.nextInt(spread * 2) - spread,
+    (seed.lon * 1000000).round() + random.nextInt(spread * 2 + 1) - spread,
+    (seed.lat * 1000000).round() + random.nextInt(spread * 2 + 1) - spread,
   );
 }
 

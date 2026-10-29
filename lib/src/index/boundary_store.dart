@@ -20,7 +20,11 @@ int _decodes = 0;
 /// [BoundaryIndex.dataVersion] again still validates and counts, but does not
 /// replace the index.
 void installBoundaries(Uint8List bytes) {
-  final index = decodeIndex(() => bytes);
+  // Copy. The index keeps this buffer and reads rings from it on later
+  // lookups. A rootBundle view, or any buffer the caller reuses, must not
+  // be able to change those bytes.
+  final copy = Uint8List.fromList(bytes);
+  final index = decodeIndex(() => copy);
   final existing = _installed;
   if (existing != null && existing.dataVersion == index.dataVersion) {
     return;

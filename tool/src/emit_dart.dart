@@ -49,14 +49,15 @@ EmitResult emitDartData({
   required String dataVersion,
   required int chunkBase64Chars,
 }) {
-  if (chunkBase64Chars % 4 != 0) {
+  if (chunkBase64Chars <= 0 || chunkBase64Chars % 4 != 0) {
     // base64 encodes three bytes per four characters. A chunk boundary off a
     // four-character group cannot be decoded on its own, which would force the
     // loader back to joining every chunk into one enormous string first.
+    // Zero would divide the encoded length by zero.
     throw ArgumentError.value(
       chunkBase64Chars,
       'chunkBase64Chars',
-      'must be a multiple of 4 so each chunk decodes independently',
+      'must be a positive multiple of 4 so each chunk decodes independently',
     );
   }
   directory.createSync(recursive: true);

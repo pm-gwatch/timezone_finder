@@ -22,9 +22,12 @@ class SimplifyStats {
   /// dropped. Each is a small island that the bundled data cannot answer for.
   int polygonsDropped = 0;
 
-  /// Holes that collapsed and were dropped: lakes and coastal notches as well
-  /// as enclaves. An enclave's own polygon is separate and, being smaller,
-  /// still wins the tiebreak, so dropping its hole does not change answers.
+  /// Holes that collapsed below three vertices and were dropped.
+  ///
+  /// Dropping a hole changes answers wherever no surviving inner polygon
+  /// still covers that area: a lake or coastal notch (the unsimplified answer
+  /// was null), or an enclave whose own polygon was also dropped. An enclave
+  /// polygon that survives still wins the tiebreak inside its own ring.
   int holesDropped = 0;
 
   double get vertexRetention => verticesIn == 0 ? 0 : verticesOut / verticesIn;
@@ -42,6 +45,9 @@ class SimplifyStats {
 /// The first and last vertices are always kept, so a closed ring stays closed.
 /// Returns the input unchanged when it has fewer than three vertices.
 Int32List simplifyRing(Int32List ring, int tolerance) {
+  if (tolerance < 0) {
+    throw ArgumentError.value(tolerance, 'tolerance', 'must be >= 0');
+  }
   final count = ring.length ~/ 2;
   if (count < 3) return ring;
 

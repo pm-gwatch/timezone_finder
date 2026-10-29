@@ -47,6 +47,13 @@ void main() {
   // leaving a synthetic container installed would break whatever runs next.
   tearDown(() => installBoundaries(_shippedBytes()));
 
+  test('mutating the buffer after install does not change answers', () {
+    final bytes = Uint8List.fromList(_shippedBytes());
+    installBoundaries(bytes);
+    bytes.fillRange(0, bytes.length, 0);
+    expect(LocationFinder().findLocationName(2.3522, 48.8566), 'Europe/Paris');
+  });
+
   test('installBoundaries accepts the shipped .bin', () {
     installBoundaries(_shippedBytes());
     final finder = LocationFinder();

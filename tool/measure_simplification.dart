@@ -23,10 +23,32 @@ import 'src/differential.dart';
 import 'src/fetch.dart';
 
 Future<void> main(List<String> args) async {
+  const usage =
+      'Usage: dart run tool/measure_simplification.dart [--points <n>]';
   var points = 2000000;
   for (var i = 0; i < args.length; i++) {
-    if (args[i] == '--points' && i + 1 < args.length) {
-      points = int.parse(args[i + 1]);
+    final argument = args[i];
+    final hasValue = i + 1 < args.length && !args[i + 1].startsWith('--');
+    switch (argument) {
+      case '--points' when hasValue:
+        final parsed = int.tryParse(args[++i]);
+        if (parsed == null || parsed <= 0) {
+          stderr.writeln('--points needs an integer greater than 0.\n$usage');
+          exitCode = 64;
+          return;
+        }
+        points = parsed;
+      case '-h' || '--help':
+        stdout.writeln(usage);
+        return;
+      case '--points':
+        stderr.writeln('Missing value for $argument.\n$usage');
+        exitCode = 64;
+        return;
+      default:
+        stderr.writeln('Unknown argument: $argument\n$usage');
+        exitCode = 64;
+        return;
     }
   }
 

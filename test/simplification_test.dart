@@ -186,7 +186,7 @@ void main() {
               expected,
               reason:
                   'the two differ ${(offset * 111320 * 0.995).round()} m '
-                  'from a straight border at $latitude, $longitude — '
+                  'from a straight border at $longitude, $latitude — '
                   'simplification should have nothing to remove here',
             );
           }

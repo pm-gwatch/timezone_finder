@@ -1,13 +1,19 @@
-/// Point-in-polygon in quantized integers. Shared by runtime, builder, and
-/// oracle so they cannot disagree on containment.
+/// Point-in-polygon in quantized integers.
+///
+/// [pointInRing] is the shared edge test. The oracle calls [pointInPolygon].
+/// The runtime repeats that outer-ring-then-holes loop in
+/// `BoundaryIndex._polygonContains` so hole rings can be decoded lazily, and
+/// calls [pointInRing] directly. The index builder does not call either; it
+/// filters with bounding boxes. Keep the two loops the same.
 library;
 
 import 'dart:typed_data';
 
 /// Even-odd ray cast. [ring] is interleaved quantized `[x,y]`, implicitly
 /// closed. **A point on an edge belongs to the polygon east of it** (inside on
-/// a west edge, outside on an east). dart2js: products must stay below 2⁵³;
-/// the generator refuses rings that would not.
+/// a west edge, outside on an east). For a straddling edge the cross product
+/// stays at most 6.48e16. dart2js needs it below 2⁵³; the generator refuses
+/// rings that would not.
 bool pointInRing(Int32List ring, int px, int py) {
   final n = ring.length ~/ 2;
   var inside = false;

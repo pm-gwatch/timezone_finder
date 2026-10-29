@@ -50,8 +50,12 @@ void main() {
         ]);
       });
 
-      /// What the runtime will do: filter by grid, then test geometry.
-      String? gridFind(double latitude, double longitude) {
+      /// Grid completeness. Every polygon that contains the point must be
+      /// offered; [comparePrecedence] then picks the winner. The runtime does
+      /// not sort at lookup time: it returns the first containing polygon in
+      /// the order the builder stored. Argument order matches findLocation:
+      /// longitude, then latitude.
+      String? gridFind(double longitude, double latitude) {
         final x = quantizeQueryLongitude(longitude);
         final y = quantize(latitude);
         ReferencePolygon? best;
@@ -106,7 +110,7 @@ void main() {
           ...bootstrapGoldens,
           ...goldenPoints,
         ]) {
-          final viaGrid = gridFind(point.latitude, point.longitude);
+          final viaGrid = gridFind(point.longitude, point.latitude);
           final direct = oracle.findLocationName(
             point.longitude,
             point.latitude,
@@ -143,10 +147,10 @@ void main() {
 
           final direct = oracle.findLocationName(lon, lat);
           if (direct != null) land++;
-          final viaGrid = gridFind(lat, lon);
+          final viaGrid = gridFind(lon, lat);
           if (viaGrid != direct) {
             failures.add(
-              '($lat, $lon): grid ${viaGrid ?? 'null'}, '
+              '($lon, $lat): grid ${viaGrid ?? 'null'}, '
               'oracle ${direct ?? 'null'}',
             );
             if (failures.length > 20) break;
@@ -199,9 +203,9 @@ void main() {
         for (final lon in <double>[-180, 180, 0, 179.9999999]) {
           for (final lat in <double>[-90, -89, 89, 90]) {
             expect(
-              gridFind(lat, lon),
+              gridFind(lon, lat),
               oracle.findLocationName(lon, lat),
-              reason: 'grid and oracle disagree at ($lat, $lon)',
+              reason: 'grid and oracle disagree at ($lon, $lat)',
             );
           }
         }

@@ -211,15 +211,35 @@ void main() {
       );
     });
 
-    test('throws on a varint longer than 64 bits', () {
-      // The index ships as source. A corrupt continuation run must not decode
-      // into a silently wrong coordinate.
-      final bytes = Uint8List.fromList([
-        1,
-        ...List<int>.filled(12, 0x80),
-        0x01,
-      ]);
-      expect(() => readRing(bytes, 0), throwsA(isA<IndexFormatException>()));
+    test('throws on a varint longer than five bytes', () {
+      // The index ships as source. A sixth byte must not decode: dart2js
+      // would wrap the shift, and the VM can set the sign bit.
+      final bytes = Uint8List.fromList([0x80, 0x80, 0x80, 0x80, 0x80, 0x01]);
+      expect(
+        () => readRing(bytes, 0),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('5 bytes'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when the fifth byte leaves 31 bits', () {
+      // shift 28, payload 8: bit 31 would be set.
+      final bytes = Uint8List.fromList([0x80, 0x80, 0x80, 0x80, 0x08]);
+      expect(
+        () => readRing(bytes, 0),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('31 bits'),
+          ),
+        ),
+      );
     });
   });
 }

@@ -9,7 +9,7 @@ Up to [0.2.0](https://pub.dev/packages/timezone_finder/versions/0.2.0), this pac
 ```yaml
 dependencies:
   timezone_extensions: ^0.1.0
-  timezone_finder: ^1.0.0
+  timezone_finder: ^1.0.1
 ```
 
 ## Initialization
@@ -97,7 +97,9 @@ Future<void> main() async {
   final data = await rootBundle.load(
     'packages/timezone_finder/data/boundaries.bin',
   );
-  installBoundaries(data.buffer.asUint8List());
+  installBoundaries(
+    data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+  );
 
   final paris = findLocation(2.3522, 48.8566); // Europe/Paris Location
 

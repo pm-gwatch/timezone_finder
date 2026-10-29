@@ -24,6 +24,7 @@ void main() {
           allOf(
             contains('not initialized'),
             contains('initializeTimeZones'),
+            contains('initializeTimeZone'),
             contains('latest_all'),
           ),
         ),
@@ -49,7 +50,12 @@ void main() {
         isA<StateError>().having(
           (e) => e.message,
           'message',
-          allOf(contains('Europe/Zagreb'), contains('latest_all')),
+          allOf(
+            contains('Europe/Zagreb'),
+            contains('latest_all'),
+            contains('link identifiers'),
+            contains('boundary release'),
+          ),
         ),
       ),
     );

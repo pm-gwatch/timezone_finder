@@ -67,7 +67,7 @@ jobs:
             echo 'This regenerates both the bundled index in `lib/src/generated/` and'
             echo 'the unsimplified baseline in `tool/release/`, which is what'
             echo 'the accuracy numbers are measured against. Review'
-            echo '`git diff --stat lib/data tool/release`, then set the version:'
+            echo '`git diff --stat lib/data lib/src/generated tool/release`, then set the version:'
             echo 'patch for a geometry-only change, minor if the identifier set'
             echo 'moved.'
             echo

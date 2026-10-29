@@ -39,19 +39,42 @@ const int _defaultGridSteps = 24;
 late int _gridSteps;
 
 Future<void> main(List<String> args) async {
+  const usage =
+      'Usage: dart run tool/probe_overlaps.dart [--steps <n>] [--only <pair>] '
+      '[--point <lat,lon>] [--check-fixtures]';
   _gridSteps = _defaultGridSteps;
   String? only;
   for (var i = 0; i < args.length; i++) {
-    if (args[i] == '--steps' && i + 1 < args.length) {
-      _gridSteps = int.parse(args[i + 1]);
-    } else if (args[i] == '--only' && i + 1 < args.length) {
-      only = args[i + 1];
-    } else if (args[i] == '--point' && i + 1 < args.length) {
-      await _queryPoint(args[i + 1]);
-      return;
-    } else if (args[i] == '--check-fixtures') {
-      await _checkFixtures();
-      return;
+    final argument = args[i];
+    final hasValue = i + 1 < args.length && !args[i + 1].startsWith('--');
+    switch (argument) {
+      case '--steps' when hasValue:
+        final parsed = int.tryParse(args[++i]);
+        if (parsed == null || parsed <= 0) {
+          stderr.writeln('--steps needs an integer greater than 0.\n$usage');
+          exitCode = 64;
+          return;
+        }
+        _gridSteps = parsed;
+      case '--only' when hasValue:
+        only = args[++i];
+      case '--point' when hasValue:
+        await _queryPoint(args[++i]);
+        return;
+      case '--check-fixtures':
+        await _checkFixtures();
+        return;
+      case '-h' || '--help':
+        stdout.writeln(usage);
+        return;
+      case '--steps' || '--only' || '--point':
+        stderr.writeln('Missing value for $argument.\n$usage');
+        exitCode = 64;
+        return;
+      default:
+        stderr.writeln('Unknown argument: $argument\n$usage');
+        exitCode = 64;
+        return;
     }
   }
   await _run(only);

@@ -13,13 +13,25 @@ import 'dart:io';
 import 'src/fetch.dart';
 
 Future<void> main(List<String> args) async {
+  const usage = 'Usage: dart run tool/fetch_data.dart [--release <tag>]';
   var release = defaultRelease;
   for (var i = 0; i < args.length; i++) {
-    if (args[i] == '--release' && i + 1 < args.length) {
-      release = args[i + 1];
-    } else if (args[i] == '-h' || args[i] == '--help') {
-      stdout.writeln('Usage: dart run tool/fetch_data.dart [--release <tag>]');
-      return;
+    final argument = args[i];
+    final hasValue = i + 1 < args.length && !args[i + 1].startsWith('--');
+    switch (argument) {
+      case '--release' when hasValue:
+        release = args[++i];
+      case '-h' || '--help':
+        stdout.writeln(usage);
+        return;
+      case '--release':
+        stderr.writeln('Missing value for $argument.\n$usage');
+        exitCode = 64;
+        return;
+      default:
+        stderr.writeln('Unknown argument: $argument\n$usage');
+        exitCode = 64;
+        return;
     }
   }
 
