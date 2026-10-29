@@ -127,7 +127,7 @@ void main() {
           final actual = finder.findLocationName(lon, lat);
           if (actual != expected) {
             failures.add(
-              '($lat, $lon): runtime ${actual ?? 'null'}, '
+              '($lon, $lat): runtime ${actual ?? 'null'}, '
               'oracle ${expected ?? 'null'}',
             );
             if (failures.length > 20) break;
@@ -198,26 +198,28 @@ void main() {
         );
       });
 
-      test('a freshly packed container answers as the bundled one does', () {
-        // The finder now reads bundled data, so this checks the *builder*
-        // against it: a container packed here in memory must resolve the
-        // fixtures the same way. Byte-identity is asserted separately in
-        // bundled_data_test; this is the behavioural counterpart.
-        final fresh = BoundaryIndex.fromBytes(packed);
-        for (final point in <GoldenPoint>[
-          ...bootstrapGoldens.take(40),
-          ...goldenPoints.take(40),
-        ]) {
-          expect(
-            fresh.lookup(
-              quantizeQueryLongitude(point.longitude),
-              quantize(point.latitude),
-            ),
-            finder.findLocationName(point.longitude, point.latitude),
-            reason: point.name,
-          );
-        }
-      });
+      test(
+        'a freshly packed unsimplified container matches the committed baseline',
+        () {
+          // Both sides are full-resolution geometry. `packed` is built here
+          // from the oracle; `finder` reads tool/release/. The simplified index
+          // that ships is covered by bundled_data_test.
+          final fresh = BoundaryIndex.fromBytes(packed);
+          for (final point in <GoldenPoint>[
+            ...bootstrapGoldens.take(40),
+            ...goldenPoints.take(40),
+          ]) {
+            expect(
+              fresh.lookup(
+                quantizeQueryLongitude(point.longitude),
+                quantize(point.latitude),
+              ),
+              finder.findLocationName(point.longitude, point.latitude),
+              reason: point.name,
+            );
+          }
+        },
+      );
 
       test('the packed container is the size the budget expects', () {
         final megabytes = packed.length / 1e6;

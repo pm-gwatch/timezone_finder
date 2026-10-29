@@ -12,9 +12,96 @@ import 'fixtures/golden_points.dart';
 import 'fixtures/overlap_pins.dart';
 import 'reference/reference_location_finder.dart';
 
+final _ianaName = RegExp(
+  r'^[A-Za-z][A-Za-z0-9_+-]*(?:/[A-Za-z][A-Za-z0-9_+-]*){1,2}$',
+);
+
 void main() {
   final cached = cachedGeoJsonFile(defaultRelease);
   final available = cached.existsSync();
+  final all = <GoldenPoint>[...bootstrapGoldens, ...goldenPoints];
+
+  test('the set is broad enough to be worth running', () {
+    expect(all.length, greaterThanOrEqualTo(250));
+    final zones = all.map((p) => p.zone).whereType<String>().toSet();
+    expect(
+      zones.length,
+      greaterThanOrEqualTo(230),
+      reason: 'coverage across the 419 identifiers matters more than count',
+    );
+    for (final category in GoldenCategory.values) {
+      expect(
+        all.where((p) => p.category == category),
+        isNotEmpty,
+        reason: 'no fixtures exercise ${category.name}',
+      );
+    }
+  });
+
+  test('no fixture is duplicated across the two sets', () {
+    final byCoordinate = <String, List<String>>{};
+    final byName = <String, int>{};
+    for (final point in all) {
+      byCoordinate
+          .putIfAbsent('${point.latitude},${point.longitude}', () => [])
+          .add(point.name);
+      byName[point.name] = (byName[point.name] ?? 0) + 1;
+    }
+    expect(
+      byCoordinate.entries
+          .where((e) => e.value.length > 1)
+          .map((e) => '${e.key}: ${e.value.join(' / ')}'),
+      isEmpty,
+      reason: 'duplicate coordinates across bootstrap + extended sets',
+    );
+    expect(
+      byName.entries.where((e) => e.value > 1).map((e) => e.key),
+      isEmpty,
+      reason: 'duplicate labels across bootstrap + extended sets',
+    );
+  });
+
+  test('extended goldens have sane coordinates and zone names', () {
+    for (final point in goldenPoints) {
+      expect(point.latitude, inInclusiveRange(-90, 90), reason: point.name);
+      expect(point.longitude, inInclusiveRange(-180, 180), reason: point.name);
+      expect(point.latitude.isFinite, isTrue, reason: point.name);
+      expect(point.longitude.isFinite, isTrue, reason: point.name);
+      if (point.zone != null) {
+        expect(point.zone, matches(_ianaName), reason: point.name);
+      }
+    }
+  });
+
+  test('overlap pins have sane coordinates and zone names', () {
+    for (final pin in overlapPins) {
+      expect(pin.latitude, inInclusiveRange(-90, 90), reason: pin.description);
+      expect(
+        pin.longitude,
+        inInclusiveRange(-180, 180),
+        reason: pin.description,
+      );
+      expect(pin.latitude.isFinite, isTrue, reason: pin.description);
+      expect(pin.longitude.isFinite, isTrue, reason: pin.description);
+      expect(pin.selected, matches(_ianaName), reason: pin.description);
+      for (final zone in pin.contenders) {
+        expect(zone, matches(_ianaName), reason: pin.description);
+      }
+    }
+  });
+
+  test('every pin is genuinely ambiguous, and selects its first contender', () {
+    for (final pin in overlapPins) {
+      expect(
+        pin.contenders.length,
+        greaterThanOrEqualTo(2),
+        reason:
+            '${pin.description} pins a single zone — it is ground '
+            'truth, not an overlap',
+      );
+      expect(pin.selected, pin.contenders.first);
+    }
+  });
 
   group(
     'golden set',
@@ -25,54 +112,9 @@ void main() {
               '(downloads ~51 MB into .dart_tool/, which is gitignored)',
     () {
       late ReferenceLocationFinder oracle;
-      final all = <GoldenPoint>[...bootstrapGoldens, ...goldenPoints];
 
       setUpAll(() async {
         oracle = await ReferenceLocationFinder.load(cached);
-      });
-
-      test('the set is broad enough to be worth running', () {
-        expect(all.length, greaterThanOrEqualTo(250));
-        final zones = all.map((p) => p.zone).whereType<String>().toSet();
-        expect(
-          zones.length,
-          greaterThanOrEqualTo(230),
-          reason: 'coverage across the 419 identifiers matters more than count',
-        );
-        for (final category in GoldenCategory.values) {
-          expect(
-            all.where((p) => p.category == category),
-            isNotEmpty,
-            reason: 'no fixtures exercise ${category.name}',
-          );
-        }
-      });
-
-      test('no fixture is duplicated across the two sets', () {
-        // The sets are concatenated, so an entry listed in both is sampled
-        // twice and inflates the advertised coverage without adding any. The
-        // per-file integrity tests cannot see this, because each only checks
-        // within its own file.
-        final byCoordinate = <String, List<String>>{};
-        final byName = <String, int>{};
-        for (final point in all) {
-          byCoordinate
-              .putIfAbsent('${point.latitude},${point.longitude}', () => [])
-              .add(point.name);
-          byName[point.name] = (byName[point.name] ?? 0) + 1;
-        }
-        expect(
-          byCoordinate.entries
-              .where((e) => e.value.length > 1)
-              .map((e) => '${e.key}: ${e.value.join(' / ')}'),
-          isEmpty,
-          reason: 'duplicate coordinates across bootstrap + extended sets',
-        );
-        expect(
-          byName.entries.where((e) => e.value > 1).map((e) => e.key),
-          isEmpty,
-          reason: 'duplicate labels across bootstrap + extended sets',
-        );
       });
 
       test('the oracle agrees with every ground-truth fixture', () {
@@ -214,22 +256,6 @@ void main() {
               'refresh.\n${drift.join('\n')}',
         );
       });
-
-      test(
-        'every pin is genuinely ambiguous, and selects its first contender',
-        () {
-          for (final pin in overlapPins) {
-            expect(
-              pin.contenders.length,
-              greaterThanOrEqualTo(2),
-              reason:
-                  '${pin.description} pins a single zone — it is ground '
-                  'truth, not an overlap',
-            );
-            expect(pin.selected, pin.contenders.first);
-          }
-        },
-      );
     },
   );
 }

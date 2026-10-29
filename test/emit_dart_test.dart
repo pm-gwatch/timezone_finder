@@ -24,9 +24,10 @@ void main() {
       // 37.5 MB intermediate that cost a quarter of peak memory.
       final directory = _scratch();
       addTearDown(() => directory.deleteSync(recursive: true));
-      // Every one of these leaves a remainder mod 4. (100 does not, which
-      // this test asserted until it failed.)
-      for (final bad in <int>[1, 2, 3, 5, 6, 7, 101, 1023]) {
+      // Zero and negative multiples of 4 used to pass the modulo check.
+      // 100 is a positive multiple of 4 and must be accepted; an earlier
+      // test listed it here by mistake.
+      for (final bad in <int>[0, -4, 1, 2, 3, 5, 6, 7, 101, 1023]) {
         expect(
           () => emitDartData(
             directory: directory,
@@ -36,7 +37,7 @@ void main() {
             chunkBase64Chars: bad,
           ),
           throwsArgumentError,
-          reason: '$bad is not a multiple of 4',
+          reason: '$bad is not a positive multiple of 4',
         );
       }
     });

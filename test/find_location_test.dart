@@ -24,8 +24,16 @@ void main() {
 
     test('rejects invalid coordinates', () {
       expect(() => findLocation(0, 91), throwsArgumentError);
+      expect(() => findLocation(0, -91), throwsArgumentError);
       expect(() => findLocation(181, 0), throwsArgumentError);
+      expect(() => findLocation(-181, 0), throwsArgumentError);
       expect(() => findLocation(0, double.nan), throwsArgumentError);
+      expect(() => findLocation(double.nan, 0), throwsArgumentError);
+      expect(() => findLocation(double.infinity, 0), throwsArgumentError);
+      expect(
+        () => findLocation(0, double.negativeInfinity),
+        throwsArgumentError,
+      );
     });
 
     test('resolves every identifier in the dataset', () {

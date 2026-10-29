@@ -87,42 +87,19 @@ Future<void> main() async {
 }
 
 void _checkNoBoxWrapsTheAntimeridian(List<PolygonBox> boxes) {
-  // Grid indexing treats a box as a plain interval in x, so a polygon whose
-  // real extent crosses ±180 would be a problem: its box would claim all 360°
-  // while the polygon occupies a sliver. tzbb splits such zones, but the index
-  // depends on it, so it is checked rather than assumed.
-  //
-  // A box spanning every longitude is not automatically that case. A polygon
-  // enclosing a pole genuinely occupies all longitudes, and its box is honest.
-  // The two are distinguished by whether the box reaches the pole.
-  final fullWidth = boxes.where(
-    (b) => b.minX <= -179000000 && b.maxX >= 179000000,
-  );
-  final polar = fullWidth.where(
-    (b) => b.minY <= -89000000 || b.maxY >= 89000000,
-  );
-  final wrapping = fullWidth.where(
-    (b) => b.minY > -89000000 && b.maxY < 89000000,
-  );
-
-  for (final box in polar) {
+  // Same rule buildIndex enforces. Polar caps are reported; a non-polar
+  // full-longitude box throws.
+  for (final box in boxes.where(boxSpansAllLongitudes).where(boxReachesAPole)) {
     stdout.writeln(
       'polygon ${box.id} spans every longitude and reaches the '
       'pole — a polar cap, so the box is honest',
     );
   }
-  if (wrapping.isEmpty) {
-    stdout.writeln(
-      'no polygon box wraps the antimeridian — grid indexing is '
-      'a plain interval in x\n',
-    );
-  } else {
-    stdout.writeln(
-      'WARNING: ${wrapping.length} box(es) span every longitude '
-      'without reaching a pole, which means a seam wrap; grid indexing '
-      'assumes none do\n',
-    );
-  }
+  assertNoAntimeridianWrap(boxes);
+  stdout.writeln(
+    'no polygon box wraps the antimeridian — grid indexing is '
+    'a plain interval in x\n',
+  );
 }
 
 ({double mean, int worst}) _averageCandidatesOverLand(

@@ -71,9 +71,10 @@ Future<void> main(List<String> args) async {
         release = args[++i];
       case '--chunk-kb' when hasValue:
         final chunk = int.tryParse(args[++i]);
-        if (chunk == null) {
+        if (chunk == null || chunk <= 0) {
           stderr.writeln(
-            '--chunk-kb needs an integer, got ${args[i]}\n$_usage',
+            '--chunk-kb needs an integer greater than 0, got ${args[i]}\n'
+            '$_usage',
           );
           exitCode = 64;
           return;
@@ -81,9 +82,9 @@ Future<void> main(List<String> args) async {
         chunkKb = chunk;
       case '--tolerance' when hasValue:
         final units = int.tryParse(args[++i]);
-        if (units == null) {
+        if (units == null || units < 0) {
           stderr.writeln(
-            '--tolerance needs an integer, got ${args[i]}\n$_usage',
+            '--tolerance needs an integer >= 0, got ${args[i]}\n$_usage',
           );
           exitCode = 64;
           return;
@@ -134,7 +135,15 @@ Future<void> main(List<String> args) async {
   if (verifyOnly) return;
 
   // Both emit targets: CI's format gate covers tool/release/ too.
-  await _run('dart', <String>['format', 'lib/src/generated', 'tool/release']);
+  if (!await _run('dart', <String>[
+    'format',
+    'lib/src/generated',
+    'tool/release',
+  ])) {
+    stderr.writeln('dart format failed.');
+    exitCode = 1;
+    return;
+  }
 
   if (!skipTests) {
     stdout.writeln(

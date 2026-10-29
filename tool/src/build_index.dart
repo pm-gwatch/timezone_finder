@@ -66,16 +66,38 @@ int maxPipSideBound(Iterable<Int32List> rings) {
 
 /// Packs [polygons] into a container the runtime reader accepts.
 ///
-/// [cellSize] is the grid resolution in quantized units; it must divide 360°.
+/// [cellSize] is the grid resolution in quantized units. It must be a
+/// positive divisor of 180° (180000000). Every such value also divides 360°.
 ///
-/// Throws [StateError] if any ring edge's sound `|side|` bound is ≥ 2⁵³.
+/// Throws [ArgumentError] when [cellSize] does not.
+/// Throws [StateError] if any ring edge's sound `|side|` bound is ≥ 2⁵³,
+/// or if a non-polar box spans the antimeridian.
 Uint8List buildIndex({
   required String dataVersion,
   required List<SourcePolygon> polygons,
   required int cellSize,
 }) {
+  if (cellSize <= 0 || 180000000 % cellSize != 0) {
+    throw ArgumentError.value(
+      cellSize,
+      'cellSize',
+      'must be a positive divisor of 180° in quantized units (180000000)',
+    );
+  }
   assertPipDart2jsSafe([
     for (final polygon in polygons) ...[polygon.outer, ...polygon.holes],
+  ]);
+  assertNoAntimeridianWrap(<PolygonBox>[
+    for (var i = 0; i < polygons.length; i++)
+      (
+        id: i,
+        minX: polygons[i].minX,
+        maxX: polygons[i].maxX,
+        minY: polygons[i].minY,
+        maxY: polygons[i].maxY,
+        area: polygons[i].area,
+        zone: polygons[i].zone,
+      ),
   ]);
 
   final zoneNames = <String>{for (final p in polygons) p.zone}.toList()..sort();

@@ -86,25 +86,28 @@ class LocationFinder {
     if (!timeZoneDatabase.isInitialized) {
       throw StateError(
         'The time zone database is not initialized, so $identifier cannot be '
-        'resolved to a Location. Call initializeTimeZones() from '
-        "package:timezone/data/latest_all.dart before using findLocation.",
+        'resolved to a Location. On the VM, call initializeTimeZones() from '
+        'package:timezone/data/latest_all.dart. In a browser, call '
+        "initializeTimeZone('packages/timezone/data/latest_all.tzf').",
       );
     }
     try {
       return getLocation(identifier);
     } on LocationNotFoundException {
-      // Not a boundary miss: `latest` omits 106 of this package's 419 ids
-      // (it keeps 313). `latest_all` has every id. Both platforms are named
-      // because the VM loads `latest` only when imported, while
-      // initializeTimeZone() in a browser fetches it by default.
+      // Not a boundary miss. `latest` omits the tzdb link identifiers.
+      // `latest_all` from an older package:timezone can also lack an id that
+      // a newer boundary release contains. Name both platforms: the VM loads
+      // `latest` only when that library is imported, while a browser fetches
+      // latest.tzf unless the path is explicit.
       throw StateError(
         'The boundary data resolved this coordinate to $identifier, but the '
-        'initialized time zone database has no such location — it omits the '
-        'tzdb link identifiers. On the VM, initialize from '
-        'package:timezone/data/latest_all.dart rather than data/latest.dart. '
-        'In a browser, pass the path explicitly: '
-        "initializeTimeZone('packages/timezone/data/latest_all.tzf'), because "
-        'the default fetches latest.tzf.',
+        'initialized time zone database has no such location. data/latest.dart '
+        'omits the tzdb link identifiers; load latest_all instead. An older '
+        'latest_all can also lack an identifier added in a newer boundary '
+        'release. On the VM, initialize from '
+        'package:timezone/data/latest_all.dart. In a browser, pass the path '
+        "explicitly: initializeTimeZone('packages/timezone/data/latest_all.tzf'), "
+        'because the default fetches latest.tzf.',
       );
     }
   }

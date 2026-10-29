@@ -149,8 +149,9 @@ void main() {
     });
 
     test('works at the extremes of the coordinate range', () {
-      // The products reach ~1.3e17 for antipodal coordinates. If that
-      // overflowed, containment here would be arbitrary.
+      // For a straddling edge the cross product is at most 6.48e16.
+      // 1.3e17 is the sum of two term maxima that cannot occur together.
+      // If the real bound overflowed, containment here would be arbitrary.
       final world = ring([
         [-180000000, -90000000],
         [180000000, -90000000],

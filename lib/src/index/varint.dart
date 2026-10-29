@@ -130,13 +130,20 @@ void _writeVarint(BytesBuilder out, int value) {
         'varint runs past the end of the buffer at $offset',
       );
     }
-    // A tenth continuation byte means corrupt data; fail instead of inventing
-    // a coordinate.
-    if (shift > 63) {
-      throw IndexFormatException('varint longer than 64 bits at $offset');
+    // Five bytes cover every legal coordinate (zigzag of ±360° is < 2³⁰).
+    // A sixth byte is corrupt. On dart2js the shift would wrap at 32 bits;
+    // on the VM a later byte can set the sign bit. Reject both before that.
+    if (shift > 28) {
+      throw IndexFormatException('varint longer than 5 bytes at $offset');
     }
     final byte = bytes[position++];
-    value |= (byte & 0x7f) << shift;
+    final payload = byte & 0x7f;
+    // At shift 28 the payload must stay in 0..7 so the value remains a
+    // non-negative 31-bit integer on both the VM and dart2js.
+    if (shift == 28 && payload > 7) {
+      throw IndexFormatException('varint exceeds 31 bits at $offset');
+    }
+    value |= payload << shift;
     if (byte < 0x80) return (value: value, next: position);
     shift += 7;
   }

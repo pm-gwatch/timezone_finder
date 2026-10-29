@@ -51,9 +51,9 @@ class ReferencePolygon {
 
   /// Whether ([x], [y]) in quantized units lies inside this polygon.
   ///
-  /// The bounding-box test is only an optimisation; containment itself is
-  /// delegated to the shared [pointInPolygon] so the oracle and the index
-  /// cannot drift apart on it.
+  /// The bounding-box test is only an optimisation. Containment goes through
+  /// [pointInPolygon], which calls the same [pointInRing] the runtime uses.
+  /// The runtime inlines the hole loop instead of calling [pointInPolygon].
   bool contains(int x, int y) {
     if (!_bboxContains(x, y)) return false;
     return pointInPolygon(outer, holes, x, y);

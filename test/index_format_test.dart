@@ -44,13 +44,28 @@ Uint8List _syntheticContainer() => buildIndex(
 
 void main() {
   group('rejects a header that does not describe a container', () {
-    test('a cell size that does not divide 360°', () {
-      // The reader derives its column count from this, so a value that does
-      // not divide the globe silently skews every cell index.
+    test('a cell size that does not divide 180°', () {
+      // Latitude is 180°. A value that divides 360° but not 180° (72000000)
+      // builds a short row axis and clamps the north into the last row.
       expect(
         () =>
             BoundaryIndex.fromBytes(_withHeaderField(IndexHeader.cellSize, 7)),
         throwsA(isA<IndexFormatException>()),
+      );
+    });
+
+    test('a cell size that divides 360° but not 180°', () {
+      expect(
+        () => BoundaryIndex.fromBytes(
+          _withHeaderField(IndexHeader.cellSize, 72000000),
+        ),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('180'),
+          ),
+        ),
       );
     });
 
@@ -122,6 +137,94 @@ void main() {
       expect(
         () => BoundaryIndex.fromBytes(corrupt),
         throwsA(isA<IndexFormatException>()),
+      );
+    });
+
+    test('a bad magic on a full container', () {
+      final bytes = Uint8List.fromList(_syntheticContainer());
+      bytes[0] ^= 0xff;
+      expect(
+        () => BoundaryIndex.fromBytes(bytes),
+        throwsA(isA<IndexFormatException>()),
+      );
+    });
+
+    test('an unknown format version', () {
+      final bytes = Uint8List.fromList(_syntheticContainer());
+      ByteData.sublistView(
+        bytes,
+      ).setUint32(IndexHeader.formatVersion, 99, Endian.little);
+      expect(
+        () => BoundaryIndex.fromBytes(bytes),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('format version'),
+          ),
+        ),
+      );
+    });
+
+    test('invalid UTF-8 in a container string', () {
+      final corrupt = Uint8List.fromList(_syntheticContainer());
+      final at = _headerField(corrupt, IndexHeader.dataVersion);
+      expect(corrupt[at], 9, reason: 'length of "synthetic"');
+      corrupt[at + 1] = 0xff;
+      expect(
+        () => BoundaryIndex.fromBytes(corrupt),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('UTF-8'),
+          ),
+        ),
+      );
+    });
+
+    test('a varint longer than five bytes', () {
+      final corrupt = Uint8List.fromList(_syntheticContainer());
+      final at = _headerField(corrupt, IndexHeader.dataVersion);
+      for (var i = 0; i < 5; i++) {
+        corrupt[at + i] = 0x80;
+      }
+      corrupt[at + 5] = 0x01;
+      expect(
+        () => BoundaryIndex.fromBytes(corrupt),
+        throwsA(isA<IndexFormatException>()),
+      );
+    });
+
+    test('a positive grid cell', () {
+      final corrupt = Uint8List.fromList(_syntheticContainer());
+      final cells = _headerField(corrupt, IndexHeader.gridCells);
+      ByteData.sublistView(corrupt).setInt32(cells, 1, Endian.little);
+      expect(
+        () => BoundaryIndex.fromBytes(corrupt),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('negative pool'),
+          ),
+        ),
+      );
+    });
+
+    test('a pool offset past the pool', () {
+      final corrupt = Uint8List.fromList(_syntheticContainer());
+      final cells = _headerField(corrupt, IndexHeader.gridCells);
+      ByteData.sublistView(corrupt).setInt32(cells, -2000000000, Endian.little);
+      expect(
+        () => BoundaryIndex.fromBytes(corrupt),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('pool'),
+          ),
+        ),
       );
     });
 

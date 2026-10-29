@@ -26,16 +26,52 @@ import 'src/differential.dart';
 import 'src/fetch.dart';
 
 Future<void> main(List<String> args) async {
+  const usage =
+      'Usage: dart run tool/differential.dart [--points <n>] [--seed <n>] '
+      '[--index bundled|unsimplified]';
   var points = 10000000;
   var seed = 1;
   var index = 'unsimplified';
   for (var i = 0; i < args.length; i++) {
-    if (args[i] == '--points' && i + 1 < args.length) {
-      points = int.parse(args[i + 1]);
-    } else if (args[i] == '--seed' && i + 1 < args.length) {
-      seed = int.parse(args[i + 1]);
-    } else if (args[i] == '--index' && i + 1 < args.length) {
-      index = args[i + 1];
+    final argument = args[i];
+    final hasValue = i + 1 < args.length && !args[i + 1].startsWith('--');
+    switch (argument) {
+      case '--points' when hasValue:
+        final parsed = int.tryParse(args[++i]);
+        if (parsed == null || parsed <= 0) {
+          stderr.writeln('--points needs an integer greater than 0.\n$usage');
+          exitCode = 64;
+          return;
+        }
+        points = parsed;
+      case '--seed' when hasValue:
+        final parsed = int.tryParse(args[++i]);
+        if (parsed == null) {
+          stderr.writeln('--seed needs an integer.\n$usage');
+          exitCode = 64;
+          return;
+        }
+        seed = parsed;
+      case '--index' when hasValue:
+        index = args[++i];
+        if (index != 'bundled' && index != 'unsimplified') {
+          stderr.writeln(
+            '--index must be bundled or unsimplified, got $index.\n$usage',
+          );
+          exitCode = 64;
+          return;
+        }
+      case '-h' || '--help':
+        stdout.writeln(usage);
+        return;
+      case '--points' || '--seed' || '--index':
+        stderr.writeln('Missing value for $argument.\n$usage');
+        exitCode = 64;
+        return;
+      default:
+        stderr.writeln('Unknown argument: $argument\n$usage');
+        exitCode = 64;
+        return;
     }
   }
 

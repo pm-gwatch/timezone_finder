@@ -36,9 +36,11 @@ void main() {
       reason: 'compiled JS must not reference base64 chunk libraries',
     );
     expect(
-      js.contains("const String chunk = '"),
+      js.contains('VFpGW'),
       isFalse,
-      reason: 'compiled JS must not embed chunk string literals',
+      reason:
+          'compiled JS must not contain the base64 prefix of the container '
+          'magic (TZFX)',
     );
     // Chunks alone are ~5.6 MB of base64. A clean build without them is well
     // under 2 MB even with the rest of the library.

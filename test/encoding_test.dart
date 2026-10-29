@@ -102,8 +102,9 @@ void main() {
       });
 
       test('encodedRingLength predicts the packed size exactly', () {
-        // The index builder sizes the buffer and builds the offset table
-        // without encoding twice.
+        // The builder records BytesBuilder.length as it writes each ring.
+        // encodedRingLength is this separate check that the same count of
+        // bytes would have been emitted.
         var predicted = 0;
         for (final value in rings) {
           predicted += encodedRingLength(value);

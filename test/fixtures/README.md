@@ -80,20 +80,27 @@ no external answer.** A sweep of all fixtures against the oracle confirmed
 Ürümqi was the only one affected; `dart run tool/probe_overlaps.dart
 --check-fixtures` re-runs that sweep, and a test enforces it permanently.
 
-### The one provenance exception
+### Two provenance exceptions
 
-`Unclaimed Antarctic sector, 10°W` → `Etc/UTC` is the only fixture in
-`golden_points.dart` whose *coordinate* came from the dataset rather than from
-independent knowledge. (The bootstrap set has no such exception: every point
+`golden_points.dart` names two fixtures whose expectation was checked against
+the data rather than predicted from geography alone.
+
+`Unclaimed Antarctic sector, 10°W` → `Etc/UTC` is the one whose *coordinate*
+came from the dataset. (The bootstrap set has no such exception: every point
 is a city centre.) The region has no named station to anchor to, and `Etc/UTC`
 is the one identifier of the 419 that is absent from tzdb's `zone.tab` — which
 makes it easy to mistake for an artifact and filter out. It is a real
 six-vertex land polygon, and both external implementations return `Etc/UTC`
 there.
 
-Without it, a zone the package can genuinely return would never be tested. It
-is included with the weaker provenance stated in its note, rather than either
-omitted or quietly filed as if it were like the rest.
+`Dover Strait, mid-channel` → `Europe/Paris` uses the midpoint of the Dover
+and Calais port fixtures. Which side of the maritime boundary that midpoint
+falls on was verified with timezonefinder and tzf, because the ports are not
+directly opposite.
+
+Without the Antarctic point, a zone the package can genuinely return would
+never be tested. Both are included with the weaker provenance stated in their
+notes.
 
 ---
 
@@ -203,26 +210,36 @@ python3 -m venv /tmp/tzcheck && /tmp/tzcheck/bin/pip install timezonefinder tzfp
 curl -sLO https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026e/timezone-names.json
 ```
 
+```bash
+dart run tool/dump_fixtures.dart > /tmp/fixtures.json
+```
+
 ```python
-import re, json
+import json
 import tzfpy
 from timezonefinder import TimezoneFinder
 
-src = open('test/fixtures/bootstrap_goldens.dart').read()
-body = src.split('bootstrapGoldens = <GoldenPoint>[', 1)[1]
-pat = re.compile(r"GoldenPoint\(\s*'((?:[^']|\\')*)'\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*'([^']+)'")
-pairs = [(m[1], float(m[2]), float(m[3]), m[4]) for m in pat.finditer(body)]
-
+fixtures = json.load(open('/tmp/fixtures.json'))
 names = set(json.load(open('timezone-names.json')))
-assert not [z for _, _, _, z in pairs if z not in names]
+bad = [f['zone'] for f in fixtures if f['zone'] is not None and f['zone'] not in names]
+assert not bad, bad
 
 tf = TimezoneFinder()
-for n, lat, lon, z in pairs:
-    a = tzfpy.get_tz(lon, lat)                    # (lng, lat) order!
+for f in fixtures:
+    lat, lon, z = f['lat'], f['lon'], f['zone']
+    # tzf answers Etc/GMT±N at sea; only compare it where a land zone is expected.
+    if z is not None:
+        a = tzfpy.get_tz(lon, lat)                # (lng, lat) order!
+        if a != z:
+            print(f"DISAGREE {f['name']}: expected {z}, tzf {a}")
     b = tf.timezone_at_land(lat=lat, lng=lon)
-    if a != z or b != z:
-        print(f'DISAGREE {n}: expected {z}, tzf {a}, timezonefinder {b}')
+    if b != z:
+        print(f"DISAGREE {f['name']}: expected {z}, timezonefinder {b}")
 ```
+
+`dump_fixtures.dart` reads the same lists the tests read, including `null`
+ocean expectations and escaped quotes. A regex over `bootstrap_goldens.dart`
+does not.
 
 ### Scope — what is deliberately absent
 

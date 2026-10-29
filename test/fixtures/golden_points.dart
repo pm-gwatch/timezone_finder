@@ -682,7 +682,7 @@ const List<GoldenPoint> goldenPoints = <GoldenPoint>[
         'is only ~42 km across, so the British and French claims meet mid-'
         'channel with nothing unclaimed between them.\n'
         '\n'
-        'PROVENANCE, as for the Antarctic sector below: the coordinate is the '
+        'PROVENANCE, as for the Antarctic sector above: the coordinate is the '
         'midpoint of the two ports, but which side of the maritime boundary it '
         'falls on was verified rather than predicted — the ports are not '
         'directly opposite, so their midpoint is not the median line. '

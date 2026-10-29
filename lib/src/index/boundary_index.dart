@@ -55,7 +55,12 @@ class BoundaryIndex {
     required List<Int32List> polygonRingOffsets,
   }) : _bytes = bytes,
        _cellSize = cellSize,
-       _gridCells = _viewCells(bytes, gridCellsOffset, gridPoolOffset),
+       _gridCells = _viewCells(
+         bytes,
+         gridCellsOffset,
+         gridPoolOffset,
+         coordinatesOffset,
+       ),
        _gridPoolOffset = gridPoolOffset,
        _coordinatesOffset = coordinatesOffset,
        _polygonZoneIds = polygonZoneIds,
@@ -95,8 +100,11 @@ class BoundaryIndex {
     }
 
     final cellSize = header.getUint32(IndexHeader.cellSize, Endian.little);
-    if (cellSize <= 0 || 360000000 % cellSize != 0) {
-      throw IndexFormatException('cell size $cellSize does not divide 360°');
+    // 180°, not only 360°. A divisor of 360° that is not a divisor of 180°
+    // (72000000 is 72°) builds a short latitude axis and clamps the north
+    // into the last row. Every divisor of 180° also divides 360°.
+    if (cellSize <= 0 || 180000000 % cellSize != 0) {
+      throw IndexFormatException('cell size $cellSize does not divide 180°');
     }
 
     final dataVersion = _readString(bytes, offset(IndexHeader.dataVersion));
@@ -145,10 +153,29 @@ class BoundaryIndex {
       for (var r = 0; r < ringCount.value; r++) {
         final delta = _varint(bytes, cursor);
         cursor = delta.next;
+        if (delta.value > 0x7fffffff - previousRingOffset) {
+          throw IndexFormatException(
+            'polygon $i ring offset overflows 32-bit signed',
+          );
+        }
         previousRingOffset += delta.value;
         offsets[r] = previousRingOffset;
       }
       ringOffsets.add(offsets);
+    }
+
+    final coordinatesOffset = offset(IndexHeader.coordinates);
+    for (var i = 0; i < ringOffsets.length; i++) {
+      for (final start in ringOffsets[i]) {
+        // `start` fits in signed int32 and is >= 0, so this does not wrap.
+        // A ring must begin on a byte that exists.
+        if (bytes.length - coordinatesOffset <= start) {
+          throw IndexFormatException(
+            'polygon $i ring starts at coordinate offset $start, outside a '
+            '${bytes.length}-byte buffer',
+          );
+        }
+      }
     }
 
     final gridCellsOffset = offset(IndexHeader.gridCells);
@@ -172,7 +199,7 @@ class BoundaryIndex {
       cellSize: cellSize,
       gridCellsOffset: gridCellsOffset,
       gridPoolOffset: gridPoolOffset,
-      coordinatesOffset: offset(IndexHeader.coordinates),
+      coordinatesOffset: coordinatesOffset,
       polygonZoneIds: zoneIds,
       polygonBoxes: boxes,
       polygonRingOffsets: ringOffsets,
@@ -213,6 +240,8 @@ class BoundaryIndex {
 
     var id = 0;
     for (var i = 0; i < count.value; i++) {
+      // Candidate lists reuse the coordinate codec, so each id is a pair.
+      // The y delta is always 0; only dx advances the polygon id.
       final dx = _varint(_bytes, cursor);
       cursor = dx.next;
       final dy = _varint(_bytes, cursor);
@@ -281,12 +310,40 @@ class BoundaryIndex {
 /// A zero-copy view is possible on the VM; we copy via [ByteData] so chunks
 /// and `.bin` share one path across compilers. The factory has already checked
 /// the section length.
-Int32List _viewCells(Uint8List bytes, int cellsOffset, int poolOffset) {
+Int32List _viewCells(
+  Uint8List bytes,
+  int cellsOffset,
+  int poolOffset,
+  int coordinatesOffset,
+) {
+  if (coordinatesOffset < poolOffset) {
+    throw IndexFormatException(
+      'coordinate section starts at $coordinatesOffset, before the grid pool '
+      'at $poolOffset',
+    );
+  }
+  final poolLength = coordinatesOffset - poolOffset;
   final count = (poolOffset - cellsOffset) ~/ 4;
   final view = ByteData.sublistView(bytes, cellsOffset, poolOffset);
   final copy = Int32List(count);
   for (var i = 0; i < count; i++) {
-    copy[i] = view.getInt32(i * 4, Endian.little);
+    final cell = view.getInt32(i * 4, Endian.little);
+    if (cell > 0) {
+      throw IndexFormatException(
+        'grid cell $i has value $cell; only 0 (empty) or a negative pool '
+        'offset is valid',
+      );
+    }
+    if (cell < 0) {
+      final at = -cell - 1;
+      if (at >= poolLength) {
+        throw IndexFormatException(
+          'grid cell $i points at pool offset $at, past the '
+          '$poolLength-byte pool',
+        );
+      }
+    }
+    copy[i] = cell;
   }
   return copy;
 }
@@ -299,11 +356,16 @@ Int32List _viewCells(Uint8List bytes, int cellsOffset, int poolOffset) {
     if (position >= bytes.length) {
       throw const IndexFormatException('varint runs past the end of the index');
     }
-    if (shift > 63) {
-      throw const IndexFormatException('varint longer than 64 bits');
+    // Same bound as readRing: five bytes, payload <= 7 on the fifth.
+    if (shift > 28) {
+      throw const IndexFormatException('varint longer than 5 bytes');
     }
     final byte = bytes[position++];
-    value |= (byte & 0x7f) << shift;
+    final payload = byte & 0x7f;
+    if (shift == 28 && payload > 7) {
+      throw const IndexFormatException('varint exceeds 31 bits');
+    }
+    value |= payload << shift;
     if (byte < 0x80) return (value: value, next: position);
     shift += 7;
   }
@@ -315,5 +377,9 @@ Int32List _viewCells(Uint8List bytes, int cellsOffset, int poolOffset) {
   if (end > bytes.length) {
     throw const IndexFormatException('string runs past the end of the index');
   }
-  return (value: utf8.decode(bytes.sublist(length.next, end)), next: end);
+  try {
+    return (value: utf8.decode(bytes.sublist(length.next, end)), next: end);
+  } on FormatException catch (error) {
+    throw IndexFormatException('invalid UTF-8 string: ${error.message}');
+  }
 }

@@ -21,6 +21,20 @@ List<List<int>> points(Int32List r) => <List<int>>[
 
 void main() {
   group('simplifyRing', () {
+    test('rejects a negative tolerance', () {
+      expect(
+        () => simplifyRing(
+          ring([
+            [0, 0],
+            [1, 0],
+            [1, 1],
+          ]),
+          -1,
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('keeps the first and last vertex, so a ring stays closed', () {
       final original = ring([
         [0, 0],

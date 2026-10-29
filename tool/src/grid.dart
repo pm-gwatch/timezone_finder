@@ -87,9 +87,10 @@ class BuiltGrid {
   final Int32List cells;
 
   /// Candidate lists, each `varint(count)` then polygon ids as zigzag varint
-  /// deltas, **in overlap-tiebreak order**, not ascending. The runtime returns
-  /// the first containing polygon, so this order decides disputed answers.
-  /// Identical lists are stored once.
+  /// deltas, **in overlap-tiebreak order**, not ascending. Each id is written
+  /// with [writeRing], so it is a pair: the x delta is the id and the y delta
+  /// is 0 (one extra byte). The runtime returns the first containing polygon,
+  /// so this order decides disputed answers. Identical lists are stored once.
   final Uint8List pool;
 
   final int emptyCells;
@@ -202,6 +203,35 @@ BuiltGrid buildGrid(GridSpec spec, List<PolygonBox> boxes) {
     candidateCells: occupied,
     candidateLengths: lengths,
     distinctLists: interned.length,
+  );
+}
+
+/// A box whose longitude span covers essentially the whole globe.
+bool boxSpansAllLongitudes(PolygonBox box) =>
+    box.minX <= -179000000 && box.maxX >= 179000000;
+
+/// A box that reaches the arctic or antarctic, where a full-longitude span
+/// is a polar cap rather than an unsplit antimeridian ring.
+bool boxReachesAPole(PolygonBox box) =>
+    box.minY <= -89000000 || box.maxY >= 89000000;
+
+/// Non-polar boxes that claim every longitude.
+///
+/// Grid indexing treats x as a plain interval. An unsplit ring that crosses
+/// ±180 would be filed across the globe while occupying a sliver.
+List<PolygonBox> antimeridianWrappingBoxes(List<PolygonBox> boxes) => [
+  for (final box in boxes)
+    if (boxSpansAllLongitudes(box) && !boxReachesAPole(box)) box,
+];
+
+/// Throws [StateError] when [antimeridianWrappingBoxes] is not empty.
+void assertNoAntimeridianWrap(List<PolygonBox> boxes) {
+  final wrapping = antimeridianWrappingBoxes(boxes);
+  if (wrapping.isEmpty) return;
+  throw StateError(
+    '${wrapping.length} polygon box(es) span every longitude without '
+    'reaching a pole. Grid indexing treats longitude as a plain interval '
+    'and cannot represent an unsplit antimeridian ring.',
   );
 }
 
