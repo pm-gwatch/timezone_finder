@@ -6,12 +6,22 @@
 ///     dart run tool/measure_pip_bound.dart
 library;
 
+import 'dart:io';
+
 import 'package:timezone_finder/src/generated/boundaries.dart' as bundled;
 import 'package:timezone_finder/src/index/boundary_index.dart';
 
 import 'src/build_index.dart';
 
-void main() {
+void main(List<String> args) {
+  if (args.isNotEmpty) {
+    stderr.writeln(
+      'Usage: dart run tool/measure_pip_bound.dart\n'
+      'Unknown argument: ${args.first}',
+    );
+    exitCode = 64;
+    return;
+  }
   final bytes = bundled.loadContainer();
   final index = BoundaryIndex.fromBytes(bytes);
   final maxBound = maxPipSideBound(index.decodeAllRings);

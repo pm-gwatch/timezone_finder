@@ -122,6 +122,16 @@ class BoundaryIndex {
     cursor = offset(IndexHeader.polygons);
     final polygonCount = _varint(bytes, cursor);
     cursor = polygonCount.next;
+    // A polygon record is at least 7 bytes: zone id, four box varints, a ring
+    // count, and one ring-offset varint. Reject a count the unread bytes
+    // cannot hold before allocating.
+    final polygonBytesLeft = bytes.length - cursor;
+    if (polygonCount.value > polygonBytesLeft ~/ 7) {
+      throw IndexFormatException(
+        'polygon count ${polygonCount.value} needs more than the '
+        '$polygonBytesLeft bytes left in the buffer',
+      );
+    }
     final zoneIds = Int32List(polygonCount.value);
     final boxes = Int32List(polygonCount.value * 4);
     final ringOffsets = <Int32List>[];
@@ -148,6 +158,14 @@ class BoundaryIndex {
       // Every polygon has an outer ring; lookup reads offsets[0].
       if (ringCount.value == 0) {
         throw IndexFormatException('polygon $i has no rings');
+      }
+      // One offset varint per ring, at least one byte each.
+      final ringBytesLeft = bytes.length - cursor;
+      if (ringCount.value > ringBytesLeft) {
+        throw IndexFormatException(
+          'polygon $i ring count ${ringCount.value} needs more than the '
+          '$ringBytesLeft bytes left in the buffer',
+        );
       }
       final offsets = Int32List(ringCount.value);
       for (var r = 0; r < ringCount.value; r++) {

@@ -38,7 +38,10 @@ void installBoundaries(Uint8List bytes) {
 BoundaryIndex get sharedIndex {
   final existing = _installed;
   if (existing != null) return existing;
-  installBoundaries(container.loadContainer());
+  // The loader just allocated this buffer and does not keep it, so decoding
+  // it directly avoids the extra copy [installBoundaries] makes for a buffer
+  // the caller might reuse.
+  _installed = decodeIndex(container.loadContainer);
   return _installed!;
 }
 

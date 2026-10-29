@@ -224,9 +224,9 @@ void main() {
       });
 
       test('the serialized grid is far smaller than the coordinate blob', () {
-        // The original estimate was 1–3 MB for the grid. Measured, the raw cell
-        // array at this resolution is ~275 KB, so the index total is
-        // essentially the coordinates (28.19 MB in 2026e).
+        // The original estimate was 1–3 MB for the grid. 64800 cells × 4 bytes
+        // is 259200 bytes. The serialized form adds the pool and is still
+        // under 1 MB, so the index total is essentially the coordinates.
         expect(grid.serializedBytes, lessThan(1000000));
       });
     },

@@ -1,11 +1,6 @@
 ## 1.0.1
 
-Bug fixes. Lookups on a valid `2026e` index are unchanged.
-
-- The Flutter web sample passes `rootBundle` bytes with `offsetInBytes` and `lengthInBytes`. `installBoundaries` copies its buffer, so a later reuse of the caller's bytes cannot change a lookup.
-- `findLocation` names both the VM and browser ways to load `latest_all` when tzdata was never initialized. A missing identifier no longer claims that the database is always `latest`: an older `latest_all` can lack an id from a newer boundary release.
-- Corrupt containers throw `IndexFormatException` for invalid UTF-8, a varint past five bytes, a positive grid cell, a pool offset outside the pool, a ring offset that does not fit, and a cell size that divides 360° but not 180°.
-- `buildIndex` rejects that cell size and a non-polar box that spans the antimeridian. The release tools reject a negative tolerance, a non-positive `--chunk-kb`, and unknown flags. `tool/refresh.dart` stops when `dart format` fails.
+Bug fixes.
 
 ## 1.0.0
 

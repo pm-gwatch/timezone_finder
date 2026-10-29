@@ -25,7 +25,10 @@ LocationFinder get _defaultFinder => _default ??= LocationFinder();
 ///
 /// Throws [ArgumentError] on invalid coordinates. Throws [StateError] if
 /// tzdata is missing or incomplete (`latest_all`), or on web until boundaries
-/// are installed (`package:timezone_finder/browser.dart`).
+/// are installed (`package:timezone_finder/browser.dart`). Throws
+/// [IndexFormatException] if a lookup reaches a corrupt ring. On the VM the
+/// index is embedded, so that is a package bug. [IndexFormatException] is
+/// exported from `package:timezone_finder/browser.dart`.
 Location? findLocation(double longitude, double latitude) =>
     _defaultFinder.findLocation(longitude, latitude);
 
@@ -87,8 +90,11 @@ class LocationFinder {
       throw StateError(
         'The time zone database is not initialized, so $identifier cannot be '
         'resolved to a Location. On the VM, call initializeTimeZones() from '
-        'package:timezone/data/latest_all.dart. In a browser, call '
-        "initializeTimeZone('packages/timezone/data/latest_all.tzf').",
+        'package:timezone/data/latest_all.dart. On Dart web, call '
+        "initializeTimeZone('packages/timezone/data/latest_all.tzf') and serve "
+        'that packages/ path. On Flutter web, load '
+        'packages/timezone/data/latest_all.tzf with rootBundle and pass the '
+        'bytes to initializeDatabase.',
       );
     }
     try {
@@ -96,18 +102,20 @@ class LocationFinder {
     } on LocationNotFoundException {
       // Not a boundary miss. `latest` omits the tzdb link identifiers.
       // `latest_all` from an older package:timezone can also lack an id that
-      // a newer boundary release contains. Name both platforms: the VM loads
-      // `latest` only when that library is imported, while a browser fetches
-      // latest.tzf unless the path is explicit.
+      // a newer boundary release contains. The VM loads `latest` only when
+      // that library is imported. Dart web fetches latest.tzf unless the path
+      // is explicit. Flutter web has no packages/ URL, so it loads the asset.
       throw StateError(
         'The boundary data resolved this coordinate to $identifier, but the '
         'initialized time zone database has no such location. data/latest.dart '
         'omits the tzdb link identifiers; load latest_all instead. An older '
         'latest_all can also lack an identifier added in a newer boundary '
         'release. On the VM, initialize from '
-        'package:timezone/data/latest_all.dart. In a browser, pass the path '
-        "explicitly: initializeTimeZone('packages/timezone/data/latest_all.tzf'), "
-        'because the default fetches latest.tzf.',
+        'package:timezone/data/latest_all.dart. On Dart web, call '
+        "initializeTimeZone('packages/timezone/data/latest_all.tzf'), because "
+        'the default fetches latest.tzf, and serve that packages/ path. On '
+        'Flutter web, load packages/timezone/data/latest_all.tzf with '
+        'rootBundle and pass the bytes to initializeDatabase.',
       );
     }
   }

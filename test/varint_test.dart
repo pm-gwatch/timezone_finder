@@ -203,6 +203,21 @@ void main() {
   });
 
   group('malformed input', () {
+    test('throws when a ring claims more vertices than the bytes left', () {
+      // count 1000, then no vertex bytes. Must fail before allocating.
+      final bytes = Uint8List.fromList(<int>[0xe8, 0x07]);
+      expect(
+        () => readRing(bytes, 0),
+        throwsA(
+          isA<IndexFormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('vertices'),
+          ),
+        ),
+      );
+    });
+
     test('throws rather than reading past the buffer', () {
       final truncated = Uint8List.fromList([2, 0x80]); // count 2, then a stub
       expect(

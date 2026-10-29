@@ -1,5 +1,5 @@
 // Location helpers: findLocation.
-// Uses latest_all (latest is tzdata_test.dart, separate process).
+// Uses latest_all (latest is tzdata_test.dart, separate isolate).
 // Index is bundled.
 
 import 'package:test/test.dart';

@@ -66,6 +66,14 @@ void writeRing(BytesBuilder out, Int32List ring) {
   var position = offset;
   final count = _readVarint(bytes, position);
   position = count.next;
+  // Each vertex is a dx and a dy varint, at least one byte each.
+  final bytesLeft = bytes.length - position;
+  if (count.value > bytesLeft ~/ 2) {
+    throw IndexFormatException(
+      'ring of ${count.value} vertices needs more than the $bytesLeft bytes '
+      'left at $offset',
+    );
+  }
 
   final ring = Int32List(count.value * 2);
   var x = 0;
