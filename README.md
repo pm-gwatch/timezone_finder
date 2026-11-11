@@ -8,7 +8,7 @@ Up to [0.2.0](https://pub.dev/packages/timezone_finder/versions/0.2.0), this pac
 
 ```yaml
 dependencies:
-  timezone_extensions: ^0.1.0
+  timezone_extensions: ^0.2.1
   timezone_finder: ^1.0.2
 ```
 
