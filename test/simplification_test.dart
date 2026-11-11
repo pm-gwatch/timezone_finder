@@ -32,7 +32,7 @@ void main() {
     });
 
     test('carries no more zones than the baseline', () {
-      // On 2026e, 65 polygons and 59 holes collapse below three vertices at
+      // On 2026f, 65 polygons and 60 holes collapse below three vertices at
       // this tolerance and are dropped. A zone disappears only if every one of its
       // polygons went, so the count barely moves — but it can move.
       expect(

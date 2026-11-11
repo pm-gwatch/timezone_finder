@@ -1,3 +1,7 @@
+## 1.0.2
+
+Takes into account changes in the OpenStreetMap extract used by the latest version of tzbb (`2026f`).
+
 ## 1.0.1
 
 Bug fixes.

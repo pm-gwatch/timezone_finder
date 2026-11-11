@@ -19,7 +19,7 @@ void main() {
   setUpAll(() async {
     await initializeBoundaries();
     finder = LocationFinder();
-    expect(boundaryDataVersion, '2026e');
+    expect(boundaryDataVersion, '2026f');
     expect(finder.availableLocationNames.length, 419);
   });
 

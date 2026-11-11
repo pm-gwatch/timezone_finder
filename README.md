@@ -9,7 +9,7 @@ Up to [0.2.0](https://pub.dev/packages/timezone_finder/versions/0.2.0), this pac
 ```yaml
 dependencies:
   timezone_extensions: ^0.1.0
-  timezone_finder: ^1.0.1
+  timezone_finder: ^1.0.2
 ```
 
 ## Initialization
@@ -43,7 +43,7 @@ On a server, call `await ensurePreloaded()` in each isolate at startup. That mov
 
 ### Dart web
 
-Import `package:timezone/browser.dart` and `package:timezone_finder/browser.dart`. Load `latest_all.tzf` by path. The default fetch is `latest.tzf`. Then fetch and install the `.bin` with `initializeBoundaries`. Its default URL is `packages/timezone_finder/data/boundaries.bin?v=2026e`. Pass another URL to self-host.
+Import `package:timezone/browser.dart` and `package:timezone_finder/browser.dart`. Load `latest_all.tzf` by path. The default fetch is `latest.tzf`. Then fetch and install the `.bin` with `initializeBoundaries`. Its default URL is `packages/timezone_finder/data/boundaries.bin?v=2026f`. Pass another URL to self-host.
 
 The deployed site has to serve `packages/`. `webdev serve`, `dart test -p chrome`, and `build_web_compilers` do. `dart compile js` by itself does not. That covers both the tzdata path and the default URL of `initializeBoundaries`.
 
@@ -143,7 +143,7 @@ On the web, `installBoundaries` and `initializeBoundaries` already decode the `.
 
 ### `String get boundaryDataVersion`
 
-The Timezone Boundary Builder release for the borders in this package, such as `'2026e'`. This getter does not report the tzdb release inside `package:timezone`. A boundary update can ship without a new tzdb, and a tzdb update can ship without new borders.
+The Timezone Boundary Builder release for the borders in this package, such as `'2026f'`. This getter does not report the tzdb release inside `package:timezone`. A boundary update can ship without a new tzdb, and a tzdb update can ship without new borders.
 
 Reading it decodes the index on the VM. On the web it throws `StateError` until the `.bin` is installed.
 

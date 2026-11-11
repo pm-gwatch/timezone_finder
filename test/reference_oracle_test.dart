@@ -32,7 +32,7 @@ void main() {
       });
 
       test('parses the expected shape of the dataset', () {
-        // Measured independently from tzbb 2026e before the oracle existed.
+        // Measured independently from tzbb 2026f GeoJSON, not from this oracle.
         // Asserting all five totals — not just the two cheap ones — means a
         // parse that silently drops rings or vertices fails CI rather than
         // quietly weakening every downstream guarantee.
@@ -52,10 +52,10 @@ void main() {
         }
 
         expect(oracle.zones.length, 419, reason: 'zones');
-        expect(oracle.polygons.length, 1220, reason: 'polygons');
-        expect(rings, 1530, reason: 'rings');
-        expect(holes, 310, reason: 'holes');
-        expect(vertices, 7747361, reason: 'vertices');
+        expect(oracle.polygons.length, 1217, reason: 'polygons');
+        expect(rings, 1523, reason: 'rings');
+        expect(holes, 306, reason: 'holes');
+        expect(vertices, 7757906, reason: 'vertices');
       });
 
       test('agrees with every bootstrap golden', () {
@@ -142,7 +142,7 @@ void main() {
             }
           }
         }
-        expect(checked, 1530, reason: 'ring count changed');
+        expect(checked, 1523, reason: 'ring count changed');
         expect(
           mismatches.take(5),
           isEmpty,

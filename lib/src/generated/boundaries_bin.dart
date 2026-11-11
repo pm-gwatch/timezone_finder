@@ -15,10 +15,10 @@ library;
 const String boundariesBinName = 'boundaries.bin';
 
 /// Size of [boundariesBinName], in bytes.
-const int boundariesBinLength = 4215145;
+const int boundariesBinLength = 4214958;
 
 /// Default URL for [initializeBoundaries] in browsers. The `?v=`
 /// names the release so a cached copy from an older one is not
 /// reused.
 const String boundariesDefaultUrl =
-    'packages/timezone_finder/data/$boundariesBinName?v=2026e';
+    'packages/timezone_finder/data/$boundariesBinName?v=2026f';
