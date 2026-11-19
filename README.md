@@ -156,6 +156,12 @@ Reading it decodes the index on the VM. On the web it throws `StateError` until 
 
 Coordinates come from wherever you already have them: a GPS fix, a map tap, a database column. From an address, [Nominatim](https://nominatim.org/release-docs/latest/api/Search/) and [Photon](https://photon.komoot.io) return a `FeatureCollection`. Pick a feature and pass its Point coordinates to `findLocation`.
 
+## Contributing
+
+Bug reports and pull requests are welcome on [GitHub](https://github.com/pm-gwatch/timezone_finder). Start with the [contributing guide](https://github.com/pm-gwatch/timezone_finder/blob/main/.github/CONTRIBUTING.md). Questions go to [Discussions](https://github.com/pm-gwatch/timezone_finder/discussions).
+
+If this package saves you time, a like on [pub.dev](https://pub.dev/packages/timezone_finder) or a star on GitHub helps others find it.
+
 ## Licenses
 
 - **Code** — MIT ([`LICENSE`](https://github.com/pm-gwatch/timezone_finder/blob/main/LICENSE)).
