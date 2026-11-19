@@ -1,0 +1,42 @@
+name: Wrong time zone
+description: findLocation returns the wrong zone, or null, for a place.
+labels: [data]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, check the [contributing guide](https://github.com/pm-gwatch/timezone_finder/blob/main/.github/CONTRIBUTING.md#wrong-time-zone-at-a-coordinate): open sea returns `null`, borders are simplified to ~110 m, and the data comes from OpenStreetMap.
+  - type: input
+    id: coordinates
+    attributes:
+      label: Longitude, latitude
+      description: Longitude first, as passed to findLocation.
+      placeholder: "2.3522, 48.8566"
+    validations:
+      required: true
+  - type: input
+    id: got
+    attributes:
+      label: Returned
+      placeholder: "Europe/Brussels, or null"
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: Expected
+      placeholder: Europe/Paris
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Package version and boundaryDataVersion
+      placeholder: "1.0.2, 2026f"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: A source for the expected zone, or whether Timezone Boundary Builder has the same border.

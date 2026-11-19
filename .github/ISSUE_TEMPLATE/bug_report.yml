@@ -1,0 +1,39 @@
+name: Bug report
+description: A crash, exception or wrong behaviour other than a wrong zone.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the full error and stack trace if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal code to reproduce
+      render: dart
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      multiple: true
+      options:
+        - Dart VM / CLI / server
+        - Flutter Android
+        - Flutter iOS
+        - Flutter desktop
+        - Flutter web
+        - Dart web
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: timezone_finder, timezone, and `dart --version` (or `flutter --version`).
+    validations:
+      required: true
